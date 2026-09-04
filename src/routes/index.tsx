@@ -37,6 +37,12 @@ export const Route = createFileRoute("/")({
 function HomePage() {
   const { data } = useSuspenseQuery(homeQuery);
   const hero = data.hero;
+  const [filter, setFilter] = useMediaFilter();
+  const allItems = [
+    ...data.resume,
+    ...data.nextUp,
+    ...data.rows.flatMap((r) => r.items),
+  ];
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -98,11 +104,14 @@ function HomePage() {
       )}
 
       <div className="relative z-10 -mt-10 space-y-10">
-        <Row title="Continue Watching" items={data.resume} />
-        <Row title="Next Up" items={data.nextUp} />
+        <div className="px-4 sm:px-8">
+          <FilterBar items={allItems} value={filter} onChange={setFilter} />
+        </div>
+        <Row title="Continue Watching" items={filterItems(data.resume, filter)} />
+        <Row title="Next Up" items={filterItems(data.nextUp, filter)} />
         {data.rows.map((row) => (
           <div key={row.viewId}>
-            <Row title={row.title} items={row.items} />
+            <Row title={row.title} items={filterItems(row.items, filter)} />
             <div className="px-4 sm:px-8">
               <Link
                 to="/library/$id"

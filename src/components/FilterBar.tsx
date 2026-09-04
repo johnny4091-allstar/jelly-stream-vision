@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { X } from "lucide-react";
 
 import type { JfItem } from "@/lib/jellyfin.types";
+import type { PosterRecord } from "@/lib/posters.types";
 
 export interface MediaFilter {
   genre: string;
@@ -11,32 +12,60 @@ export interface MediaFilter {
 
 export const emptyFilter: MediaFilter = { genre: "", year: "", rating: "" };
 
-export function filterItems(items: JfItem[], f: MediaFilter): JfItem[] {
+export type PosterIndex = Map<string, PosterRecord>;
+
+export function buildPosterIndex(posters: PosterRecord[]): PosterIndex {
+  return new Map(posters.map((p) => [p.jfItemId, p]));
+}
+
+/** Attributes for an item, preferring the saved poster entry. */
+function attrs(item: JfItem, index?: PosterIndex) {
+  const key = item.Type === "Episode" && item.SeriesId ? item.SeriesId : item.Id;
+  const p = index?.get(key);
+  return {
+    genres: p?.genres?.length ? p.genres : (item.Genres ?? []),
+    year: String(p?.year ?? item.ProductionYear ?? ""),
+    rating: p?.rating ?? item.OfficialRating ?? "",
+  };
+}
+
+export function filterItems(items: JfItem[], f: MediaFilter, index?: PosterIndex): JfItem[] {
+  if (!f.genre && !f.year && !f.rating) return items;
   return items.filter((i) => {
-    if (f.genre && !(i.Genres ?? []).includes(f.genre)) return false;
-    if (f.year && String(i.ProductionYear ?? "") !== f.year) return false;
-    if (f.rating && (i.OfficialRating ?? "") !== f.rating) return false;
+    const a = attrs(i, index);
+    if (f.genre && !a.genres.includes(f.genre)) return false;
+    if (f.year && a.year !== f.year) return false;
+    if (f.rating && a.rating !== f.rating) return false;
     return true;
   });
 }
 
-function options(items: JfItem[], pick: (i: JfItem) => (string | number | undefined)[]): string[] {
+export function filterPosters(posters: PosterRecord[], f: MediaFilter): PosterRecord[] {
+  return posters.filter((p) => {
+    if (f.genre && !p.genres.includes(f.genre)) return false;
+    if (f.year && String(p.year ?? "") !== f.year) return false;
+    if (f.rating && (p.rating ?? "") !== f.rating) return false;
+    return true;
+  });
+}
+
+function options(posters: PosterRecord[], pick: (p: PosterRecord) => (string | number | null | undefined)[]): string[] {
   const set = new Set<string>();
-  for (const i of items) for (const v of pick(i)) if (v !== undefined && v !== "") set.add(String(v));
+  for (const p of posters) for (const v of pick(p)) if (v !== undefined && v !== null && v !== "") set.add(String(v));
   return [...set].sort((a, b) => (Number(a) && Number(b) ? Number(b) - Number(a) : a.localeCompare(b)));
 }
 
 const selectCls =
   "rounded-md border border-border bg-card px-2.5 py-1.5 text-xs text-foreground outline-none focus:border-primary sm:text-sm";
 
-export function FilterBar({ items, value, onChange }: {
-  items: JfItem[];
+export function FilterBar({ posters, value, onChange }: {
+  posters: PosterRecord[];
   value: MediaFilter;
   onChange: (f: MediaFilter) => void;
 }) {
-  const genres = useMemo(() => options(items, (i) => i.Genres ?? []), [items]);
-  const years = useMemo(() => options(items, (i) => [i.ProductionYear]), [items]);
-  const ratings = useMemo(() => options(items, (i) => [i.OfficialRating]), [items]);
+  const genres = useMemo(() => options(posters, (p) => p.genres), [posters]);
+  const years = useMemo(() => options(posters, (p) => [p.year]), [posters]);
+  const ratings = useMemo(() => options(posters, (p) => [p.rating]), [posters]);
   const active = value.genre || value.year || value.rating;
 
   return (

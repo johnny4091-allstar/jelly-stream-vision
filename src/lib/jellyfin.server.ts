@@ -15,7 +15,11 @@ function jfHeaders(token?: string): Record<string, string> {
 
 export async function jfGet<T = unknown>(path: string, token?: string): Promise<T> {
   const res = await fetch(jfBase() + path, { headers: jfHeaders(token) });
-  if (!res.ok) throw new Error(`Jellyfin ${res.status} for ${path}`);
+  if (!res.ok) {
+    const snippet = (await res.text().catch(() => "")).slice(0, 200).replace(/\s+/g, " ");
+    const server = res.headers.get("server") ?? "";
+    throw new Error(`Jellyfin ${res.status} for ${path} [server=${server}] ${snippet}`);
+  }
   return res.json() as Promise<T>;
 }
 

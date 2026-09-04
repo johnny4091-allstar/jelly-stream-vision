@@ -1,10 +1,12 @@
 # Netflix-style streaming front-end for your Plex library
 
-A full browsing and watching experience built on top of your existing Plex Media Server.
+A full browsing and watching experience built on top of your existing Plex Media Server at your IP address.
 
 ## One important thing first
 
-If your Plex server address is plain `http://`, browsers refuse to load it inside a secure site. The app will route every request through its own backend, which reaches your server and passes images and video back safely. If your server is reachable over `https://` (e.g. a plex.direct address or your own domain), we can skip most of the proxying for better speed.
+Your Plex server is at an IP address rather than an HTTPS website. Browsers refuse to load plain `http://` content inside a secure site, so the app cannot talk to it directly. The app will route every request through its own backend, which reaches your server and passes images and video back safely. This works well, but it means video streams pass through the app rather than straight from your server.
+
+If you later put your Plex server behind an `https://` address, we can switch to direct connections for better speed.
 
 ## What gets built
 

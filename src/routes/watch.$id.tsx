@@ -113,9 +113,16 @@ function WatchPage() {
         AudioCodec: "aac",
         TranscodingMaxAudioChannels: "2",
         MaxAudioChannels: "2",
-        MaxStreamingBitrate: "120000000",
+        MaxStreamingBitrate: "200000000",
+        VideoBitrate: "180000000",
+        AudioBitrate: "384000",
+        MaxWidth: "3840",
+        MaxHeight: "2160",
+        h264_profile: "high",
+        h264_level: "51",
         SegmentContainer: "ts",
       });
+
       if (info.audioStreamIndex != null)
         params.set("AudioStreamIndex", String(info.audioStreamIndex));
       if (startTicks) params.set("StartTimeTicks", String(startTicks));

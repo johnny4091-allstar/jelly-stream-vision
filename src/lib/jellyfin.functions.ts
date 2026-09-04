@@ -136,13 +136,14 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
       `/Items/${data.itemId}/PlaybackInfo?UserId=${s.userId}&StartTimeTicks=${data.startTicks ?? 0}`,
       {
         DeviceProfile: {
-          MaxStreamingBitrate: 120_000_000,
+          MaxStreamingBitrate: 200_000_000,
+          MaxStaticBitrate: 200_000_000,
           DirectPlayProfiles: [
             {
               Type: "Video",
-              Container: "mp4,m4v",
-              VideoCodec: "h264",
-              AudioCodec: "aac,mp3",
+              Container: "mp4,m4v,mkv,webm",
+              VideoCodec: "h264,hevc,vp9,av1",
+              AudioCodec: "aac,mp3,opus,ac3,eac3,flac",
             },
           ],
           TranscodingProfiles: [
@@ -153,10 +154,12 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
               VideoCodec: "h264",
               AudioCodec: "aac",
               MaxAudioChannels: "2",
+              Context: "Streaming",
             },
           ],
           SubtitleProfiles: [],
         },
+
         AutoOpenLiveStream: true,
       },
       s.token,

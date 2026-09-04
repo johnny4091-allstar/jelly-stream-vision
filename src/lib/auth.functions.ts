@@ -5,17 +5,25 @@ import { jfBase } from "./jellyfin.server";
 import { getJfSessionConfig, readJfSession, type JfSession } from "./session.server";
 
 async function jellyfinLogin(username: string, password: string) {
-  const res = await fetch(jfBase() + "/Users/AuthenticateByName", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Emby-Authorization":
-        'MediaBrowser Client="Aurora", Device="Web", DeviceId="aurora-web", Version="1.0.0"',
-    },
-    body: JSON.stringify({ Username: username, Pw: password }),
-  });
-  if (!res.ok) return null;
-  return (await res.json()) as { AccessToken: string; User: { Id: string; Name: string } };
+  try {
+    const res = await fetch(jfBase() + "/Users/AuthenticateByName", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Emby-Authorization":
+          'MediaBrowser Client="Aurora", Device="Web", DeviceId="aurora-web", Version="1.0.0"',
+      },
+      body: JSON.stringify({ Username: username, Pw: password }),
+    });
+    if (!res.ok) {
+      console.error(`Jellyfin login rejected: HTTP ${res.status}`);
+      return null;
+    }
+    return (await res.json()) as { AccessToken: string; User: { Id: string; Name: string } };
+  } catch (err) {
+    console.error(`Jellyfin login failed: ${err instanceof Error ? err.message : String(err)}`);
+    return null;
+  }
 }
 
 export const loginFn = createServerFn({ method: "POST" })

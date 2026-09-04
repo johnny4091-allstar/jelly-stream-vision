@@ -1,10 +1,19 @@
 import { Link } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { Bookmark } from "lucide-react";
+import { useState } from "react";
 
+import { setFavoriteFn } from "@/lib/jellyfin.functions";
 import { itemImageUrl, posterOf, type JfItem } from "@/lib/jellyfin.types";
 
 export function MediaCard({ item }: { item: JfItem }) {
   const poster = posterOf(item);
   const pct = item.UserData?.PlayedPercentage ?? 0;
+  const [inWatchlist, setInWatchlist] = useState(item.UserData?.IsFavorite ?? false);
+  const [busy, setBusy] = useState(false);
+  const queryClient = useQueryClient();
+  const setFavorite = useServerFn(setFavoriteFn);
 
   return (
     <Link
@@ -24,6 +33,29 @@ export function MediaCard({ item }: { item: JfItem }) {
             <div className="h-full bg-primary" style={{ width: `${pct}%` }} />
           </div>
         )}
+        <button
+          type="button"
+          disabled={busy}
+          aria-pressed={inWatchlist}
+          aria-label={inWatchlist ? "Remove from watchlist" : "Add to watchlist"}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const next = !inWatchlist;
+            setInWatchlist(next);
+            setBusy(true);
+            void setFavorite({ data: { itemId: item.Id, favorite: next } })
+              .then(() => queryClient.invalidateQueries({ queryKey: ["watchlist"] }))
+              .finally(() => setBusy(false));
+          }}
+          className={`absolute right-1.5 top-1.5 rounded-full p-1.5 backdrop-blur-sm transition-opacity ${
+            inWatchlist
+              ? "bg-primary text-primary-foreground"
+              : "bg-background/60 text-foreground/90 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+          }`}
+        >
+          <Bookmark className={`h-3.5 w-3.5 ${inWatchlist ? "fill-current" : ""}`} />
+        </button>
       </div>
       <p className="mt-1.5 truncate text-xs font-medium text-foreground/90 sm:mt-2 sm:text-sm">
         {item.SeriesName ?? item.Name}

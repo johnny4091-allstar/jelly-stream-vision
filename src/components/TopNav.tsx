@@ -24,6 +24,15 @@ export function TopNav({ userName }: { userName: string }) {
           >
             <Search className="h-5 w-5" />
           </Link>
+          {session.data?.isAdmin && (
+            <Link
+              to="/admin"
+              aria-label="Manage people"
+              className="rounded-full p-2 text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
+            >
+              <Users className="h-5 w-5" />
+            </Link>
+          )}
           <div className="flex h-8 w-8 items-center justify-center rounded bg-primary text-sm font-bold text-primary-foreground">
             {userName.charAt(0).toUpperCase()}
           </div>

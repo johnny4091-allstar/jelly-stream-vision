@@ -28,13 +28,26 @@ export const listAccountsFn = createServerFn({ method: "GET" }).handler(async ()
   return await listAccounts();
 });
 
+async function findJfUserId(name: string): Promise<string | null> {
+  try {
+    const res = await fetch(jfBase() + "/Users", {
+      headers: { "X-Emby-Token": process.env["JELLYFIN_API_KEY"]! },
+    });
+    if (!res.ok) return null;
+    const users = (await res.json()) as { Id: string; Name: string }[];
+    return users.find((u) => u.Name.toLowerCase() === name.trim().toLowerCase())?.Id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export const createAccountFn = createServerFn({ method: "POST" })
   .inputValidator(
     (data: {
       username: string;
       password: string;
       jfUsername: string;
-      jfPassword: string;
+      jfPassword?: string;
       isAdmin: boolean;
     }) => data,
   )
@@ -43,12 +56,16 @@ export const createAccountFn = createServerFn({ method: "POST" })
     if (!data.username.trim() || data.password.length < 6) {
       return { ok: false as const, error: "Username is required and password must be 6+ characters." };
     }
-    if (!(await jellyfinCheck(data.jfUsername, data.jfPassword))) {
+    if (data.jfPassword && !(await jellyfinCheck(data.jfUsername, data.jfPassword))) {
       return { ok: false as const, error: "Those media-server details were rejected by the server." };
+    }
+    const jfUserId = await findJfUserId(data.jfUsername);
+    if (!jfUserId) {
+      return { ok: false as const, error: "No profile with that name exists on the media server." };
     }
     const { createAccount } = await import("./accounts.server");
     try {
-      await createAccount(data);
+      await createAccount({ ...data, jfUserId });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Could not create the account.";
       return {

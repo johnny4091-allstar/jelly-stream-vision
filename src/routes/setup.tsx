@@ -90,7 +90,9 @@ function SetupPage() {
             <input required value={form.jfUsername} onChange={set("jfUsername")} className={field} />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Media-server password</label>
+            <label className="text-sm font-medium text-foreground">
+              Media-server password (optional)
+            </label>
             <input
               type="password"
               value={form.jfPassword}

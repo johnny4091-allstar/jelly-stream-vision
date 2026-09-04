@@ -14,7 +14,12 @@ import {
 import { useEffect, useRef, useState } from "react";
 
 import { getSessionFn } from "@/lib/auth.functions";
-import { getItemFn, getPlaybackInfoFn, reportPlayingFn } from "@/lib/jellyfin.functions";
+import {
+  getItemFn,
+  getPlaybackInfoFn,
+  reportPlayingFn,
+  setPlayedFn,
+} from "@/lib/jellyfin.functions";
 import { episodeLabel } from "@/lib/jellyfin.types";
 
 const itemQuery = (id: string) =>
@@ -55,6 +60,8 @@ function WatchPage() {
   const { data: item } = useSuspenseQuery(itemQuery(id));
   const getPlaybackInfo = useServerFn(getPlaybackInfoFn);
   const reportPlaying = useServerFn(reportPlayingFn);
+  const setPlayed = useServerFn(setPlayedFn);
+  const markedPlayedRef = useRef(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -197,8 +204,55 @@ function WatchPage() {
         playsInline
         onClick={togglePlay}
         onPlay={() => setPlaying(true)}
-        onPause={() => setPlaying(false)}
-        onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)}
+        onPause={(e) => {
+          setPlaying(false);
+          void reportPlaying({
+            data: {
+              itemId: id,
+              playSessionId: playSessionRef.current,
+              positionTicks: Math.floor(e.currentTarget.currentTime * 10_000_000),
+              kind: "Progress",
+              isPaused: true,
+            },
+          });
+        }}
+        onSeeked={(e) => {
+          void reportPlaying({
+            data: {
+              itemId: id,
+              playSessionId: playSessionRef.current,
+              positionTicks: Math.floor(e.currentTarget.currentTime * 10_000_000),
+              kind: "Progress",
+              isPaused: e.currentTarget.paused,
+            },
+          });
+        }}
+        onEnded={(e) => {
+          void reportPlaying({
+            data: {
+              itemId: id,
+              playSessionId: playSessionRef.current,
+              positionTicks: Math.floor(e.currentTarget.currentTime * 10_000_000),
+              kind: "Stopped",
+            },
+          });
+          if (!markedPlayedRef.current) {
+            markedPlayedRef.current = true;
+            void setPlayed({ data: { itemId: id, played: true } });
+          }
+        }}
+        onTimeUpdate={(e) => {
+          const v = e.currentTarget;
+          setTime(v.currentTime);
+          if (
+            !markedPlayedRef.current &&
+            v.duration > 0 &&
+            v.currentTime / v.duration >= 0.95
+          ) {
+            markedPlayedRef.current = true;
+            void setPlayed({ data: { itemId: id, played: true } });
+          }
+        }}
         onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
         onVolumeChange={(e) => setMuted(e.currentTarget.muted)}
       />

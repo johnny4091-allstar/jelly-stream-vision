@@ -28,3 +28,14 @@ export async function jfPost<T = unknown>(
   const text = await res.text();
   return text ? (JSON.parse(text) as T) : null;
 }
+
+export async function jfDelete<T = unknown>(path: string, token?: string): Promise<T | null> {
+  const res = await fetch(jfBase() + path, {
+    method: "DELETE",
+    headers: { "X-Emby-Token": token ?? process.env['JELLYFIN_API_KEY']! },
+  });
+  if (!res.ok) throw new Error(`Jellyfin ${res.status} for ${path}`);
+  if (res.status === 204) return null;
+  const text = await res.text();
+  return text ? (JSON.parse(text) as T) : null;
+}

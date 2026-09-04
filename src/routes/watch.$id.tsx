@@ -226,7 +226,11 @@ function WatchPage() {
     const v = videoRef.current;
     if (!v) return;
     v.currentTime = Math.max(0, v.currentTime + delta);
-    setSeekFlash({ dir: delta < 0 ? -1 : 1, key: Date.now() });
+    const flash = { dir: (delta < 0 ? -1 : 1) as -1 | 1, key: Date.now() };
+    setSeekFlash(flash);
+    setTimeout(() => {
+      setSeekFlash((cur) => (cur?.key === flash.key ? null : cur));
+    }, 600);
     pokeControls();
   }
 
@@ -363,11 +367,11 @@ function WatchPage() {
       {seekFlash && (
         <div
           key={seekFlash.key}
-          className={`pointer-events-none absolute top-1/2 -translate-y-1/2 animate-ping-once ${
+          className={`pointer-events-none absolute top-1/2 -translate-y-1/2 ${
             seekFlash.dir < 0 ? "left-10" : "right-10"
           }`}
         >
-          <div className="flex flex-col items-center rounded-full bg-black/60 p-4 text-foreground">
+          <div className="flex animate-pulse flex-col items-center rounded-full bg-black/60 p-4 text-foreground">
             {seekFlash.dir < 0 ? (
               <RotateCcw className="h-8 w-8" />
             ) : (

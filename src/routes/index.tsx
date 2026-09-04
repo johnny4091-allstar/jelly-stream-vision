@@ -2,6 +2,7 @@ import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { Info, Play } from "lucide-react";
 
+import { MobilePosterRail } from "@/components/MobilePosterRail";
 import { Row } from "@/components/Row";
 import { TopNav } from "@/components/TopNav";
 import { getSessionFn } from "@/lib/auth.functions";
@@ -40,8 +41,17 @@ function HomePage() {
     <div className="min-h-screen bg-background pb-20">
       <TopNav userName={data.userName} />
 
+      {/* Mobile-only swipeable poster home screen */}
+      <MobilePosterRail
+        items={[hero, ...data.resume, ...data.rows.flatMap((r) => r.items)]
+          .filter((i): i is NonNullable<typeof i> => Boolean(i))
+          .filter((i, idx, arr) => arr.findIndex((x) => x.Id === i.Id) === idx)
+          .slice(0, 20)}
+      />
+
+      {/* Desktop hero */}
       {hero && (
-        <div className="relative h-[58vh] min-h-[340px] w-full overflow-hidden sm:h-[70vh] sm:min-h-[420px]">
+        <div className="relative hidden h-[70vh] min-h-[420px] w-full overflow-hidden sm:block">
           <img
             src={backdropUrl(hero)}
             alt={hero.Name}

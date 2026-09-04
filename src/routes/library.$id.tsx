@@ -1,11 +1,13 @@
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
-import { FilterBar, filterItems, useMediaFilter } from "@/components/FilterBar";
+import { buildPosterIndex, FilterBar, filterItems, useMediaFilter } from "@/components/FilterBar";
 import { MediaCard } from "@/components/MediaCard";
 import { TopNav } from "@/components/TopNav";
 import { getSessionFn } from "@/lib/auth.functions";
 import { getItemFn, getLibraryItemsFn } from "@/lib/jellyfin.functions";
+import { listPostersFn } from "@/lib/posters.functions";
+
 
 export const Route = createFileRoute("/library/$id")({
   beforeLoad: async () => {

@@ -141,7 +141,14 @@ function WatchPage() {
       if (cancelled) return;
 
       if (Hls.isSupported()) {
-        hls = new Hls({ enableWorker: true });
+        hls = new Hls({
+          enableWorker: true,
+          capLevelToPlayerSize: false,
+          startLevel: -1,
+          maxBufferLength: 60,
+          maxMaxBufferLength: 120,
+        });
+
         hls.on(Hls.Events.ERROR, (_e, data) => {
           if (data.fatal && video && !video.src.includes("/stream")) {
             video.src = directUrl;

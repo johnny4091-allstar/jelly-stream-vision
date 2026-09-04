@@ -139,6 +139,11 @@ function AdminPage() {
         <div className="space-y-3">
           <h2 className="text-lg font-bold text-foreground">People</h2>
           {accounts.isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
+          {accounts.isError && (
+            <p className="text-sm text-destructive">
+              People could not be loaded. Refresh the page and sign in again if needed.
+            </p>
+          )}
           {accounts.data?.map((a) => (
             <div
               key={a.id}

@@ -1,4 +1,4 @@
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 
@@ -24,8 +24,8 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
-  const navigate = useNavigate();
   const login = useServerFn(loginFn);
+  const getSession = useServerFn(getSessionFn);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +38,12 @@ function LoginPage() {
     try {
       const res = await login({ data: { username, password } });
       if (res.ok) {
-        window.location.assign("/");
+        const session = await getSession();
+        if (!session) {
+          setError("Sign-in could not be saved by this browser. Refresh the page and try again.");
+          return;
+        }
+        window.location.replace("/");
       } else {
         setError(res.error);
       }
@@ -55,7 +60,7 @@ function LoginPage() {
         <div className="text-center">
           <h1 className="text-3xl font-black tracking-tight text-primary">AURORA</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Sign in with your media server account
+            Sign in to your Aurora account
           </p>
         </div>
         <form onSubmit={onSubmit} className="space-y-4 rounded-lg bg-card p-6 shadow-xl">
@@ -81,6 +86,7 @@ function LoginPage() {
               id="password"
               type="password"
               autoComplete="current-password"
+              required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-ring/40"

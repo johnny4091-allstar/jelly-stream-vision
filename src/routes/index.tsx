@@ -1,18 +1,31 @@
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { Info, Play } from "lucide-react";
 
-import { FilterBar, filterItems, useMediaFilter } from "@/components/FilterBar";
+import { buildPosterIndex, FilterBar, filterItems, useMediaFilter } from "@/components/FilterBar";
 import { MobilePosterRail } from "@/components/MobilePosterRail";
 import { Row } from "@/components/Row";
 import { TopNav } from "@/components/TopNav";
 import { getSessionFn } from "@/lib/auth.functions";
 import { getHomeFn } from "@/lib/jellyfin.functions";
+import { listPostersFn, syncPostersFn } from "@/lib/posters.functions";
 import { backdropUrl, formatRuntime } from "@/lib/jellyfin.types";
 
 const homeQuery = queryOptions({
   queryKey: ["home"],
   queryFn: () => getHomeFn(),
+});
+
+const postersQuery = queryOptions({
+  queryKey: ["posters"],
+  queryFn: async () => {
+    let rows = await listPostersFn();
+    if (!rows.length) {
+      await syncPostersFn();
+      rows = await listPostersFn();
+    }
+    return rows;
+  },
 });
 
 export const Route = createFileRoute("/")({
@@ -36,25 +49,18 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   const { data } = useSuspenseQuery(homeQuery);
+  const { data: posters = [] } = useQuery(postersQuery);
   const hero = data.hero;
   const [filter, setFilter] = useMediaFilter();
-  const allItems = [
-    ...data.resume,
-    ...data.nextUp,
-    ...data.rows.flatMap((r) => r.items),
-  ];
+  const posterIndex = buildPosterIndex(posters);
 
   return (
     <div className="min-h-screen bg-background pb-20">
       <TopNav userName={data.userName} />
 
-      {/* Mobile-only swipeable poster home screen */}
-      <MobilePosterRail
-        items={[hero, ...data.resume, ...data.rows.flatMap((r) => r.items)]
-          .filter((i): i is NonNullable<typeof i> => Boolean(i))
-          .filter((i, idx, arr) => arr.findIndex((x) => x.Id === i.Id) === idx)
-          .slice(0, 20)}
-      />
+      {/* Mobile-only swipeable poster home screen, from the poster database */}
+      <MobilePosterRail posters={posters.slice(0, 20)} />
+
 
       {/* Desktop hero */}
       {hero && (

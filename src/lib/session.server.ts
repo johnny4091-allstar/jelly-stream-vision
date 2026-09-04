@@ -1,0 +1,17 @@
+import { useSession } from "@tanstack/react-start/server";
+
+export type JfSession = { token: string; userId: string; userName: string };
+
+export function getJfSessionConfig() {
+  return {
+    password: process.env['SESSION_SECRET']!,
+    name: "jf-session",
+    maxAge: 60 * 60 * 24 * 30,
+  };
+}
+
+export async function readJfSession(): Promise<JfSession | null> {
+  const session = await useSession<JfSession>(getJfSessionConfig());
+  const data = session.data as JfSession | undefined;
+  return data && data.token ? data : null;
+}

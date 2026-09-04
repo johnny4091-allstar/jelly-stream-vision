@@ -1,0 +1,170 @@
+import { createServerFn } from "@tanstack/react-start";
+
+import { jfGet, jfPost } from "./jellyfin.server";
+import { readJfSession } from "./session.server";
+import type { JfItem } from "./jellyfin.types";
+
+async function requireSession() {
+  const s = await readJfSession();
+  if (!s) throw new Error("Unauthorized");
+  return s;
+}
+
+export interface HomeData {
+  userName: string;
+  views: JfItem[];
+  resume: JfItem[];
+  nextUp: JfItem[];
+  rows: { title: string; viewId: string; items: JfItem[] }[];
+  hero: JfItem | null;
+}
+
+export const getHomeFn = createServerFn({ method: "GET" }).handler(async (): Promise<HomeData> => {
+  const s = await requireSession();
+  const t = s.token;
+  const viewsRes = await jfGet<{ Items: JfItem[] }>(`/Users/${s.userId}/Views`, t);
+  const views = (viewsRes.Items ?? []).filter(
+    (v) => v.CollectionType === "movies" || v.CollectionType === "tvshows",
+  );
+  const resumeRes = await jfGet<{ Items: JfItem[] }>(
+    `/Users/${s.userId}/Items/Resume?Limit=12&MediaTypes=Video&Fields=Overview`,
+    t,
+  );
+  const nextUpRes = await jfGet<{ Items: JfItem[] }>(
+    `/Shows/NextUp?UserId=${s.userId}&Limit=12&Fields=Overview`,
+    t,
+  );
+  const rows: HomeData["rows"] = [];
+  for (const view of views) {
+    const latest = await jfGet<JfItem[]>(
+      `/Users/${s.userId}/Items/Latest?Limit=16&ParentId=${view.Id}&Fields=Overview`,
+      t,
+    );
+    rows.push({ title: `Recently Added in ${view.Name}`, viewId: view.Id, items: latest ?? [] });
+  }
+  const hero =
+    resumeRes.Items?.find((i) => i.Type === "Movie") ??
+    rows.flatMap((r) => r.items).find((i) => i.Type === "Movie" || i.Type === "Series") ??
+    null;
+  return {
+    userName: s.userName,
+    views,
+    resume: resumeRes.Items ?? [],
+    nextUp: nextUpRes.Items ?? [],
+    rows,
+    hero,
+  };
+});
+
+export const getItemFn = createServerFn({ method: "GET" })
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    const s = await requireSession();
+    return await jfGet<JfItem>(
+      `/Users/${s.userId}/Items/${data.id}?Fields=Overview,People,Genres,MediaSources`,
+      s.token,
+    );
+  });
+
+export const getSeasonsFn = createServerFn({ method: "GET" })
+  .inputValidator((data: { seriesId: string }) => data)
+  .handler(async ({ data }) => {
+    const s = await requireSession();
+    const res = await jfGet<{ Items: JfItem[] }>(
+      `/Shows/${data.seriesId}/Seasons?UserId=${s.userId}&Fields=Overview`,
+      s.token,
+    );
+    return res.Items ?? [];
+  });
+
+export const getEpisodesFn = createServerFn({ method: "GET" })
+  .inputValidator((data: { seriesId: string; seasonId: string }) => data)
+  .handler(async ({ data }) => {
+    const s = await requireSession();
+    const res = await jfGet<{ Items: JfItem[] }>(
+      `/Shows/${data.seriesId}/Episodes?UserId=${s.userId}&SeasonId=${data.seasonId}&Fields=Overview`,
+      s.token,
+    );
+    return res.Items ?? [];
+  });
+
+export const getLibraryItemsFn = createServerFn({ method: "GET" })
+  .inputValidator((data: { viewId: string }) => data)
+  .handler(async ({ data }) => {
+    const s = await requireSession();
+    const res = await jfGet<{ Items: JfItem[] }>(
+      `/Users/${s.userId}/Items?ParentId=${data.viewId}&SortBy=SortName&SortOrder=Ascending&Fields=Overview&Limit=200&Recursive=true&IncludeItemTypes=Movie,Series`,
+      s.token,
+    );
+    return res.Items ?? [];
+  });
+
+export const searchFn = createServerFn({ method: "GET" })
+  .inputValidator((data: { term: string }) => data)
+  .handler(async ({ data }) => {
+    const s = await requireSession();
+    if (!data.term.trim()) return [] as JfItem[];
+    const res = await jfGet<{ Items: JfItem[] }>(
+      `/Users/${s.userId}/Items?searchTerm=${encodeURIComponent(data.term)}&IncludeItemTypes=Movie,Series,Episode&Recursive=true&Limit=30&Fields=Overview`,
+      s.token,
+    );
+    return res.Items ?? [];
+  });
+
+export const getPlaybackInfoFn = createServerFn({ method: "POST" })
+  .inputValidator((data: { itemId: string; startTicks?: number }) => data)
+  .handler(async ({ data }) => {
+    const s = await requireSession();
+    const res = await jfPost<{
+      PlaySessionId: string;
+      MediaSources: { Id: string }[];
+    }>(
+      `/Items/${data.itemId}/PlaybackInfo?UserId=${s.userId}&StartTimeTicks=${data.startTicks ?? 0}`,
+      {
+        DeviceProfile: {
+          MaxStreamingBitrate: 120_000_000,
+          DirectPlayProfiles: [
+            { Type: "Video", Container: "mp4,mkv,webm,m4v" },
+            { Type: "Audio" },
+          ],
+          TranscodingProfiles: [
+            {
+              Type: "Video",
+              Container: "ts",
+              Protocol: "hls",
+              VideoCodec: "h264",
+              AudioCodec: "aac,mp3,ac3",
+            },
+          ],
+          SubtitleProfiles: [],
+        },
+        AutoOpenLiveStream: true,
+      },
+      s.token,
+    );
+    return {
+      playSessionId: res?.PlaySessionId ?? "",
+      mediaSourceId: res?.MediaSources?.[0]?.Id ?? "",
+    };
+  });
+
+export const reportPlayingFn = createServerFn({ method: "POST" })
+  .inputValidator(
+    (data: { itemId: string; positionTicks: number; playSessionId: string; kind: "Started" | "Progress" | "Stopped"; isPaused?: boolean }) => data,
+  )
+  .handler(async ({ data }) => {
+    const s = await requireSession();
+    await jfPost(
+      `/Sessions/Playing/${data.kind}`,
+      {
+        ItemId: data.itemId,
+        PlaySessionId: data.playSessionId,
+        PositionTicks: Math.floor(data.positionTicks),
+        CanSeek: true,
+        IsPaused: data.isPaused ?? false,
+        PlayMethod: "Transcode",
+      },
+      s.token,
+    );
+    return { ok: true as const };
+  });

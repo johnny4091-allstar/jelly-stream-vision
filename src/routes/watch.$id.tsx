@@ -11,7 +11,7 @@ import {
   Volume2,
   VolumeX,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { getSessionFn } from "@/lib/auth.functions";
 import {
@@ -55,6 +55,8 @@ function formatTime(seconds: number) {
     : `${m}:${String(s).padStart(2, "0")}`;
 }
 
+const posKey = (id: string) => `aurora-pos-${id}`;
+
 function WatchPage() {
   const { id } = Route.useParams();
   const { data: item } = useSuspenseQuery(itemQuery(id));
@@ -71,10 +73,27 @@ function WatchPage() {
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [showControls, setShowControls] = useState(true);
+  const [seekFlash, setSeekFlash] = useState<{ dir: -1 | 1; key: number } | null>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const tapRef = useRef<{ count: number; x: number; timer: ReturnType<typeof setTimeout> | null }>({
+    count: 0,
+    x: 0,
+    timer: null,
+  });
+  const lastSavedSecond = useRef(-1);
+
+  const isTouch = useMemo(
+    () => typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches,
+    [],
+  );
 
   const title = item.SeriesName ? `${item.SeriesName} — ${episodeLabel(item)}` : item.Name;
-  const startTicks = item.UserData?.PlaybackPositionTicks ?? 0;
+  const savedSeconds =
+    typeof window !== "undefined" ? Number(localStorage.getItem(posKey(id)) ?? 0) : 0;
+  const startTicks = Math.max(
+    item.UserData?.PlaybackPositionTicks ?? 0,
+    Math.floor(savedSeconds * 10_000_000),
+  );
 
   // Attach stream (HLS via hls.js, direct stream fallback)
   useEffect(() => {
@@ -100,6 +119,12 @@ function WatchPage() {
       const directUrl = `/api/proxy/Videos/${id}/stream?static=true&mediaSourceId=${info.mediaSourceId}`;
 
       const video = videoRef.current;
+      // Restore remembered volume/mute
+      const vol = localStorage.getItem("aurora-volume");
+      const mut = localStorage.getItem("aurora-muted");
+      if (vol != null) video.volume = Math.min(1, Math.max(0, Number(vol)));
+      if (mut != null) video.muted = mut === "1";
+
       const { default: Hls } = await import("hls.js");
       if (cancelled) return;
 
@@ -168,6 +193,21 @@ function WatchPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, playing]);
 
+  // Unlock orientation when leaving fullscreen
+  useEffect(() => {
+    function onFsChange() {
+      if (!document.fullscreenElement) {
+        try {
+          screen.orientation?.unlock();
+        } catch {
+          /* not supported */
+        }
+      }
+    }
+    document.addEventListener("fullscreenchange", onFsChange);
+    return () => document.removeEventListener("fullscreenchange", onFsChange);
+  }, []);
+
   function pokeControls() {
     setShowControls(true);
     if (hideTimer.current) clearTimeout(hideTimer.current);
@@ -179,16 +219,66 @@ function WatchPage() {
     if (!v) return;
     if (v.paused) void v.play();
     else v.pause();
+    pokeControls();
   }
 
   function seekBy(delta: number) {
     const v = videoRef.current;
-    if (v) v.currentTime = Math.max(0, v.currentTime + delta);
+    if (!v) return;
+    v.currentTime = Math.max(0, v.currentTime + delta);
+    setSeekFlash({ dir: delta < 0 ? -1 : 1, key: Date.now() });
+    pokeControls();
   }
 
   function toggleFullscreen() {
     if (document.fullscreenElement) void document.exitFullscreen();
     else void containerRef.current?.requestFullscreen();
+    pokeControls();
+  }
+
+  // Fullscreen-first on touch devices: enter fullscreen + landscape when playback starts
+  function enterImmersiveMode() {
+    if (!isTouch || document.fullscreenElement) return;
+    void containerRef.current
+      ?.requestFullscreen()
+      .then(() => {
+        const orientation = screen.orientation as ScreenOrientation & {
+          lock?: (o: string) => Promise<void>;
+        };
+        void orientation.lock?.("landscape").catch(() => {});
+      })
+      .catch(() => {});
+  }
+
+  // Mobile tap handling: single tap = play/pause, double-tap sides = skip 10s
+  function handleTouchTap(e: React.TouchEvent<HTMLVideoElement>) {
+    e.preventDefault();
+    const x = e.changedTouches[0]?.clientX ?? window.innerWidth / 2;
+    const t = tapRef.current;
+    t.count += 1;
+    t.x = x;
+    if (t.timer) clearTimeout(t.timer);
+    if (t.count >= 2) {
+      const third = window.innerWidth / 3;
+      if (t.x < third) seekBy(-10);
+      else if (t.x > third * 2) seekBy(10);
+      else togglePlay();
+      t.count = 0;
+      t.timer = null;
+    } else {
+      t.timer = setTimeout(() => {
+        togglePlay();
+        t.count = 0;
+        t.timer = null;
+      }, 280);
+    }
+  }
+
+  function savePosition(seconds: number) {
+    const whole = Math.floor(seconds);
+    if (whole === lastSavedSecond.current) return;
+    lastSavedSecond.current = whole;
+    localStorage.setItem(posKey(id), String(seconds));
   }
 
   return (
@@ -196,16 +286,20 @@ function WatchPage() {
       ref={containerRef}
       className="relative flex h-screen w-full items-center justify-center bg-black"
       onMouseMove={pokeControls}
-      onTouchStart={pokeControls}
     >
       <video
         ref={videoRef}
-        className="h-full w-full"
+        className="h-full w-full touch-manipulation"
         playsInline
-        onClick={togglePlay}
-        onPlay={() => setPlaying(true)}
+        onClick={isTouch ? undefined : togglePlay}
+        onTouchEnd={isTouch ? handleTouchTap : undefined}
+        onPlay={() => {
+          setPlaying(true);
+          enterImmersiveMode();
+        }}
         onPause={(e) => {
           setPlaying(false);
+          savePosition(e.currentTarget.currentTime);
           void reportPlaying({
             data: {
               itemId: id,
@@ -217,6 +311,7 @@ function WatchPage() {
           });
         }}
         onSeeked={(e) => {
+          savePosition(e.currentTarget.currentTime);
           void reportPlaying({
             data: {
               itemId: id,
@@ -228,6 +323,7 @@ function WatchPage() {
           });
         }}
         onEnded={(e) => {
+          localStorage.removeItem(posKey(id));
           void reportPlaying({
             data: {
               itemId: id,
@@ -244,18 +340,43 @@ function WatchPage() {
         onTimeUpdate={(e) => {
           const v = e.currentTarget;
           setTime(v.currentTime);
+          if (Math.floor(v.currentTime) % 5 === 0) savePosition(v.currentTime);
           if (
             !markedPlayedRef.current &&
             v.duration > 0 &&
             v.currentTime / v.duration >= 0.95
           ) {
             markedPlayedRef.current = true;
+            localStorage.removeItem(posKey(id));
             void setPlayed({ data: { itemId: id, played: true } });
           }
         }}
         onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
-        onVolumeChange={(e) => setMuted(e.currentTarget.muted)}
+        onVolumeChange={(e) => {
+          setMuted(e.currentTarget.muted);
+          localStorage.setItem("aurora-muted", e.currentTarget.muted ? "1" : "0");
+          localStorage.setItem("aurora-volume", String(e.currentTarget.volume));
+        }}
       />
+
+      {/* Skip flash indicator */}
+      {seekFlash && (
+        <div
+          key={seekFlash.key}
+          className={`pointer-events-none absolute top-1/2 -translate-y-1/2 animate-ping-once ${
+            seekFlash.dir < 0 ? "left-10" : "right-10"
+          }`}
+        >
+          <div className="flex flex-col items-center rounded-full bg-black/60 p-4 text-foreground">
+            {seekFlash.dir < 0 ? (
+              <RotateCcw className="h-8 w-8" />
+            ) : (
+              <RotateCw className="h-8 w-8" />
+            )}
+            <span className="text-xs font-bold">10s</span>
+          </div>
+        </div>
+      )}
 
       <div
         className={`pointer-events-none absolute inset-0 flex flex-col justify-between transition-opacity duration-300 ${
@@ -277,6 +398,41 @@ function WatchPage() {
               <p className="text-sm text-muted-foreground">{item.Name}</p>
             )}
           </div>
+        </div>
+
+        {/* Big center controls (mobile-first) */}
+        <div
+          className={`pointer-events-auto flex items-center justify-center gap-10 sm:gap-16 ${
+            showControls ? "" : "pointer-events-none"
+          }`}
+        >
+          <button
+            onClick={() => seekBy(-10)}
+            aria-label="Back 10 seconds"
+            className="flex flex-col items-center gap-1 rounded-full p-3 text-foreground transition-transform active:scale-90"
+          >
+            <RotateCcw className="h-9 w-9 sm:h-10 sm:w-10" />
+            <span className="text-[10px] font-bold">10</span>
+          </button>
+          <button
+            onClick={togglePlay}
+            aria-label={playing ? "Pause" : "Play"}
+            className="rounded-full bg-foreground/15 p-5 text-foreground backdrop-blur-sm transition-transform active:scale-90 sm:p-6"
+          >
+            {playing ? (
+              <Pause className="h-10 w-10 fill-current sm:h-12 sm:w-12" />
+            ) : (
+              <Play className="h-10 w-10 fill-current sm:h-12 sm:w-12" />
+            )}
+          </button>
+          <button
+            onClick={() => seekBy(10)}
+            aria-label="Forward 10 seconds"
+            className="flex flex-col items-center gap-1 rounded-full p-3 text-foreground transition-transform active:scale-90"
+          >
+            <RotateCw className="h-9 w-9 sm:h-10 sm:w-10" />
+            <span className="text-[10px] font-bold">10</span>
+          </button>
         </div>
 
         <div className="pointer-events-auto space-y-3 bg-gradient-to-t from-black/80 to-transparent p-4 sm:p-6">
@@ -301,20 +457,6 @@ function WatchPage() {
                 className="rounded-full p-2 text-foreground transition-colors hover:bg-accent"
               >
                 {playing ? <Pause className="h-6 w-6 fill-current" /> : <Play className="h-6 w-6 fill-current" />}
-              </button>
-              <button
-                onClick={() => seekBy(-10)}
-                aria-label="Back 10 seconds"
-                className="rounded-full p-2 text-foreground transition-colors hover:bg-accent"
-              >
-                <RotateCcw className="h-5 w-5" />
-              </button>
-              <button
-                onClick={() => seekBy(10)}
-                aria-label="Forward 10 seconds"
-                className="rounded-full p-2 text-foreground transition-colors hover:bg-accent"
-              >
-                <RotateCw className="h-5 w-5" />
               </button>
               <button
                 onClick={() => {

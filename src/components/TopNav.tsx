@@ -1,10 +1,12 @@
+import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { LogOut, Play, Search } from "lucide-react";
+import { LogOut, Play, Search, Users } from "lucide-react";
 
-import { logoutFn } from "@/lib/auth.functions";
+import { getSessionFn, logoutFn } from "@/lib/auth.functions";
 
 export function TopNav({ userName }: { userName: string }) {
+  const session = useQuery({ queryKey: ["session"], queryFn: () => getSessionFn() });
   const navigate = useNavigate();
   const logout = useServerFn(logoutFn);
 

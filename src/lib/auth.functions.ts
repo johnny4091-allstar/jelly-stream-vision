@@ -1,8 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
-import { updateSession, clearSession } from "@tanstack/react-start/server";
+import { updateSession } from "@tanstack/react-start/server";
 
 import { jfBase } from "./jellyfin.server";
-import { getJfSessionConfig, readJfSession, type JfSession } from "./session.server";
+import {
+  clearJfSession,
+  getJfSessionConfig,
+  readJfSession,
+  type JfSession,
+} from "./session.server";
 
 async function jellyfinLogin(username: string, password: string) {
   try {
@@ -80,7 +85,7 @@ export const loginFn = createServerFn({ method: "POST" })
   });
 
 export const logoutFn = createServerFn({ method: "POST" }).handler(async () => {
-  await clearSession(getJfSessionConfig());
+  await clearJfSession();
   return { ok: true as const };
 });
 

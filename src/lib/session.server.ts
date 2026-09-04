@@ -28,3 +28,8 @@ export async function readJfSession(): Promise<JfSession | null> {
   const data = session.data as JfSession | undefined;
   return data && data.token ? data : null;
 }
+
+export async function clearJfSession(): Promise<void> {
+  const session = await useSession<JfSession>(getJfSessionConfig());
+  await session.clear();
+}

@@ -1,11 +1,13 @@
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
-import { FilterBar, filterItems, useMediaFilter } from "@/components/FilterBar";
+import { buildPosterIndex, FilterBar, filterItems, useMediaFilter } from "@/components/FilterBar";
 import { MediaCard } from "@/components/MediaCard";
 import { TopNav } from "@/components/TopNav";
 import { getSessionFn } from "@/lib/auth.functions";
 import { getItemFn, getLibraryItemsFn } from "@/lib/jellyfin.functions";
+import { listPostersFn } from "@/lib/posters.functions";
+
 
 export const Route = createFileRoute("/library/$id")({
   beforeLoad: async () => {
@@ -54,16 +56,20 @@ function LibraryPage() {
       queryFn: () => getItemFn({ data: { id } }),
     }),
   );
+  const { data: posters = [] } = useQuery(
+    queryOptions({ queryKey: ["posters"], queryFn: () => listPostersFn() }),
+  );
 
   const [filter, setFilter] = useMediaFilter();
-  const filtered = filterItems(items, filter);
+  const filtered = filterItems(items, filter, buildPosterIndex(posters));
 
   return (
     <div className="min-h-screen bg-background pb-20">
       <TopNav userName="" />
       <div className="space-y-6 px-4 pt-24 sm:px-8">
         <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">{view.Name}</h1>
-        <FilterBar items={items} value={filter} onChange={setFilter} />
+        <FilterBar posters={posters} value={filter} onChange={setFilter} />
+
         {filtered.length ? (
           <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 sm:gap-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7">
             {filtered.map((item) => (

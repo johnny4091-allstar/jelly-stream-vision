@@ -1,5 +1,4 @@
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-// eslint-disable-next-line no-duplicate-imports
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import {

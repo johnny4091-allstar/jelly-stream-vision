@@ -47,8 +47,9 @@ function LoginPage() {
       } else {
         setError(res.error);
       }
-    } catch {
-      setError("Could not reach the media server. Try again.");
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      setError(`Sign-in request failed: ${detail}`);
     } finally {
       setBusy(false);
     }

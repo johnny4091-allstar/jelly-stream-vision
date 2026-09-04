@@ -73,24 +73,46 @@ export async function setPassword(id: string, password: string) {
   if (error) throw new Error(error.message);
 }
 
-/** Returns the account plus its decrypted media-server credentials when the password matches. */
-export async function authenticateAccount(username: string, password: string) {
+export type AuthResult =
+  | {
+      ok: true;
+      account: {
+        id: string;
+        username: string;
+        isAdmin: boolean;
+        jfUsername: string;
+        jfUserId: string | null;
+        jfPassword: string | null;
+      };
+    }
+  | { ok: false; reason: "db_error" | "no_user" | "bad_password"; detail?: string };
+
+/** Authenticates against the Aurora account table, reporting why a failure happened. */
+export async function authenticateAccount(
+  username: string,
+  password: string,
+): Promise<AuthResult> {
   const db = await admin();
   const { data, error } = await db
     .from("app_users")
     .select("*")
     .ilike("username", username.trim())
     .maybeSingle();
-  if (error) throw new Error(error.message);
+  if (error) return { ok: false, reason: "db_error", detail: error.message };
   const row = data as AppUserRow | null;
-  if (!row) return null;
-  if (!(await verifyPassword(password, row.password_hash))) return null;
+  if (!row) return { ok: false, reason: "no_user" };
+  if (!(await verifyPassword(password, row.password_hash))) {
+    return { ok: false, reason: "bad_password" };
+  }
   return {
-    id: row.id,
-    username: row.username,
-    isAdmin: row.is_admin,
-    jfUsername: row.jf_username,
-    jfUserId: row.jf_user_id,
-    jfPassword: row.jf_password_enc ? await decryptSecret(row.jf_password_enc) : null,
+    ok: true,
+    account: {
+      id: row.id,
+      username: row.username,
+      isAdmin: row.is_admin,
+      jfUsername: row.jf_username,
+      jfUserId: row.jf_user_id,
+      jfPassword: row.jf_password_enc ? await decryptSecret(row.jf_password_enc) : null,
+    },
   };
 }

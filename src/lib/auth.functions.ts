@@ -44,10 +44,17 @@ export const loginFn = createServerFn({ method: "POST" })
   .inputValidator((data: { username: string; password: string }) => data)
   .handler(async ({ data }) => {
     const { authenticateAccount } = await import("./accounts.server");
-    const account = await authenticateAccount(data.username, data.password);
-    if (!account) {
-      return { ok: false as const, error: "Invalid username or password" };
+    const auth = await authenticateAccount(data.username, data.password);
+    if (!auth.ok) {
+      if (auth.reason === "no_user") {
+        return { ok: false as const, error: `No Aurora account named "${data.username.trim()}" exists. Check the spelling or ask the admin to create it.` };
+      }
+      if (auth.reason === "bad_password") {
+        return { ok: false as const, error: "That password doesn't match this Aurora account." };
+      }
+      return { ok: false as const, error: `The account database returned an error: ${auth.detail ?? "unknown"}. Try again in a moment.` };
     }
+    const account = auth.account;
     let token: string | null = null;
     let jfUserId: string | null = account.jfUserId;
     if (account.jfPassword) {
@@ -65,7 +72,7 @@ export const loginFn = createServerFn({ method: "POST" })
     if (!token || !jfUserId) {
       return {
         ok: false as const,
-        error: "Your media-server profile for this account could not be reached. Ask the admin to update it.",
+        error: `Signed in, but the media-server profile "${account.jfUsername}" could not be reached on the Jellyfin server. Ask the admin to update it.`,
       };
     }
     const session: JfSession = {

@@ -111,6 +111,16 @@ export const searchFn = createServerFn({ method: "GET" })
     return res.Items ?? [];
   });
 
+/** Watchlist = items favourited on the Jellyfin account ("My List"). */
+export const getWatchlistFn = createServerFn({ method: "GET" }).handler(async () => {
+  const s = await requireSession();
+  const res = await jfGet<{ Items: JfItem[] }>(
+    `/Users/${s.userId}/Items?Filters=IsFavorite&IncludeItemTypes=Movie,Series&Recursive=true&SortBy=DateCreated&SortOrder=Descending&Limit=200&Fields=Overview`,
+    s.token,
+  );
+  return res.Items ?? [];
+});
+
 export const getPlaybackInfoFn = createServerFn({ method: "POST" })
   .inputValidator((data: { itemId: string; startTicks?: number }) => data)
   .handler(async ({ data }) => {

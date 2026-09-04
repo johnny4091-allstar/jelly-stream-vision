@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { LogOut, Play, Search, Users } from "lucide-react";
+import { Bookmark, LogOut, Play, Search, Users } from "lucide-react";
 
 import { getSessionFn, logoutFn } from "@/lib/auth.functions";
 
@@ -17,6 +17,13 @@ export function TopNav({ userName }: { userName: string }) {
           AURORA
         </Link>
         <div className="flex items-center gap-1.5 sm:gap-3">
+          <Link
+            to="/watchlist"
+            aria-label="My watchlist"
+            className="rounded-full p-2 text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
+          >
+            <Bookmark className="h-5 w-5" />
+          </Link>
           <Link
             to="/search"
             aria-label="Search"

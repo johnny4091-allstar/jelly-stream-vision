@@ -15,6 +15,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ProfilesRouteImport } from './routes/profiles'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SetupRouteImport } from './routes/setup'
+import { Route as WatchlistRouteImport } from './routes/watchlist'
 import { Route as LibraryIdRouteImport } from './routes/library.$id'
 import { Route as TitleIdRouteImport } from './routes/title.$id'
 import { Route as WatchIdRouteImport } from './routes/watch.$id'
@@ -50,6 +51,11 @@ const SetupRoute = SetupRouteImport.update({
   path: '/setup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WatchlistRoute = WatchlistRouteImport.update({
+  id: '/watchlist',
+  path: '/watchlist',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LibraryIdRoute = LibraryIdRouteImport.update({
   id: '/library/$id',
   path: '/library/$id',
@@ -78,6 +84,7 @@ export interface FileRoutesByFullPath {
   '/profiles': typeof ProfilesRoute
   '/search': typeof SearchRoute
   '/setup': typeof SetupRoute
+  '/watchlist': typeof WatchlistRoute
   '/library/$id': typeof LibraryIdRoute
   '/title/$id': typeof TitleIdRoute
   '/watch/$id': typeof WatchIdRoute
@@ -90,6 +97,7 @@ export interface FileRoutesByTo {
   '/profiles': typeof ProfilesRoute
   '/search': typeof SearchRoute
   '/setup': typeof SetupRoute
+  '/watchlist': typeof WatchlistRoute
   '/library/$id': typeof LibraryIdRoute
   '/title/$id': typeof TitleIdRoute
   '/watch/$id': typeof WatchIdRoute
@@ -103,6 +111,7 @@ export interface FileRoutesById {
   '/profiles': typeof ProfilesRoute
   '/search': typeof SearchRoute
   '/setup': typeof SetupRoute
+  '/watchlist': typeof WatchlistRoute
   '/library/$id': typeof LibraryIdRoute
   '/title/$id': typeof TitleIdRoute
   '/watch/$id': typeof WatchIdRoute
@@ -117,6 +126,7 @@ export interface FileRouteTypes {
     | '/profiles'
     | '/search'
     | '/setup'
+    | '/watchlist'
     | '/library/$id'
     | '/title/$id'
     | '/watch/$id'
@@ -129,6 +139,7 @@ export interface FileRouteTypes {
     | '/profiles'
     | '/search'
     | '/setup'
+    | '/watchlist'
     | '/library/$id'
     | '/title/$id'
     | '/watch/$id'
@@ -141,6 +152,7 @@ export interface FileRouteTypes {
     | '/profiles'
     | '/search'
     | '/setup'
+    | '/watchlist'
     | '/library/$id'
     | '/title/$id'
     | '/watch/$id'
@@ -154,6 +166,7 @@ export interface RootRouteChildren {
   ProfilesRoute: typeof ProfilesRoute
   SearchRoute: typeof SearchRoute
   SetupRoute: typeof SetupRoute
+  WatchlistRoute: typeof WatchlistRoute
   LibraryIdRoute: typeof LibraryIdRoute
   TitleIdRoute: typeof TitleIdRoute
   WatchIdRoute: typeof WatchIdRoute
@@ -204,6 +217,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SetupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/watchlist': {
+      id: '/watchlist'
+      path: '/watchlist'
+      fullPath: '/watchlist'
+      preLoaderRoute: typeof WatchlistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/library/$id': {
       id: '/library/$id'
       path: '/library/$id'
@@ -242,6 +262,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfilesRoute: ProfilesRoute,
   SearchRoute: SearchRoute,
   SetupRoute: SetupRoute,
+  WatchlistRoute: WatchlistRoute,
   LibraryIdRoute: LibraryIdRoute,
   TitleIdRoute: TitleIdRoute,
   WatchIdRoute: WatchIdRoute,

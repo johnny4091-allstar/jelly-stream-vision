@@ -41,15 +41,15 @@ function HomePage() {
       <TopNav userName={data.userName} />
 
       {hero && (
-        <div className="relative h-[70vh] min-h-[420px] w-full overflow-hidden">
+        <div className="relative h-[58vh] min-h-[340px] w-full overflow-hidden sm:h-[70vh] sm:min-h-[420px]">
           <img
             src={backdropUrl(hero)}
             alt={hero.Name}
             className="h-full w-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-background/20" />
-          <div className="absolute inset-x-0 bottom-0 space-y-4 px-4 pb-16 sm:px-8">
-            <h1 className="max-w-2xl text-4xl font-black tracking-tight text-foreground drop-shadow-lg sm:text-6xl">
+          <div className="absolute inset-x-0 bottom-0 space-y-3 px-4 pb-12 sm:space-y-4 sm:px-8 sm:pb-16">
+            <h1 className="max-w-2xl text-3xl font-black tracking-tight text-foreground drop-shadow-lg sm:text-6xl">
               {hero.SeriesName ?? hero.Name}
             </h1>
             <div className="flex items-center gap-3 text-sm text-muted-foreground">
@@ -62,7 +62,7 @@ function HomePage() {
               {hero.RunTimeTicks ? <span>{formatRuntime(hero.RunTimeTicks)}</span> : null}
             </div>
             {hero.Overview && (
-              <p className="line-clamp-3 max-w-xl text-sm text-foreground/85 sm:text-base">
+              <p className="line-clamp-2 max-w-xl text-xs text-foreground/85 sm:line-clamp-3 sm:text-base">
                 {hero.Overview}
               </p>
             )}
@@ -70,14 +70,14 @@ function HomePage() {
               <Link
                 to="/watch/$id"
                 params={{ id: hero.Id }}
-                className="inline-flex items-center gap-2 rounded-md bg-foreground px-6 py-2.5 text-sm font-bold text-background transition-colors hover:bg-foreground/80"
+                className="inline-flex items-center gap-2 rounded-md bg-foreground px-5 py-2 text-xs font-bold text-background transition-colors hover:bg-foreground/80 sm:px-6 sm:py-2.5 sm:text-sm"
               >
                 <Play className="h-5 w-5 fill-current" /> Play
               </Link>
               <Link
                 to="/title/$id"
                 params={{ id: hero.Type === "Episode" && hero.SeriesId ? hero.SeriesId : hero.Id }}
-                className="inline-flex items-center gap-2 rounded-md bg-accent/80 px-6 py-2.5 text-sm font-bold text-accent-foreground transition-colors hover:bg-accent"
+                className="inline-flex items-center gap-2 rounded-md bg-accent/80 px-5 py-2 text-xs font-bold text-accent-foreground transition-colors hover:bg-accent sm:px-6 sm:py-2.5 sm:text-sm"
               >
                 <Info className="h-5 w-5" /> More Info
               </Link>

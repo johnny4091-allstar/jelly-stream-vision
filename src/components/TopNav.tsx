@@ -12,11 +12,11 @@ export function TopNav({ userName }: { userName: string }) {
 
   return (
     <header className="fixed inset-x-0 top-0 z-40 bg-gradient-to-b from-background via-background/80 to-transparent">
-      <div className="flex items-center justify-between px-4 py-4 sm:px-8">
-        <Link to="/" className="text-xl font-black tracking-tight text-primary sm:text-2xl">
+      <div className="flex items-center justify-between px-4 py-3 sm:px-8 sm:py-4">
+        <Link to="/" className="text-lg font-black tracking-tight text-primary sm:text-2xl">
           AURORA
         </Link>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3">
           <Link
             to="/search"
             aria-label="Search"

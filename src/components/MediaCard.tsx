@@ -10,7 +10,7 @@ export function MediaCard({ item }: { item: JfItem }) {
     <Link
       to="/title/$id"
       params={{ id: item.Type === "Episode" && item.SeriesId ? item.SeriesId : item.Id }}
-      className="group relative block w-40 shrink-0 snap-start sm:w-44"
+      className="group relative block w-28 shrink-0 snap-start sm:w-40 md:w-44"
     >
       <div className="relative aspect-[2/3] overflow-hidden rounded-md bg-muted transition-transform duration-300 group-hover:scale-105 group-hover:ring-2 group-hover:ring-primary/60">
         <img
@@ -25,7 +25,7 @@ export function MediaCard({ item }: { item: JfItem }) {
           </div>
         )}
       </div>
-      <p className="mt-2 truncate text-sm font-medium text-foreground/90">
+      <p className="mt-1.5 truncate text-xs font-medium text-foreground/90 sm:mt-2 sm:text-sm">
         {item.SeriesName ?? item.Name}
       </p>
       {item.Type === "Episode" && (

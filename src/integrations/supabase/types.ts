@@ -19,7 +19,8 @@ export type Database = {
           created_at: string
           id: string
           is_admin: boolean
-          jf_password_enc: string
+          jf_password_enc: string | null
+          jf_user_id: string | null
           jf_username: string
           password_hash: string
           username: string
@@ -28,7 +29,8 @@ export type Database = {
           created_at?: string
           id?: string
           is_admin?: boolean
-          jf_password_enc: string
+          jf_password_enc?: string | null
+          jf_user_id?: string | null
           jf_username: string
           password_hash: string
           username: string
@@ -37,7 +39,8 @@ export type Database = {
           created_at?: string
           id?: string
           is_admin?: boolean
-          jf_password_enc?: string
+          jf_password_enc?: string | null
+          jf_user_id?: string | null
           jf_username?: string
           password_hash?: string
           username?: string

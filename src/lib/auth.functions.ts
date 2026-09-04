@@ -96,22 +96,28 @@ export const needsSetupFn = createServerFn({ method: "GET" }).handler(async () =
 
 export const createFirstAdminFn = createServerFn({ method: "POST" })
   .inputValidator(
-    (data: { username: string; password: string; jfUsername: string; jfPassword: string }) => data,
+    (data: { username: string; password: string; jfUsername: string; jfPassword?: string }) => data,
   )
   .handler(async ({ data }) => {
     const { countAccounts, createAccount } = await import("./accounts.server");
     if ((await countAccounts()) > 0) {
       return { ok: false as const, error: "Setup has already been completed." };
     }
-    const jf = await jellyfinLogin(data.jfUsername, data.jfPassword);
-    if (!jf) {
-      return { ok: false as const, error: "Those media-server details were rejected by the server." };
+    let jfUserId: string | null = null;
+    if (data.jfPassword) {
+      const jf = await jellyfinLogin(data.jfUsername, data.jfPassword);
+      if (jf) jfUserId = jf.User.Id;
+    }
+    if (!jfUserId) jfUserId = await findJfUserId(data.jfUsername);
+    if (!jfUserId) {
+      return { ok: false as const, error: "No profile with that name exists on the media server." };
     }
     await createAccount({
       username: data.username,
       password: data.password,
       jfUsername: data.jfUsername,
-      jfPassword: data.jfPassword,
+      ...(data.jfPassword ? { jfPassword: data.jfPassword } : {}),
+      jfUserId,
       isAdmin: true,
     });
     return { ok: true as const };

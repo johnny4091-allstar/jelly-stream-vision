@@ -23,7 +23,7 @@ export function MobilePosterRail({ items }: { items: JfItem[] }) {
               className="group relative w-[68vw] max-w-[300px] shrink-0 snap-center overflow-hidden rounded-2xl border border-border/60 bg-card shadow-lg"
             >
               <img
-                src={posterUrl(item)}
+                src={itemImageUrl(posterOf(item).id, posterOf(item).type, 600)}
                 alt={title}
                 loading="lazy"
                 className="aspect-[2/3] w-full object-cover"

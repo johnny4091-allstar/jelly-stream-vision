@@ -1,5 +1,11 @@
 export function jfBase() {
-  return (process.env['JELLYFIN_SERVER_URL'] ?? "").replace(/\/$/, "");
+  const raw = (process.env['JELLYFIN_SERVER_URL'] ?? "").replace(/\/$/, "");
+  // Cloudflare Workers refuse outbound fetches to bare IP addresses (error 1003),
+  // so map the IP to an equivalent hostname that resolves to it.
+  return raw.replace(
+    /^(https?:\/\/)(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})(?=[:/]|$)/,
+    (_m, proto, a, b, c, d) => `${proto}${a}-${b}-${c}-${d}.nip.io`,
+  );
 }
 
 function jfHeaders(token?: string): Record<string, string> {

@@ -47,6 +47,48 @@ export type Database = {
         }
         Relationships: []
       }
+      posters: {
+        Row: {
+          cover_url: string | null
+          created_at: string
+          genres: string[]
+          id: string
+          item_type: string
+          jf_item_id: string
+          rating: string | null
+          sort_order: number
+          title: string
+          updated_at: string
+          year: number | null
+        }
+        Insert: {
+          cover_url?: string | null
+          created_at?: string
+          genres?: string[]
+          id?: string
+          item_type?: string
+          jf_item_id: string
+          rating?: string | null
+          sort_order?: number
+          title: string
+          updated_at?: string
+          year?: number | null
+        }
+        Update: {
+          cover_url?: string | null
+          created_at?: string
+          genres?: string[]
+          id?: string
+          item_type?: string
+          jf_item_id?: string
+          rating?: string | null
+          sort_order?: number
+          title?: string
+          updated_at?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

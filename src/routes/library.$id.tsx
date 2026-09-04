@@ -1,6 +1,7 @@
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
+import { FilterBar, filterItems, useMediaFilter } from "@/components/FilterBar";
 import { MediaCard } from "@/components/MediaCard";
 import { TopNav } from "@/components/TopNav";
 import { getSessionFn } from "@/lib/auth.functions";
@@ -54,16 +55,26 @@ function LibraryPage() {
     }),
   );
 
+  const [filter, setFilter] = useMediaFilter();
+  const filtered = filterItems(items, filter);
+
   return (
     <div className="min-h-screen bg-background pb-20">
       <TopNav userName="" />
-      <div className="space-y-8 px-4 pt-24 sm:px-8">
-        <h1 className="text-3xl font-black tracking-tight text-foreground">{view.Name}</h1>
-        <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7">
-          {items.map((item) => (
-            <MediaCard key={item.Id} item={item} />
-          ))}
-        </div>
+      <div className="space-y-6 px-4 pt-24 sm:px-8">
+        <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">{view.Name}</h1>
+        <FilterBar items={items} value={filter} onChange={setFilter} />
+        {filtered.length ? (
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 sm:gap-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7">
+            {filtered.map((item) => (
+              <MediaCard key={item.Id} item={item} />
+            ))}
+          </div>
+        ) : (
+          <p className="py-16 text-center text-sm text-muted-foreground">
+            Nothing matches those filters.
+          </p>
+        )}
       </div>
     </div>
   );

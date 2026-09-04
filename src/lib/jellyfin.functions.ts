@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 
-import { jfGet, jfPost } from "./jellyfin.server";
+import { jfDelete, jfGet, jfPost } from "./jellyfin.server";
 import { readJfSession } from "./session.server";
 import type { JfItem } from "./jellyfin.types";
 
@@ -167,4 +167,37 @@ export const reportPlayingFn = createServerFn({ method: "POST" })
       s.token,
     );
     return { ok: true as const };
+  });
+
+/** Toggle favourite ("My List" / heart) on the Jellyfin account itself. */
+export const setFavoriteFn = createServerFn({ method: "POST" })
+  .inputValidator((data: { itemId: string; favorite: boolean }) => data)
+  .handler(async ({ data }) => {
+    const s = await requireSession();
+    const path = `/Users/${s.userId}/FavoriteItems/${data.itemId}`;
+    if (data.favorite) await jfPost(path, null, s.token);
+    else await jfDelete(path, s.token);
+    return { ok: true as const, favorite: data.favorite };
+  });
+
+/** Thumbs up / down / clear, stored as the Jellyfin user rating. */
+export const setRatingFn = createServerFn({ method: "POST" })
+  .inputValidator((data: { itemId: string; likes: boolean | null }) => data)
+  .handler(async ({ data }) => {
+    const s = await requireSession();
+    const base = `/Users/${s.userId}/Items/${data.itemId}/Rating`;
+    if (data.likes === null) await jfDelete(base, s.token);
+    else await jfPost(`${base}?Likes=${data.likes}`, null, s.token);
+    return { ok: true as const, likes: data.likes };
+  });
+
+/** Mark watched / unwatched on the Jellyfin account. */
+export const setPlayedFn = createServerFn({ method: "POST" })
+  .inputValidator((data: { itemId: string; played: boolean }) => data)
+  .handler(async ({ data }) => {
+    const s = await requireSession();
+    const path = `/Users/${s.userId}/PlayedItems/${data.itemId}`;
+    if (data.played) await jfPost(path, null, s.token);
+    else await jfDelete(path, s.token);
+    return { ok: true as const, played: data.played };
   });

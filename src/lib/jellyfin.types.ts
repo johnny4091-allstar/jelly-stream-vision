@@ -2,6 +2,8 @@ export interface JfUserData {
   PlayedPercentage?: number;
   PlaybackPositionTicks?: number;
   Played?: boolean;
+  IsFavorite?: boolean;
+  Likes?: boolean;
   UnplayedItemCount?: number;
 }
 

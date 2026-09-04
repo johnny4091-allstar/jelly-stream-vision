@@ -54,16 +54,20 @@ function LibraryPage() {
       queryFn: () => getItemFn({ data: { id } }),
     }),
   );
+  const { data: posters = [] } = useQuery(
+    queryOptions({ queryKey: ["posters"], queryFn: () => listPostersFn() }),
+  );
 
   const [filter, setFilter] = useMediaFilter();
-  const filtered = filterItems(items, filter);
+  const filtered = filterItems(items, filter, buildPosterIndex(posters));
 
   return (
     <div className="min-h-screen bg-background pb-20">
       <TopNav userName="" />
       <div className="space-y-6 px-4 pt-24 sm:px-8">
         <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">{view.Name}</h1>
-        <FilterBar items={items} value={filter} onChange={setFilter} />
+        <FilterBar posters={posters} value={filter} onChange={setFilter} />
+
         {filtered.length ? (
           <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 sm:gap-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7">
             {filtered.map((item) => (

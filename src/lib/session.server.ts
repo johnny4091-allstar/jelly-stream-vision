@@ -1,6 +1,12 @@
 import { useSession } from "@tanstack/react-start/server";
 
-export type JfSession = { token: string; userId: string; userName: string };
+export type JfSession = {
+  token: string;
+  userId: string;
+  userName: string;
+  accountId?: string;
+  isAdmin?: boolean;
+};
 
 export function getJfSessionConfig() {
   return {

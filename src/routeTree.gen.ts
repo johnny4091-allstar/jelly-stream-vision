@@ -10,9 +10,11 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ProfilesRouteImport } from './routes/profiles'
 import { Route as SearchRouteImport } from './routes/search'
+import { Route as SetupRouteImport } from './routes/setup'
 import { Route as LibraryIdRouteImport } from './routes/library.$id'
 import { Route as TitleIdRouteImport } from './routes/title.$id'
 import { Route as WatchIdRouteImport } from './routes/watch.$id'
@@ -21,6 +23,11 @@ import { Route as ApiProxySplatRouteImport } from './routes/api/proxy/$'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -36,6 +43,11 @@ const ProfilesRoute = ProfilesRouteImport.update({
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
   path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SetupRoute = SetupRouteImport.update({
+  id: '/setup',
+  path: '/setup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LibraryIdRoute = LibraryIdRouteImport.update({
@@ -61,9 +73,11 @@ const ApiProxySplatRoute = ApiProxySplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/login': typeof LoginRoute
   '/profiles': typeof ProfilesRoute
   '/search': typeof SearchRoute
+  '/setup': typeof SetupRoute
   '/library/$id': typeof LibraryIdRoute
   '/title/$id': typeof TitleIdRoute
   '/watch/$id': typeof WatchIdRoute
@@ -71,9 +85,11 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/login': typeof LoginRoute
   '/profiles': typeof ProfilesRoute
   '/search': typeof SearchRoute
+  '/setup': typeof SetupRoute
   '/library/$id': typeof LibraryIdRoute
   '/title/$id': typeof TitleIdRoute
   '/watch/$id': typeof WatchIdRoute
@@ -82,9 +98,11 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/login': typeof LoginRoute
   '/profiles': typeof ProfilesRoute
   '/search': typeof SearchRoute
+  '/setup': typeof SetupRoute
   '/library/$id': typeof LibraryIdRoute
   '/title/$id': typeof TitleIdRoute
   '/watch/$id': typeof WatchIdRoute
@@ -94,9 +112,11 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/login'
     | '/profiles'
     | '/search'
+    | '/setup'
     | '/library/$id'
     | '/title/$id'
     | '/watch/$id'
@@ -104,9 +124,11 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/login'
     | '/profiles'
     | '/search'
+    | '/setup'
     | '/library/$id'
     | '/title/$id'
     | '/watch/$id'
@@ -114,9 +136,11 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/login'
     | '/profiles'
     | '/search'
+    | '/setup'
     | '/library/$id'
     | '/title/$id'
     | '/watch/$id'
@@ -125,9 +149,11 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   LoginRoute: typeof LoginRoute
   ProfilesRoute: typeof ProfilesRoute
   SearchRoute: typeof SearchRoute
+  SetupRoute: typeof SetupRoute
   LibraryIdRoute: typeof LibraryIdRoute
   TitleIdRoute: typeof TitleIdRoute
   WatchIdRoute: typeof WatchIdRoute
@@ -141,6 +167,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -162,6 +195,13 @@ declare module '@tanstack/react-router' {
       path: '/search'
       fullPath: '/search'
       preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/setup': {
+      id: '/setup'
+      path: '/setup'
+      fullPath: '/setup'
+      preLoaderRoute: typeof SetupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/library/$id': {
@@ -197,9 +237,11 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   LoginRoute: LoginRoute,
   ProfilesRoute: ProfilesRoute,
   SearchRoute: SearchRoute,
+  SetupRoute: SetupRoute,
   LibraryIdRoute: LibraryIdRoute,
   TitleIdRoute: TitleIdRoute,
   WatchIdRoute: WatchIdRoute,

@@ -70,6 +70,6 @@ export async function decryptSecret(stored: string): Promise<string> {
   const buf = unb64(stored);
   const iv = buf.subarray(0, 12);
   const ct = buf.subarray(12);
-  const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: bs(iv) }, key, ct);
+  const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: bs(iv) }, key, bs(ct));
   return dec.decode(pt);
 }

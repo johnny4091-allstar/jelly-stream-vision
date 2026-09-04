@@ -11,7 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ProfilesRouteImport } from './routes/profiles'
+import { Route as SearchRouteImport } from './routes/search'
+import { Route as LibraryIdRouteImport } from './routes/library.$id'
 import { Route as TitleIdRouteImport } from './routes/title.$id'
+import { Route as WatchIdRouteImport } from './routes/watch.$id'
 import { Route as ApiProxySplatRouteImport } from './routes/api/proxy/$'
 
 const IndexRoute = IndexRouteImport.update({
@@ -24,9 +28,29 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfilesRoute = ProfilesRouteImport.update({
+  id: '/profiles',
+  path: '/profiles',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LibraryIdRoute = LibraryIdRouteImport.update({
+  id: '/library/$id',
+  path: '/library/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TitleIdRoute = TitleIdRouteImport.update({
   id: '/title/$id',
   path: '/title/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WatchIdRoute = WatchIdRouteImport.update({
+  id: '/watch/$id',
+  path: '/watch/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiProxySplatRoute = ApiProxySplatRouteImport.update({
@@ -38,34 +62,75 @@ const ApiProxySplatRoute = ApiProxySplatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/profiles': typeof ProfilesRoute
+  '/search': typeof SearchRoute
+  '/library/$id': typeof LibraryIdRoute
   '/title/$id': typeof TitleIdRoute
+  '/watch/$id': typeof WatchIdRoute
   '/api/proxy/$': typeof ApiProxySplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/profiles': typeof ProfilesRoute
+  '/search': typeof SearchRoute
+  '/library/$id': typeof LibraryIdRoute
   '/title/$id': typeof TitleIdRoute
+  '/watch/$id': typeof WatchIdRoute
   '/api/proxy/$': typeof ApiProxySplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/profiles': typeof ProfilesRoute
+  '/search': typeof SearchRoute
+  '/library/$id': typeof LibraryIdRoute
   '/title/$id': typeof TitleIdRoute
+  '/watch/$id': typeof WatchIdRoute
   '/api/proxy/$': typeof ApiProxySplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/title/$id' | '/api/proxy/$'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/profiles'
+    | '/search'
+    | '/library/$id'
+    | '/title/$id'
+    | '/watch/$id'
+    | '/api/proxy/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/title/$id' | '/api/proxy/$'
-  id: '__root__' | '/' | '/login' | '/title/$id' | '/api/proxy/$'
+  to:
+    | '/'
+    | '/login'
+    | '/profiles'
+    | '/search'
+    | '/library/$id'
+    | '/title/$id'
+    | '/watch/$id'
+    | '/api/proxy/$'
+  id:
+    | '__root__'
+    | '/'
+    | '/login'
+    | '/profiles'
+    | '/search'
+    | '/library/$id'
+    | '/title/$id'
+    | '/watch/$id'
+    | '/api/proxy/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
+  ProfilesRoute: typeof ProfilesRoute
+  SearchRoute: typeof SearchRoute
+  LibraryIdRoute: typeof LibraryIdRoute
   TitleIdRoute: typeof TitleIdRoute
+  WatchIdRoute: typeof WatchIdRoute
   ApiProxySplatRoute: typeof ApiProxySplatRoute
 }
 
@@ -85,11 +150,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profiles': {
+      id: '/profiles'
+      path: '/profiles'
+      fullPath: '/profiles'
+      preLoaderRoute: typeof ProfilesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/library/$id': {
+      id: '/library/$id'
+      path: '/library/$id'
+      fullPath: '/library/$id'
+      preLoaderRoute: typeof LibraryIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/title/$id': {
       id: '/title/$id'
       path: '/title/$id'
       fullPath: '/title/$id'
       preLoaderRoute: typeof TitleIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/watch/$id': {
+      id: '/watch/$id'
+      path: '/watch/$id'
+      fullPath: '/watch/$id'
+      preLoaderRoute: typeof WatchIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/proxy/$': {
@@ -105,7 +198,11 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
+  ProfilesRoute: ProfilesRoute,
+  SearchRoute: SearchRoute,
+  LibraryIdRoute: LibraryIdRoute,
   TitleIdRoute: TitleIdRoute,
+  WatchIdRoute: WatchIdRoute,
   ApiProxySplatRoute: ApiProxySplatRoute,
 }
 export const routeTree = rootRouteImport

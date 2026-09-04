@@ -1,21 +1,21 @@
-# Netflix-style streaming front-end for your Jellyfin library
+# Netflix-style streaming front-end for your Plex library
 
-A full browsing and watching experience built on top of your existing Jellyfin server at `http://76.8.230.133:8096`.
+A full browsing and watching experience built on top of your existing Plex Media Server.
 
 ## One important thing first
 
-Your server address is plain `http://`, not `https://`. Browsers refuse to load `http://` content inside a secure site, so the app cannot talk to it directly from the browser. The app will instead route every request through its own backend, which can reach your server and pass images and video back safely. This works, but it means video streams pass through the app rather than straight from your server. If you later put your server behind an `https://` address, we can switch to direct connections for better speed.
+If your Plex server address is plain `http://`, browsers refuse to load it inside a secure site. The app will route every request through its own backend, which reaches your server and passes images and video back safely. If your server is reachable over `https://` (e.g. a plex.direct address or your own domain), we can skip most of the proxying for better speed.
 
 ## What gets built
 
 **Sign in**
-- Login screen asking for Jellyfin username and password, checked against your server.
+- Login screen; authentication against Plex (either your Plex account or a server token).
 - Session kept in an encrypted cookie so people stay signed in.
 - Everything else in the app requires sign-in.
 
 **Home**
-- Full-bleed hero for a featured title with backdrop art, logo, description, Play and More Info.
-- Horizontal rows: Continue Watching, Recently Added, Movies, Shows, and one row per library/genre.
+- Full-bleed hero for a featured title with backdrop art, description, Play and More Info.
+- Horizontal rows: On Deck / Continue Watching, Recently Added, Movies, Shows, and one row per library.
 - Cards enlarge on hover with quick actions, like Netflix, but with our own accent color rather than Netflix red.
 
 **Title pages**
@@ -24,13 +24,13 @@ Your server address is plain `http://`, not `https://`. Browsers refuse to load 
 
 **Player**
 - Full-screen video player with play/pause, seek, volume, subtitles and audio track selection, fullscreen, and skip forward/back.
-- Watch progress reported back to Jellyfin so Continue Watching stays accurate across your devices.
+- Watch progress reported back to Plex so On Deck stays accurate across your devices.
 
 **Search**
 - Instant search across movies, shows and episodes with poster results.
 
 **Profiles**
-- Jellyfin user switcher on a profile-select screen after login, styled like Netflix's "Who's watching?".
+- Optional profile-select screen if multiple Plex home users exist, styled like Netflix's "Who's watching?".
 
 ## Look and feel
 
@@ -38,13 +38,13 @@ Netflix-inspired, not a copy: near-black background, layered dark surfaces, tigh
 
 ## Technical notes
 
-- Jellyfin calls go through TanStack Start server functions and a small set of server routes; the client never contacts the Jellyfin host directly (mixed content + CORS).
-- Auth via Jellyfin `/Users/AuthenticateByName`; the returned access token is stored in an encrypted session cookie, never exposed to the browser.
-- Server routes proxy `/Items/{id}/Images/*` and video (`/Videos/{id}/stream`, plus HLS segments) with range-request passthrough so seeking works.
-- Playback uses direct-play/remux via HLS where the browser supports it; `hls.js` loaded client-side only.
-- Your Jellyfin API key will be stored securely as a secret (`JELLYFIN_API_KEY`) along with the server URL (`JELLYFIN_SERVER_URL`); user sign-in still goes through Jellyfin auth.
-- Routes: `/` (home), `/login`, `/profiles`, `/title/$id`, `/watch/$id`, `/search`, `/library/$id`.
+- Plex calls go through TanStack Start server functions and server routes; the client never contacts the Plex host directly.
+- Auth uses your Plex token (`X-Plex-Token`), stored securely as a secret (`PLEX_TOKEN`) along with the server URL (`PLEX_SERVER_URL`). I'll collect both via a secure form once you approve.
+- Server routes proxy artwork (`/library/metadata/:key/thumb/...`) and video streams (direct stream and HLS transcode endpoints) with range-request passthrough so seeking works.
+- Playback uses Plex's HLS/universal transcode where direct play isn't supported; `hls.js` loaded client-side only.
+- Routes: `/` (home), `/login`, `/title/$id`, `/watch/$id`, `/search`, `/library/$id`.
 
 ## Open items
 
-- Playback of some codecs (HEVC, certain audio) may require Jellyfin transcoding; if your server has no hardware transcoding, those titles could be slow. We'll see once it's running.
+- Need from you: your Plex server URL and a Plex token (I can walk you through finding it — it takes about a minute).
+- Some codecs may need Plex transcoding; if your server has no hardware transcoding, those titles could be slow.

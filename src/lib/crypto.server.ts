@@ -1,4 +1,5 @@
 const enc = new TextEncoder();
+const bs = (u: Uint8Array): BufferSource => u as unknown as BufferSource;
 const dec = new TextDecoder();
 
 function b64(buf: ArrayBuffer | Uint8Array): string {
@@ -57,7 +58,7 @@ async function aesKey(): Promise<CryptoKey> {
 export async function encryptSecret(plaintext: string): Promise<string> {
   const key = await aesKey();
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, enc.encode(plaintext));
+  const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv: bs(iv) }, key, enc.encode(plaintext));
   const out = new Uint8Array(iv.length + ct.byteLength);
   out.set(iv, 0);
   out.set(new Uint8Array(ct), iv.length);
@@ -69,6 +70,6 @@ export async function decryptSecret(stored: string): Promise<string> {
   const buf = unb64(stored);
   const iv = buf.subarray(0, 12);
   const ct = buf.subarray(12);
-  const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ct);
+  const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: bs(iv) }, key, ct);
   return dec.decode(pt);
 }

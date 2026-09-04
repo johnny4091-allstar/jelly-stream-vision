@@ -111,13 +111,14 @@ function HomePage() {
 
       <div className="relative z-10 -mt-10 space-y-10">
         <div className="px-4 sm:px-8">
-          <FilterBar items={allItems} value={filter} onChange={setFilter} />
+          <FilterBar posters={posters} value={filter} onChange={setFilter} />
         </div>
-        <Row title="Continue Watching" items={filterItems(data.resume, filter)} />
-        <Row title="Next Up" items={filterItems(data.nextUp, filter)} />
+        <Row title="Continue Watching" items={filterItems(data.resume, filter, posterIndex)} />
+        <Row title="Next Up" items={filterItems(data.nextUp, filter, posterIndex)} />
         {data.rows.map((row) => (
           <div key={row.viewId}>
-            <Row title={row.title} items={filterItems(row.items, filter)} />
+            <Row title={row.title} items={filterItems(row.items, filter, posterIndex)} />
+
             <div className="px-4 sm:px-8">
               <Link
                 to="/library/$id"

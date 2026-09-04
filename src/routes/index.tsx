@@ -2,6 +2,7 @@ import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { Info, Play } from "lucide-react";
 
+import { FilterBar, filterItems, useMediaFilter } from "@/components/FilterBar";
 import { MobilePosterRail } from "@/components/MobilePosterRail";
 import { Row } from "@/components/Row";
 import { TopNav } from "@/components/TopNav";

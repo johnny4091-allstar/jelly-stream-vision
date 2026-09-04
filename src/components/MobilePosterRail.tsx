@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Play } from "lucide-react";
 
 import type { JfItem } from "@/lib/jellyfin.types";
-import { posterUrl } from "@/lib/jellyfin.types";
+import { itemImageUrl, posterOf } from "@/lib/jellyfin.types";
 
 /**
  * Mobile-only home screen: a full-width, swipeable rail of large posters.

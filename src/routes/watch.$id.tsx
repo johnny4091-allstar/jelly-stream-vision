@@ -110,11 +110,16 @@ function WatchPage() {
         PlaySessionId: info.playSessionId,
         DeviceId: "aurora-web",
         VideoCodec: "h264",
-        AudioCodec: "aac,mp3,ac3",
+        AudioCodec: "aac",
+        TranscodingMaxAudioChannels: "2",
+        MaxAudioChannels: "2",
         MaxStreamingBitrate: "120000000",
         SegmentContainer: "ts",
       });
+      if (info.audioStreamIndex != null)
+        params.set("AudioStreamIndex", String(info.audioStreamIndex));
       if (startTicks) params.set("StartTimeTicks", String(startTicks));
+
       const hlsUrl = `/api/proxy/Videos/${id}/master.m3u8?${params.toString()}`;
       const directUrl = `/api/proxy/Videos/${id}/stream?static=true&mediaSourceId=${info.mediaSourceId}`;
 

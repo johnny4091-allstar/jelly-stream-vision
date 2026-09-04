@@ -127,15 +127,23 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
     const s = await requireSession();
     const res = await jfPost<{
       PlaySessionId: string;
-      MediaSources: { Id: string }[];
+      MediaSources: {
+        Id: string;
+        DefaultAudioStreamIndex?: number;
+        MediaStreams?: { Type: string; Index: number; IsDefault?: boolean }[];
+      }[];
     }>(
       `/Items/${data.itemId}/PlaybackInfo?UserId=${s.userId}&StartTimeTicks=${data.startTicks ?? 0}`,
       {
         DeviceProfile: {
           MaxStreamingBitrate: 120_000_000,
           DirectPlayProfiles: [
-            { Type: "Video", Container: "mp4,mkv,webm,m4v" },
-            { Type: "Audio" },
+            {
+              Type: "Video",
+              Container: "mp4,m4v",
+              VideoCodec: "h264",
+              AudioCodec: "aac,mp3",
+            },
           ],
           TranscodingProfiles: [
             {
@@ -143,7 +151,8 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
               Container: "ts",
               Protocol: "hls",
               VideoCodec: "h264",
-              AudioCodec: "aac,mp3,ac3",
+              AudioCodec: "aac",
+              MaxAudioChannels: "2",
             },
           ],
           SubtitleProfiles: [],
@@ -152,10 +161,17 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
       },
       s.token,
     );
+    const src = res?.MediaSources?.[0];
+    const audioIndex =
+      src?.DefaultAudioStreamIndex ??
+      src?.MediaStreams?.find((m) => m.Type === "Audio" && m.IsDefault)?.Index ??
+      src?.MediaStreams?.find((m) => m.Type === "Audio")?.Index;
     return {
       playSessionId: res?.PlaySessionId ?? "",
-      mediaSourceId: res?.MediaSources?.[0]?.Id ?? "",
+      mediaSourceId: src?.Id ?? "",
+      audioStreamIndex: audioIndex ?? null,
     };
+
   });
 
 export const reportPlayingFn = createServerFn({ method: "POST" })

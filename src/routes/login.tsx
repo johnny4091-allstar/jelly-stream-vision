@@ -2,10 +2,11 @@ import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 
-import { getSessionFn, loginFn } from "@/lib/auth.functions";
+import { getSessionFn, loginFn, needsSetupFn } from "@/lib/auth.functions";
 
 export const Route = createFileRoute("/login")({
   beforeLoad: async () => {
+    if (await needsSetupFn()) throw redirect({ to: "/setup" });
     const session = await getSessionFn();
     if (session) throw redirect({ to: "/" });
   },

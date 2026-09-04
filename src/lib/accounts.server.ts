@@ -5,7 +5,8 @@ export type AppUserRow = {
   username: string;
   password_hash: string;
   jf_username: string;
-  jf_password_enc: string;
+  jf_password_enc: string | null;
+  jf_user_id: string | null;
   is_admin: boolean;
   created_at: string;
 };
@@ -41,7 +42,8 @@ export async function createAccount(input: {
   username: string;
   password: string;
   jfUsername: string;
-  jfPassword: string;
+  jfPassword?: string;
+  jfUserId?: string;
   isAdmin: boolean;
 }) {
   const db = await admin();
@@ -49,7 +51,8 @@ export async function createAccount(input: {
     username: input.username.trim(),
     password_hash: await hashPassword(input.password),
     jf_username: input.jfUsername.trim(),
-    jf_password_enc: await encryptSecret(input.jfPassword),
+    jf_password_enc: input.jfPassword ? await encryptSecret(input.jfPassword) : null,
+    jf_user_id: input.jfUserId ?? null,
     is_admin: input.isAdmin,
   });
   if (error) throw new Error(error.message);
@@ -87,6 +90,7 @@ export async function authenticateAccount(username: string, password: string) {
     username: row.username,
     isAdmin: row.is_admin,
     jfUsername: row.jf_username,
-    jfPassword: await decryptSecret(row.jf_password_enc),
+    jfUserId: row.jf_user_id,
+    jfPassword: row.jf_password_enc ? await decryptSecret(row.jf_password_enc) : null,
   };
 }

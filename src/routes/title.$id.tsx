@@ -3,6 +3,7 @@ import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { Play, RotateCcw } from "lucide-react";
 import { useState } from "react";
 
+import { SyncActions } from "@/components/SyncActions";
 import { TopNav } from "@/components/TopNav";
 import { getSessionFn } from "@/lib/auth.functions";
 import { getEpisodesFn, getItemFn, getSeasonsFn } from "@/lib/jellyfin.functions";
@@ -84,7 +85,7 @@ function TitlePage() {
             </span>
           ))}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Link
             to="/watch/$id"
             params={{ id: item.Id }}
@@ -93,6 +94,7 @@ function TitlePage() {
             {pct > 0 ? <RotateCcw className="h-5 w-5" /> : <Play className="h-5 w-5 fill-current" />}
             {pct > 0 ? `Resume (${Math.round(pct)}%)` : "Play"}
           </Link>
+          <SyncActions item={item} />
         </div>
         {item.Overview && (
           <p className="max-w-3xl text-sm leading-relaxed text-foreground/85 sm:text-base">

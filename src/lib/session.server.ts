@@ -13,6 +13,13 @@ export function getJfSessionConfig() {
     password: process.env['SESSION_SECRET']!,
     name: "jf-session",
     maxAge: 60 * 60 * 24 * 30,
+    cookie: {
+      httpOnly: true,
+      path: "/",
+      sameSite: "none" as const,
+      secure: true,
+      partitioned: true,
+    },
   };
 }
 

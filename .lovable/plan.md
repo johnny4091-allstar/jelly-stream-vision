@@ -42,7 +42,7 @@ Netflix-inspired, not a copy: near-black background, layered dark surfaces, tigh
 - Auth via Jellyfin `/Users/AuthenticateByName`; the returned access token is stored in an encrypted session cookie, never exposed to the browser.
 - Server routes proxy `/Items/{id}/Images/*` and video (`/Videos/{id}/stream`, plus HLS segments) with range-request passthrough so seeking works.
 - Playback uses direct-play/remux via HLS where the browser supports it; `hls.js` loaded client-side only.
-- Server base URL stored as a secret so it can be changed without a code edit.
+- Your Jellyfin API key will be stored securely as a secret (`JELLYFIN_API_KEY`) along with the server URL (`JELLYFIN_SERVER_URL`); user sign-in still goes through Jellyfin auth.
 - Routes: `/` (home), `/login`, `/profiles`, `/title/$id`, `/watch/$id`, `/search`, `/library/$id`.
 
 ## Open items

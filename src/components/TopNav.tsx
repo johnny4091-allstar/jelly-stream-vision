@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Bookmark, LogOut, Play, Search, Users } from "lucide-react";
 
@@ -7,7 +7,7 @@ import { getSessionFn, logoutFn } from "@/lib/auth.functions";
 
 export function TopNav({ userName }: { userName: string }) {
   const session = useQuery({ queryKey: ["session"], queryFn: () => getSessionFn() });
-  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const logout = useServerFn(logoutFn);
 
   return (
@@ -44,11 +44,14 @@ export function TopNav({ userName }: { userName: string }) {
             {userName.charAt(0).toUpperCase()}
           </div>
           <button
-            onClick={() =>
-              void logout().then(() => {
-                void navigate({ to: "/login" });
-              })
-            }
+            onClick={() => {
+              void (async () => {
+                await queryClient.cancelQueries();
+                queryClient.clear();
+                await logout();
+                window.location.replace("/login");
+              })();
+            }}
             aria-label="Sign out"
             className="rounded-full p-2 text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
           >

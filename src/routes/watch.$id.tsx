@@ -125,12 +125,17 @@ function WatchPage() {
 
       if (info.audioStreamIndex != null)
         params.set("AudioStreamIndex", String(info.audioStreamIndex));
-      if (startTicks) params.set("StartTimeTicks", String(startTicks));
-
       const hlsUrl = `/api/proxy/Videos/${id}/master.m3u8?${params.toString()}`;
       const directUrl = `/api/proxy/Videos/${id}/stream?static=true&mediaSourceId=${info.mediaSourceId}`;
 
       const video = videoRef.current;
+      const resumeSeconds = startTicks / 10_000_000;
+      let resumeApplied = false;
+      const applyResumePosition = () => {
+        if (resumeApplied || !Number.isFinite(resumeSeconds) || resumeSeconds <= 0) return;
+        resumeApplied = true;
+        video.currentTime = resumeSeconds;
+      };
       // Restore remembered volume/mute
       const vol = localStorage.getItem("aurora-volume");
       const mut = localStorage.getItem("aurora-muted");
@@ -203,10 +208,13 @@ function WatchPage() {
 
         hls.attachMedia(video);
         hls.on(Hls.Events.MEDIA_ATTACHED, () => hls?.loadSource(hlsUrl));
+        hls.on(Hls.Events.MANIFEST_PARSED, applyResumePosition);
       } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
         video.src = hlsUrl;
+        video.addEventListener("loadedmetadata", applyResumePosition, { once: true });
       } else {
         video.src = directUrl;
+        video.addEventListener("loadedmetadata", applyResumePosition, { once: true });
       }
       void video.play().catch(() => {});
 

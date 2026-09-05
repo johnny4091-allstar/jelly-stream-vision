@@ -113,14 +113,17 @@ function WatchPage() {
         AudioCodec: "aac",
         TranscodingMaxAudioChannels: "2",
         MaxAudioChannels: "2",
-        MaxStreamingBitrate: "200000000",
-        VideoBitrate: "180000000",
-        AudioBitrate: "384000",
+        // Let Jellyfin publish a ladder of renditions and let the player choose.
+        EnableAdaptiveBitrateStreaming: "true",
+        MaxStreamingBitrate: "60000000",
+        AudioBitrate: "256000",
         MaxWidth: "3840",
         MaxHeight: "2160",
         h264_profile: "high",
         h264_level: "51",
         SegmentContainer: "ts",
+        MinSegments: "2",
+        BreakOnNonKeyFrames: "true",
       });
 
       if (info.audioStreamIndex != null)
@@ -143,18 +146,59 @@ function WatchPage() {
       if (Hls.isSupported()) {
         hls = new Hls({
           enableWorker: true,
-          capLevelToPlayerSize: false,
+          lowLatencyMode: false,
+          // Adaptive bitrate: start conservative, climb to the best sustainable level.
           startLevel: -1,
-          maxBufferLength: 60,
-          maxMaxBufferLength: 120,
+          capLevelToPlayerSize: false,
+          abrEwmaDefaultEstimate: 5_000_000,
+          abrBandWidthFactor: 0.95,
+          abrBandWidthUpFactor: 0.7,
+          maxBufferLength: 30,
+          maxMaxBufferLength: 600,
+          backBufferLength: 30,
+          maxBufferHole: 1,
+          // Long transcode start-up through the proxy needs patient timeouts + retries.
+          manifestLoadingTimeOut: 30_000,
+          manifestLoadingMaxRetry: 6,
+          levelLoadingTimeOut: 30_000,
+          levelLoadingMaxRetry: 8,
+          fragLoadingTimeOut: 90_000,
+          fragLoadingMaxRetry: 10,
+          fragLoadingMaxRetryTimeout: 8_000,
+          nudgeMaxRetry: 10,
         });
 
+        let recoveries = 0;
         hls.on(Hls.Events.ERROR, (_e, data) => {
-          if (data.fatal && video && !video.src.includes("/stream")) {
-            video.src = directUrl;
-            void video.play().catch(() => {});
+          if (!data.fatal) return;
+          const h = hls;
+          if (!h || !video) return;
+          if (data.type === Hls.ErrorTypes.NETWORK_ERROR && recoveries < 6) {
+            recoveries += 1;
+            h.startLoad();
+            return;
           }
+          if (data.type === Hls.ErrorTypes.MEDIA_ERROR && recoveries < 6) {
+            recoveries += 1;
+            h.recoverMediaError();
+            return;
+          }
+          // Give up on HLS and fall back to a direct stream.
+          const at = video.currentTime;
+          h.destroy();
+          hls = null;
+          video.src = directUrl;
+          video.currentTime = at;
+          void video.play().catch(() => {});
         });
+
+        // Keep playback moving if the buffer stalls mid-segment.
+        hls.on(Hls.Events.MEDIA_ATTACHED, () => {
+          video.addEventListener("waiting", () => {
+            if (hls && video.readyState < 3) hls.startLoad(-1);
+          });
+        });
+
         hls.loadSource(hlsUrl);
         hls.attachMedia(video);
       } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
@@ -163,6 +207,7 @@ function WatchPage() {
         video.src = directUrl;
       }
       void video.play().catch(() => {});
+
     }
 
     void setup();

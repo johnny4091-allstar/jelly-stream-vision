@@ -113,17 +113,14 @@ function WatchPage() {
         AudioCodec: "aac",
         TranscodingMaxAudioChannels: "2",
         MaxAudioChannels: "2",
-        // Let Jellyfin publish a ladder of renditions and let the player choose.
-        EnableAdaptiveBitrateStreaming: "true",
-        MaxStreamingBitrate: "60000000",
-        AudioBitrate: "256000",
+        MaxStreamingBitrate: "200000000",
+        VideoBitrate: "180000000",
+        AudioBitrate: "384000",
         MaxWidth: "3840",
         MaxHeight: "2160",
         h264_profile: "high",
         h264_level: "51",
         SegmentContainer: "ts",
-        MinSegments: "2",
-        BreakOnNonKeyFrames: "true",
       });
 
       if (info.audioStreamIndex != null)
@@ -147,14 +144,13 @@ function WatchPage() {
         hls = new Hls({
           enableWorker: true,
           lowLatencyMode: false,
-          // Adaptive bitrate: start conservative, climb to the best sustainable level.
           startLevel: -1,
           capLevelToPlayerSize: false,
-          abrEwmaDefaultEstimate: 5_000_000,
-          abrBandWidthFactor: 0.95,
+          abrEwmaDefaultEstimate: 10_000_000,
+          abrBandWidthFactor: 0.9,
           abrBandWidthUpFactor: 0.7,
-          maxBufferLength: 30,
-          maxMaxBufferLength: 600,
+          maxBufferLength: 60,
+          maxMaxBufferLength: 120,
           backBufferLength: 30,
           maxBufferHole: 1,
           // Long transcode start-up through the proxy needs patient timeouts + retries.
@@ -173,12 +169,12 @@ function WatchPage() {
           if (!data.fatal) return;
           const h = hls;
           if (!h || !video) return;
-          if (data.type === Hls.ErrorTypes.NETWORK_ERROR && recoveries < 6) {
+          if (data.type === Hls.ErrorTypes.NETWORK_ERROR && recoveries < 2) {
             recoveries += 1;
             h.startLoad();
             return;
           }
-          if (data.type === Hls.ErrorTypes.MEDIA_ERROR && recoveries < 6) {
+          if (data.type === Hls.ErrorTypes.MEDIA_ERROR && recoveries < 2) {
             recoveries += 1;
             h.recoverMediaError();
             return;
@@ -188,8 +184,14 @@ function WatchPage() {
           h.destroy();
           hls = null;
           video.src = directUrl;
-          video.currentTime = at;
-          void video.play().catch(() => {});
+          video.addEventListener(
+            "loadedmetadata",
+            () => {
+              if (Number.isFinite(at) && at > 0) video.currentTime = at;
+              void video.play().catch(() => {});
+            },
+            { once: true },
+          );
         });
 
         // Keep playback moving if the buffer stalls mid-segment.
@@ -199,8 +201,8 @@ function WatchPage() {
           });
         });
 
-        hls.loadSource(hlsUrl);
         hls.attachMedia(video);
+        hls.on(Hls.Events.MEDIA_ATTACHED, () => hls?.loadSource(hlsUrl));
       } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
         video.src = hlsUrl;
       } else {

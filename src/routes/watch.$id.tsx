@@ -18,6 +18,7 @@ import {
   getItemFn,
   getPlaybackInfoFn,
   reportPlayingFn,
+  stopTranscodeFn,
   setPlayedFn,
 } from "@/lib/jellyfin.functions";
 import { episodeLabel } from "@/lib/jellyfin.types";
@@ -62,6 +63,7 @@ function WatchPage() {
   const { data: item } = useSuspenseQuery(itemQuery(id));
   const getPlaybackInfo = useServerFn(getPlaybackInfoFn);
   const reportPlaying = useServerFn(reportPlayingFn);
+  const stopTranscode = useServerFn(stopTranscodeFn);
   const setPlayed = useServerFn(setPlayedFn);
   const markedPlayedRef = useRef(false);
 
@@ -223,10 +225,31 @@ function WatchPage() {
     void setup();
     return () => {
       cancelled = true;
-      hls?.destroy();
+      const sid = playSessionRef.current;
+      const v = videoRef.current;
+      try {
+        hls?.destroy();
+      } catch {
+        /* already gone */
+      }
+      hls = null;
+      if (v) {
+        try {
+          v.pause();
+          v.removeAttribute("src");
+          v.load();
+        } catch {
+          /* ignore */
+        }
+      }
+      if (sid) {
+        void stopTranscode({ data: { playSessionId: sid } });
+        playSessionRef.current = "";
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
 
   // Progress reporting
   useEffect(() => {

@@ -14,6 +14,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { getSessionFn } from "@/lib/auth.functions";
+import { logWatchFn } from "@/lib/history.functions";
 import {
   getItemFn,
   getPlaybackInfoFn,

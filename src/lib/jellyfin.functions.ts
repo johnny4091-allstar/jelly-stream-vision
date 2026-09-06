@@ -142,8 +142,8 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
         DeviceProfile: {
           // Browsers can only direct-play mp4/webm with browser-safe codecs.
           // Listing mkv/hevc here made TV episodes "direct play" and fail silently.
-          MaxStreamingBitrate: 20_000_000,
-          MaxStaticBitrate: 20_000_000,
+          MaxStreamingBitrate: 8_000_000,
+          MaxStaticBitrate: 8_000_000,
           DirectPlayProfiles: [
             {
               Type: "Video",
@@ -162,7 +162,6 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
               AudioCodec: "aac",
               MaxAudioChannels: "2",
               Context: "Streaming",
-              BreakOnNonKeyFrames: true,
             },
           ],
           SubtitleProfiles: [],
@@ -183,7 +182,15 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
       mediaSourceId: src?.Id ?? "",
       audioStreamIndex: audioIndex ?? null,
       // Jellyfin's own transcode URL already carries the correct, working parameters.
-      transcodingUrl: src?.TranscodingUrl ?? null,
+      transcodingUrl: src?.TranscodingUrl
+        ? (() => {
+            const url = new URL(src.TranscodingUrl, "http://jellyfin.local");
+            // The proxy authenticates upstream; never expose the Jellyfin token in the browser URL.
+            url.searchParams.delete("ApiKey");
+            url.searchParams.delete("api_key");
+            return `${url.pathname}${url.search}`;
+          })()
+        : null,
       supportsDirectPlay: Boolean(src?.SupportsDirectPlay),
       container: src?.Container ?? null,
     };

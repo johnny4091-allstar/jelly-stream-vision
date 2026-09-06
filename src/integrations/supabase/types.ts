@@ -89,6 +89,54 @@ export type Database = {
         }
         Relationships: []
       }
+      watch_history: {
+        Row: {
+          created_at: string
+          id: string
+          image_item_id: string | null
+          item_type: string
+          jf_item_id: string
+          jf_user_id: string
+          last_played_at: string
+          last_position_seconds: number
+          play_count: number
+          runtime_seconds: number | null
+          seconds_watched: number
+          subtitle: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_item_id?: string | null
+          item_type?: string
+          jf_item_id: string
+          jf_user_id: string
+          last_played_at?: string
+          last_position_seconds?: number
+          play_count?: number
+          runtime_seconds?: number | null
+          seconds_watched?: number
+          subtitle?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_item_id?: string | null
+          item_type?: string
+          jf_item_id?: string
+          jf_user_id?: string
+          last_played_at?: string
+          last_position_seconds?: number
+          play_count?: number
+          runtime_seconds?: number | null
+          seconds_watched?: number
+          subtitle?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

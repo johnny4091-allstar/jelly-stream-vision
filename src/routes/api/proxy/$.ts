@@ -39,7 +39,10 @@ export const Route = createFileRoute("/api/proxy/$")({
           const v = upstream.headers.get(name);
           if (v) out.set(name, v);
         }
-        if (!out.has("cache-control")) out.set("cache-control", "private, max-age=3600");
+        // Playlists must never be cached, or the player replays a stale segment list and stalls.
+        const path = params._splat ?? "";
+        if (/\.m3u8$/i.test(path)) out.set("cache-control", "no-store");
+        else if (!out.has("cache-control")) out.set("cache-control", "private, max-age=3600");
 
         return new Response(upstream.body, { status: upstream.status, headers: out });
       },

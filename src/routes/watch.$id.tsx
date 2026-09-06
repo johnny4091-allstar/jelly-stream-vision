@@ -223,10 +223,31 @@ function WatchPage() {
     void setup();
     return () => {
       cancelled = true;
-      hls?.destroy();
+      const sid = playSessionRef.current;
+      const v = videoRef.current;
+      try {
+        hls?.destroy();
+      } catch {
+        /* already gone */
+      }
+      hls = null;
+      if (v) {
+        try {
+          v.pause();
+          v.removeAttribute("src");
+          v.load();
+        } catch {
+          /* ignore */
+        }
+      }
+      if (sid) {
+        void stopTranscode({ data: { playSessionId: sid } });
+        playSessionRef.current = "";
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
 
   // Progress reporting
   useEffect(() => {

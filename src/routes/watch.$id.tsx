@@ -63,6 +63,7 @@ function WatchPage() {
   const { data: item } = useSuspenseQuery(itemQuery(id));
   const getPlaybackInfo = useServerFn(getPlaybackInfoFn);
   const reportPlaying = useServerFn(reportPlayingFn);
+  const logWatch = useServerFn(logWatchFn);
   const stopTranscode = useServerFn(stopTranscodeFn);
   const setPlayed = useServerFn(setPlayedFn);
   const markedPlayedRef = useRef(false);
@@ -289,8 +290,37 @@ function WatchPage() {
         },
       });
     }, 10_000);
+    // Watch history: bank the elapsed time every 30s and on exit.
+    const histTitle = item.SeriesName ?? item.Name ?? "Unknown";
+    const histSubtitle = item.SeriesName ? (item.Name ?? null) : null;
+    let lastLogged = videoRef.current?.currentTime ?? time;
+    let firstLog = true;
+    const logDelta = () => {
+      const v = videoRef.current;
+      const now = v?.currentTime ?? time;
+      const delta = Math.max(0, Math.min(now - lastLogged, 120));
+      lastLogged = now;
+      void logWatch({
+        data: {
+          itemId: id,
+          title: histTitle,
+          subtitle: histSubtitle,
+          itemType: item.Type ?? "Movie",
+          imageItemId: item.SeriesId ?? item.Id,
+          secondsDelta: delta,
+          positionSeconds: now,
+          runtimeSeconds: v?.duration && Number.isFinite(v.duration) ? v.duration : null,
+          isNewPlay: firstLog,
+        },
+      });
+      firstLog = false;
+    };
+    logDelta();
+    const histTimer = setInterval(logDelta, 30_000);
     return () => {
       clearInterval(timer);
+      clearInterval(histTimer);
+      logDelta();
       const v = videoRef.current;
       void reportPlaying({
         data: {

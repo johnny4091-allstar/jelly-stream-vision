@@ -122,8 +122,8 @@ function WatchPage() {
         MaxAudioChannels: "2",
         // Sane ceilings: asking for 200 Mbps made the server transcode far
         // slower than real time, which is why playback stalled after ~90s.
-        MaxStreamingBitrate: "20000000",
-        VideoBitrate: "12000000",
+        MaxStreamingBitrate: "8000000",
+        VideoBitrate: "6500000",
         AudioBitrate: "192000",
         MaxWidth: "1920",
         MaxHeight: "1080",

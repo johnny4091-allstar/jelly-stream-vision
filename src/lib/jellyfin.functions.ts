@@ -130,21 +130,28 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
       MediaSources: {
         Id: string;
         DefaultAudioStreamIndex?: number;
+        TranscodingUrl?: string;
+        SupportsDirectStream?: boolean;
+        SupportsDirectPlay?: boolean;
+        Container?: string;
         MediaStreams?: { Type: string; Index: number; IsDefault?: boolean }[];
       }[];
     }>(
       `/Items/${data.itemId}/PlaybackInfo?UserId=${s.userId}&StartTimeTicks=${data.startTicks ?? 0}`,
       {
         DeviceProfile: {
-          MaxStreamingBitrate: 200_000_000,
-          MaxStaticBitrate: 200_000_000,
+          // Browsers can only direct-play mp4/webm with browser-safe codecs.
+          // Listing mkv/hevc here made TV episodes "direct play" and fail silently.
+          MaxStreamingBitrate: 20_000_000,
+          MaxStaticBitrate: 20_000_000,
           DirectPlayProfiles: [
             {
               Type: "Video",
-              Container: "mp4,m4v,mkv,webm",
-              VideoCodec: "h264,hevc,vp9,av1",
-              AudioCodec: "aac,mp3,opus,ac3,eac3,flac",
+              Container: "mp4,m4v",
+              VideoCodec: "h264,vp9,av1",
+              AudioCodec: "aac,mp3,opus",
             },
+            { Type: "Video", Container: "webm", VideoCodec: "vp8,vp9,av1", AudioCodec: "vorbis,opus" },
           ],
           TranscodingProfiles: [
             {
@@ -155,6 +162,7 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
               AudioCodec: "aac",
               MaxAudioChannels: "2",
               Context: "Streaming",
+              BreakOnNonKeyFrames: true,
             },
           ],
           SubtitleProfiles: [],
@@ -174,6 +182,10 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
       playSessionId: res?.PlaySessionId ?? "",
       mediaSourceId: src?.Id ?? "",
       audioStreamIndex: audioIndex ?? null,
+      // Jellyfin's own transcode URL already carries the correct, working parameters.
+      transcodingUrl: src?.TranscodingUrl ?? null,
+      supportsDirectPlay: Boolean(src?.SupportsDirectPlay),
+      container: src?.Container ?? null,
     };
 
   });

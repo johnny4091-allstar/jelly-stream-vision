@@ -203,7 +203,9 @@ export const reportPlayingFn = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const s = await requireSession();
-    await jfPost(
+    // Progress reporting is best-effort telemetry: never let it break playback.
+    try {
+      await jfPost(
       `/Sessions/Playing/${data.kind}`,
       {
         ItemId: data.itemId,
@@ -215,7 +217,11 @@ export const reportPlayingFn = createServerFn({ method: "POST" })
       },
       s.token,
       data.deviceId,
-    );
+      );
+    } catch (err) {
+      console.warn("Jellyfin progress report failed", err);
+      return { ok: false as const };
+    }
     return { ok: true as const };
   });
 

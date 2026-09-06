@@ -230,3 +230,20 @@ export const setPlayedFn = createServerFn({ method: "POST" })
     else await jfDelete(path, s.token);
     return { ok: true as const, played: data.played };
   });
+
+/** Kill the server-side transcode for a play session so the next title can start. */
+export const stopTranscodeFn = createServerFn({ method: "POST" })
+  .inputValidator((data: { playSessionId: string; deviceId?: string }) => data)
+  .handler(async ({ data }) => {
+    const s = await requireSession();
+    const q = new URLSearchParams({
+      deviceId: data.deviceId ?? "aurora-web",
+      playSessionId: data.playSessionId,
+    });
+    try {
+      await jfDelete(`/Videos/ActiveEncodings?${q.toString()}`, s.token);
+    } catch {
+      /* session may already be gone */
+    }
+    return { ok: true as const };
+  });

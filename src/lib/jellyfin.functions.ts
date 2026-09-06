@@ -130,6 +130,10 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
       MediaSources: {
         Id: string;
         DefaultAudioStreamIndex?: number;
+        TranscodingUrl?: string;
+        SupportsDirectStream?: boolean;
+        SupportsDirectPlay?: boolean;
+        Container?: string;
         MediaStreams?: { Type: string; Index: number; IsDefault?: boolean }[];
       }[];
     }>(
@@ -178,6 +182,10 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
       playSessionId: res?.PlaySessionId ?? "",
       mediaSourceId: src?.Id ?? "",
       audioStreamIndex: audioIndex ?? null,
+      // Jellyfin's own transcode URL already carries the correct, working parameters.
+      transcodingUrl: src?.TranscodingUrl ?? null,
+      supportsDirectPlay: Boolean(src?.SupportsDirectPlay),
+      container: src?.Container ?? null,
     };
 
   });

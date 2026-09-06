@@ -122,7 +122,7 @@ export const getWatchlistFn = createServerFn({ method: "GET" }).handler(async ()
 });
 
 export const getPlaybackInfoFn = createServerFn({ method: "POST" })
-  .inputValidator((data: { itemId: string; startTicks?: number }) => data)
+  .inputValidator((data: { itemId: string; startTicks?: number; deviceId?: string }) => data)
   .handler(async ({ data }) => {
     const s = await requireSession();
     const res = await jfPost<{
@@ -163,6 +163,7 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
         AutoOpenLiveStream: true,
       },
       s.token,
+      data.deviceId,
     );
     const src = res?.MediaSources?.[0];
     const audioIndex =
@@ -179,7 +180,7 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
 
 export const reportPlayingFn = createServerFn({ method: "POST" })
   .inputValidator(
-    (data: { itemId: string; positionTicks: number; playSessionId: string; kind: "Started" | "Progress" | "Stopped"; isPaused?: boolean }) => data,
+    (data: { itemId: string; positionTicks: number; playSessionId: string; kind: "Started" | "Progress" | "Stopped"; isPaused?: boolean; deviceId?: string }) => data,
   )
   .handler(async ({ data }) => {
     const s = await requireSession();
@@ -194,6 +195,7 @@ export const reportPlayingFn = createServerFn({ method: "POST" })
         PlayMethod: "Transcode",
       },
       s.token,
+      data.deviceId,
     );
     return { ok: true as const };
   });
@@ -241,7 +243,7 @@ export const stopTranscodeFn = createServerFn({ method: "POST" })
       playSessionId: data.playSessionId,
     });
     try {
-      await jfDelete(`/Videos/ActiveEncodings?${q.toString()}`, s.token);
+      await jfDelete(`/Videos/ActiveEncodings?${q.toString()}`, s.token, data.deviceId);
     } catch {
       /* session may already be gone */
     }

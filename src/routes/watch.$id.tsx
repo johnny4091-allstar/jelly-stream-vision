@@ -120,20 +120,27 @@ function WatchPage() {
         AudioCodec: "aac",
         TranscodingMaxAudioChannels: "2",
         MaxAudioChannels: "2",
-        MaxStreamingBitrate: "200000000",
-        VideoBitrate: "180000000",
-        AudioBitrate: "384000",
-        MaxWidth: "3840",
-        MaxHeight: "2160",
+        // Sane ceilings: asking for 200 Mbps made the server transcode far
+        // slower than real time, which is why playback stalled after ~90s.
+        MaxStreamingBitrate: "20000000",
+        VideoBitrate: "12000000",
+        AudioBitrate: "192000",
+        MaxWidth: "1920",
+        MaxHeight: "1080",
         h264_profile: "high",
-        h264_level: "51",
+        h264_level: "41",
         SegmentContainer: "ts",
       });
 
       if (info.audioStreamIndex != null)
         params.set("AudioStreamIndex", String(info.audioStreamIndex));
-      const hlsUrl = `/api/proxy/Videos/${id}/master.m3u8?${params.toString()}`;
-      const directUrl = `/api/proxy/Videos/${id}/stream?static=true&mediaSourceId=${info.mediaSourceId}`;
+      // Prefer the exact transcode URL Jellyfin negotiated for this item;
+      // it already has the right stream indexes for TV episodes (mkv/HEVC).
+      const hlsUrl = info.transcodingUrl
+        ? `/api/proxy${info.transcodingUrl.replace(/^\//, "/")}`
+        : `/api/proxy/Videos/${id}/master.m3u8?${params.toString()}`;
+      const directUrl = `/api/proxy/Videos/${id}/stream?static=true&mediaSourceId=${info.mediaSourceId}&PlaySessionId=${info.playSessionId}&DeviceId=${deviceId}`;
+
 
       const video = videoRef.current;
       const resumeSeconds = startTicks / 10_000_000;

@@ -72,10 +72,17 @@ function WatchPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const playSessionRef = useRef("");
-  // A fresh device id per playback keeps a previous title's transcode from clashing with this one.
+  // One stable device id per browser: Jellyfin then reuses (and replaces) the same
+  // playback session instead of leaving an orphaned transcode behind on every visit.
   const deviceIdRef = useRef("");
-  if (!deviceIdRef.current)
-    deviceIdRef.current = `aurora-web-${Math.random().toString(36).slice(2, 10)}`;
+  if (!deviceIdRef.current) {
+    let stored = typeof localStorage !== "undefined" ? localStorage.getItem("aurora-device-id") : null;
+    if (!stored) {
+      stored = `aurora-web-${Math.random().toString(36).slice(2, 10)}`;
+      if (typeof localStorage !== "undefined") localStorage.setItem("aurora-device-id", stored);
+    }
+    deviceIdRef.current = stored;
+  }
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const [time, setTime] = useState(0);
@@ -335,6 +342,27 @@ function WatchPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, playing]);
+
+  // Closing the tab or backgrounding the phone must also kill the server-side transcode.
+  useEffect(() => {
+    const teardown = () => {
+      const v = videoRef.current;
+      const sid = playSessionRef.current;
+      void reportPlaying({
+        data: {
+          itemId: id,
+          playSessionId: sid,
+          deviceId: deviceIdRef.current,
+          positionTicks: Math.floor((v?.currentTime ?? 0) * 10_000_000),
+          kind: "Stopped",
+        },
+      });
+      if (sid) void stopTranscode({ data: { playSessionId: sid, deviceId: deviceIdRef.current } });
+    };
+    window.addEventListener("pagehide", teardown);
+    return () => window.removeEventListener("pagehide", teardown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   // Unlock orientation when leaving fullscreen
   useEffect(() => {

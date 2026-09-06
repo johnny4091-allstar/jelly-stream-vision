@@ -18,6 +18,7 @@ import {
   getItemFn,
   getPlaybackInfoFn,
   reportPlayingFn,
+  stopTranscodeFn,
   setPlayedFn,
 } from "@/lib/jellyfin.functions";
 import { episodeLabel } from "@/lib/jellyfin.types";
@@ -62,6 +63,7 @@ function WatchPage() {
   const { data: item } = useSuspenseQuery(itemQuery(id));
   const getPlaybackInfo = useServerFn(getPlaybackInfoFn);
   const reportPlaying = useServerFn(reportPlayingFn);
+  const stopTranscode = useServerFn(stopTranscodeFn);
   const setPlayed = useServerFn(setPlayedFn);
   const markedPlayedRef = useRef(false);
 

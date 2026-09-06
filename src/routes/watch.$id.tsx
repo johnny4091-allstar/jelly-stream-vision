@@ -70,6 +70,10 @@ function WatchPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const playSessionRef = useRef("");
+  // A fresh device id per playback keeps a previous title's transcode from clashing with this one.
+  const deviceIdRef = useRef("");
+  if (!deviceIdRef.current)
+    deviceIdRef.current = `aurora-web-${Math.random().toString(36).slice(2, 10)}`;
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const [time, setTime] = useState(0);
@@ -103,14 +107,15 @@ function WatchPage() {
     let hls: import("hls.js").default | null = null;
 
     async function setup() {
-      const info = await getPlaybackInfo({ data: { itemId: id, startTicks } });
+      const deviceId = deviceIdRef.current;
+      const info = await getPlaybackInfo({ data: { itemId: id, startTicks, deviceId } });
       if (cancelled || !videoRef.current) return;
       playSessionRef.current = info.playSessionId;
 
       const params = new URLSearchParams({
         mediaSourceId: info.mediaSourceId,
         PlaySessionId: info.playSessionId,
-        DeviceId: "aurora-web",
+        DeviceId: deviceId,
         VideoCodec: "h264",
         AudioCodec: "aac",
         TranscodingMaxAudioChannels: "2",
@@ -243,7 +248,7 @@ function WatchPage() {
         }
       }
       if (sid) {
-        void stopTranscode({ data: { playSessionId: sid } });
+        void stopTranscode({ data: { playSessionId: sid, deviceId: deviceIdRef.current } });
         playSessionRef.current = "";
       }
     };
@@ -258,6 +263,7 @@ function WatchPage() {
       data: {
         itemId: id,
         playSessionId: playSessionRef.current,
+        deviceId: deviceIdRef.current,
         positionTicks: Math.floor(time * 10_000_000),
         kind: "Started",
       },
@@ -269,6 +275,7 @@ function WatchPage() {
         data: {
           itemId: id,
           playSessionId: playSessionRef.current,
+          deviceId: deviceIdRef.current,
           positionTicks: Math.floor(v.currentTime * 10_000_000),
           kind: "Progress",
           isPaused: v.paused,
@@ -282,6 +289,7 @@ function WatchPage() {
         data: {
           itemId: id,
           playSessionId: playSessionRef.current,
+          deviceId: deviceIdRef.current,
           positionTicks: Math.floor((v?.currentTime ?? time) * 10_000_000),
           kind: "Stopped",
         },
@@ -405,6 +413,7 @@ function WatchPage() {
             data: {
               itemId: id,
               playSessionId: playSessionRef.current,
+          deviceId: deviceIdRef.current,
               positionTicks: Math.floor(e.currentTarget.currentTime * 10_000_000),
               kind: "Progress",
               isPaused: true,
@@ -417,6 +426,7 @@ function WatchPage() {
             data: {
               itemId: id,
               playSessionId: playSessionRef.current,
+          deviceId: deviceIdRef.current,
               positionTicks: Math.floor(e.currentTarget.currentTime * 10_000_000),
               kind: "Progress",
               isPaused: e.currentTarget.paused,
@@ -429,6 +439,7 @@ function WatchPage() {
             data: {
               itemId: id,
               playSessionId: playSessionRef.current,
+          deviceId: deviceIdRef.current,
               positionTicks: Math.floor(e.currentTarget.currentTime * 10_000_000),
               kind: "Stopped",
             },

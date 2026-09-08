@@ -274,3 +274,71 @@ export const stopTranscodeFn = createServerFn({ method: "POST" })
     }
     return { ok: true as const };
   });
+
+export interface ActiveSession {
+  id: string;
+  userName: string;
+  device: string;
+  client: string;
+  title: string | null;
+  subtitle: string | null;
+  itemId: string | null;
+  isPaused: boolean;
+  playMethod: string | null;
+  positionSeconds: number;
+  runtimeSeconds: number | null;
+  lastActivity: string | null;
+}
+
+/** Live Jellyfin sessions (admin only) — who is playing what right now. */
+export const getActiveSessionsFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<ActiveSession[]> => {
+    const s = await requireSession();
+    if (!s.isAdmin) throw new Error("Forbidden");
+    type Raw = {
+      Id: string;
+      UserName?: string;
+      DeviceName?: string;
+      Client?: string;
+      LastActivityDate?: string;
+      NowPlayingItem?: {
+        Id: string;
+        Name?: string;
+        SeriesName?: string;
+        Type?: string;
+        IndexNumber?: number;
+        ParentIndexNumber?: number;
+        RunTimeTicks?: number;
+      };
+      PlayState?: { IsPaused?: boolean; PositionTicks?: number; PlayMethod?: string };
+    };
+    let raw: Raw[] = [];
+    try {
+      raw = await jfGet<Raw[]>("/Sessions?ActiveWithinSeconds=120");
+    } catch (err) {
+      console.warn("Jellyfin sessions fetch failed", err);
+      return [];
+    }
+    return (raw ?? []).map((r) => {
+      const np = r.NowPlayingItem;
+      const ep =
+        np?.Type === "Episode" && np.ParentIndexNumber != null && np.IndexNumber != null
+          ? `S${np.ParentIndexNumber} E${np.IndexNumber} · ${np.Name ?? ""}`
+          : null;
+      return {
+        id: r.Id,
+        userName: r.UserName ?? "Unknown",
+        device: r.DeviceName ?? "Unknown device",
+        client: r.Client ?? "",
+        title: np ? (np.SeriesName ?? np.Name ?? null) : null,
+        subtitle: ep,
+        itemId: np?.Id ?? null,
+        isPaused: Boolean(r.PlayState?.IsPaused),
+        playMethod: r.PlayState?.PlayMethod ?? null,
+        positionSeconds: Math.floor((r.PlayState?.PositionTicks ?? 0) / 10_000_000),
+        runtimeSeconds: np?.RunTimeTicks ? Math.floor(np.RunTimeTicks / 10_000_000) : null,
+        lastActivity: r.LastActivityDate ?? null,
+      };
+    });
+  },
+);

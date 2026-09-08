@@ -10,6 +10,8 @@ import {
   setPasswordFn,
 } from "@/lib/accounts.functions";
 import { getSessionFn } from "@/lib/auth.functions";
+import { getActiveSessionsFn } from "@/lib/jellyfin.functions";
+
 
 export const Route = createFileRoute("/admin")({
   beforeLoad: async () => {
@@ -33,6 +35,15 @@ export const Route = createFileRoute("/admin")({
 const field =
   "w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-ring/40";
 
+function fmtTime(total: number) {
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  return h > 0
+    ? `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
+    : `${m}:${String(s).padStart(2, "0")}`;
+}
+
 function AdminPage() {
   const list = useServerFn(listAccountsFn);
   const create = useServerFn(createAccountFn);
@@ -40,6 +51,14 @@ function AdminPage() {
   const setPassword = useServerFn(setPasswordFn);
 
   const accounts = useQuery({ queryKey: ["accounts"], queryFn: () => list() });
+
+  const activity = useQuery({
+    queryKey: ["active-sessions"],
+    queryFn: () => getActiveSessionsFn(),
+    refetchInterval: 5000,
+    refetchIntervalInBackground: false,
+  });
+
 
   const empty = { username: "", password: "", jfUsername: "", jfPassword: "", isAdmin: false };
   const [form, setForm] = useState(empty);
@@ -74,6 +93,67 @@ function AdminPage() {
             Back to Aurora
           </Link>
         </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-bold text-foreground">Live activity</h2>
+            <span className="flex h-2 w-2 animate-pulse rounded-full bg-primary" />
+            <span className="text-xs text-muted-foreground">updates every 5s</span>
+          </div>
+          {activity.isLoading && <p className="text-sm text-muted-foreground">Checking…</p>}
+          {!activity.isLoading && (activity.data?.length ?? 0) === 0 && (
+            <p className="text-sm text-muted-foreground">Nobody is watching right now.</p>
+          )}
+          {activity.data?.map((s) => (
+            <div key={s.id} className="rounded-lg bg-card px-4 py-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="font-semibold text-foreground">
+                  {s.userName}
+                  <span className="ml-2 text-xs font-normal text-muted-foreground">
+                    {s.device}
+                    {s.client ? ` · ${s.client}` : ""}
+                  </span>
+                </p>
+                <span
+                  className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${
+                    !s.title
+                      ? "bg-secondary text-muted-foreground"
+                      : s.isPaused
+                        ? "bg-secondary text-foreground"
+                        : "bg-primary text-primary-foreground"
+                  }`}
+                >
+                  {!s.title ? "idle" : s.isPaused ? "paused" : "playing"}
+                </span>
+              </div>
+              {s.title && (
+                <>
+                  <p className="mt-1 text-sm text-foreground">
+                    {s.title}
+                    {s.subtitle ? ` — ${s.subtitle}` : ""}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {fmtTime(s.positionSeconds)}
+                    {s.runtimeSeconds ? ` / ${fmtTime(s.runtimeSeconds)}` : ""}
+                    {s.playMethod ? ` · ${s.playMethod}` : ""}
+                  </p>
+                  {s.runtimeSeconds ? (
+                    <div className="mt-2 h-1 w-full overflow-hidden rounded bg-secondary">
+                      <div
+                        className="h-full bg-primary"
+                        style={{
+                          width: `${Math.min(100, (s.positionSeconds / s.runtimeSeconds) * 100)}%`,
+                        }}
+                      />
+                    </div>
+                  ) : null}
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+
+
 
         <form onSubmit={onCreate} className="space-y-4 rounded-lg bg-card p-6 shadow-xl">
           <h2 className="text-lg font-bold text-foreground">Add a person</h2>

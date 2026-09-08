@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import { getSessionFn } from "@/lib/auth.functions";
 import { logWatchFn } from "@/lib/history.functions";
 import {
@@ -562,13 +563,13 @@ function WatchPage() {
       {playbackError && (
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-background/90 px-6 text-center">
           <p className="max-w-md text-sm text-foreground">{playbackError}</p>
-          <button
+          <Button
             type="button"
             onClick={() => retryPlaybackRef.current?.()}
-            className="rounded-md bg-primary px-5 py-2.5 font-semibold text-primary-foreground"
+            size="lg"
           >
             Retry playback
-          </button>
+          </Button>
         </div>
       )}
 

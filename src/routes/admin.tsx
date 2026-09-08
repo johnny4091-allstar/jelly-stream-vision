@@ -35,6 +35,15 @@ export const Route = createFileRoute("/admin")({
 const field =
   "w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-ring/40";
 
+function fmtTime(total: number) {
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  return h > 0
+    ? `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
+    : `${m}:${String(s).padStart(2, "0")}`;
+}
+
 function AdminPage() {
   const list = useServerFn(listAccountsFn);
   const create = useServerFn(createAccountFn);

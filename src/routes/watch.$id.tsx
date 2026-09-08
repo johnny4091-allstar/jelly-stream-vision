@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import { getSessionFn } from "@/lib/auth.functions";
 import { logWatchFn } from "@/lib/history.functions";
 import {
@@ -88,6 +89,8 @@ function WatchPage() {
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [showControls, setShowControls] = useState(true);
+  const [playbackError, setPlaybackError] = useState<string | null>(null);
+  const retryPlaybackRef = useRef<(() => void) | null>(null);
   const [seekFlash, setSeekFlash] = useState<{ dir: -1 | 1; key: number } | null>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tapRef = useRef<{ count: number; x: number; timer: ReturnType<typeof setTimeout> | null }>({
@@ -116,8 +119,15 @@ function WatchPage() {
     let hls: import("hls.js").default | null = null;
 
     async function setup() {
+      setPlaybackError(null);
       const deviceId = deviceIdRef.current;
-      const info = await getPlaybackInfo({ data: { itemId: id, startTicks, deviceId } });
+      let info: Awaited<ReturnType<typeof getPlaybackInfo>>;
+      try {
+        info = await getPlaybackInfo({ data: { itemId: id, startTicks, deviceId } });
+      } catch {
+        if (!cancelled) setPlaybackError("The TV stream could not be started. Tap retry.");
+        return;
+      }
       if (cancelled || !videoRef.current) return;
       playSessionRef.current = info.playSessionId;
 
@@ -192,34 +202,43 @@ function WatchPage() {
           nudgeMaxRetry: 10,
         });
 
-        let recoveries = 0;
+        let networkRecoveries = 0;
+        let mediaRecoveries = 0;
+        retryPlaybackRef.current = () => {
+          setPlaybackError(null);
+          hls?.stopLoad();
+          hls?.startLoad(video.currentTime || -1);
+          void video.play().catch(() => {});
+        };
         hls.on(Hls.Events.ERROR, (_e, data) => {
           if (!data.fatal) return;
           const h = hls;
           if (!h || !video) return;
-          if (data.type === Hls.ErrorTypes.NETWORK_ERROR && recoveries < 2) {
-            recoveries += 1;
+          if (data.type === Hls.ErrorTypes.NETWORK_ERROR && networkRecoveries < 6) {
+            networkRecoveries += 1;
             h.startLoad();
             return;
           }
-          if (data.type === Hls.ErrorTypes.MEDIA_ERROR && recoveries < 2) {
-            recoveries += 1;
+          if (data.type === Hls.ErrorTypes.MEDIA_ERROR && mediaRecoveries < 4) {
+            mediaRecoveries += 1;
             h.recoverMediaError();
             return;
           }
-          // Give up on HLS and fall back to a direct stream.
-          const at = video.currentTime;
-          h.destroy();
-          hls = null;
-          video.src = directUrl;
-          video.addEventListener(
-            "loadedmetadata",
-            () => {
+          // Most episodes are MKV/HEVC/EAC3. A raw-file fallback can work for
+          // movies but cannot play those TV formats in Chrome or Android WebView.
+          if (info.supportsDirectPlay) {
+            const at = video.currentTime;
+            h.destroy();
+            hls = null;
+            video.src = directUrl;
+            video.addEventListener("loadedmetadata", () => {
               if (Number.isFinite(at) && at > 0) video.currentTime = at;
               void video.play().catch(() => {});
-            },
-            { once: true },
-          );
+            }, { once: true });
+          } else {
+            h.stopLoad();
+            setPlaybackError("The TV stream was interrupted. Tap retry to continue.");
+          }
         });
 
         // Keep playback moving if the buffer stalls mid-segment.
@@ -229,9 +248,12 @@ function WatchPage() {
           });
         });
 
-        hls.attachMedia(video);
         hls.on(Hls.Events.MEDIA_ATTACHED, () => hls?.loadSource(hlsUrl));
-        hls.on(Hls.Events.MANIFEST_PARSED, applyResumePosition);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          applyResumePosition();
+          void video.play().catch(() => {});
+        });
+        hls.attachMedia(video);
       } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
         video.src = hlsUrl;
         video.addEventListener("loadedmetadata", applyResumePosition, { once: true });
@@ -246,6 +268,7 @@ function WatchPage() {
     void setup();
     return () => {
       cancelled = true;
+      retryPlaybackRef.current = null;
       const sid = playSessionRef.current;
       const v = videoRef.current;
       try {
@@ -536,6 +559,19 @@ function WatchPage() {
           localStorage.setItem("aurora-volume", String(e.currentTarget.volume));
         }}
       />
+
+      {playbackError && (
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-background/90 px-6 text-center">
+          <p className="max-w-md text-sm text-foreground">{playbackError}</p>
+          <Button
+            type="button"
+            onClick={() => retryPlaybackRef.current?.()}
+            size="lg"
+          >
+            Retry playback
+          </Button>
+        </div>
+      )}
 
       {/* Skip flash indicator */}
       {seekFlash && (

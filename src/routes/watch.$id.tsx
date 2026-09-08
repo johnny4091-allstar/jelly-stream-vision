@@ -113,7 +113,8 @@ function WatchPage() {
     Math.floor(savedSeconds * 10_000_000),
   );
 
-  // Attach stream (HLS via hls.js, direct stream fallback)
+  // Attach the Jellyfin-transcoded HLS stream. TV episodes are commonly MKV
+  // with AC3/EAC3 audio, so they must never fall back to the raw source file.
   useEffect(() => {
     let cancelled = false;
     let hls: import("hls.js").default | null = null;
@@ -158,9 +159,6 @@ function WatchPage() {
       const hlsUrl = info.transcodingUrl
         ? `/api/proxy${info.transcodingUrl.replace(/^\//, "/")}`
         : `/api/proxy/Videos/${id}/master.m3u8?${params.toString()}`;
-      const directUrl = `/api/proxy/Videos/${id}/stream?static=true&mediaSourceId=${info.mediaSourceId}&PlaySessionId=${info.playSessionId}&DeviceId=${deviceId}`;
-
-
       const video = videoRef.current;
       const resumeSeconds = startTicks / 10_000_000;
       let resumeApplied = false;
@@ -206,8 +204,10 @@ function WatchPage() {
         let mediaRecoveries = 0;
         retryPlaybackRef.current = () => {
           setPlaybackError(null);
+          const at = video.currentTime;
           hls?.stopLoad();
-          hls?.startLoad(video.currentTime || -1);
+          hls?.loadSource(hlsUrl);
+          hls?.startLoad(Number.isFinite(at) && at > 0 ? at : -1);
           void video.play().catch(() => {});
         };
         hls.on(Hls.Events.ERROR, (_e, data) => {
@@ -224,21 +224,8 @@ function WatchPage() {
             h.recoverMediaError();
             return;
           }
-          // Most episodes are MKV/HEVC/EAC3. A raw-file fallback can work for
-          // movies but cannot play those TV formats in Chrome or Android WebView.
-          if (info.supportsDirectPlay) {
-            const at = video.currentTime;
-            h.destroy();
-            hls = null;
-            video.src = directUrl;
-            video.addEventListener("loadedmetadata", () => {
-              if (Number.isFinite(at) && at > 0) video.currentTime = at;
-              void video.play().catch(() => {});
-            }, { once: true });
-          } else {
-            h.stopLoad();
-            setPlaybackError("The TV stream was interrupted. Tap retry to continue.");
-          }
+          h.stopLoad();
+          setPlaybackError("The TV stream was interrupted. Tap retry to continue.");
         });
 
         // Keep playback moving if the buffer stalls mid-segment.
@@ -257,9 +244,19 @@ function WatchPage() {
       } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
         video.src = hlsUrl;
         video.addEventListener("loadedmetadata", applyResumePosition, { once: true });
+        retryPlaybackRef.current = () => {
+          setPlaybackError(null);
+          const at = video.currentTime;
+          video.src = hlsUrl;
+          video.addEventListener("loadedmetadata", () => {
+            if (Number.isFinite(at) && at > 0) video.currentTime = at;
+            void video.play().catch(() => {});
+          }, { once: true });
+          video.load();
+        };
       } else {
-        video.src = directUrl;
-        video.addEventListener("loadedmetadata", applyResumePosition, { once: true });
+        setPlaybackError("This Android version cannot play the compatible TV stream.");
+        return;
       }
       void video.play().catch(() => {});
 

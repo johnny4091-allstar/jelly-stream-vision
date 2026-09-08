@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/get-app")({
   head: () => ({
@@ -22,32 +23,68 @@ export const Route = createFileRoute("/get-app")({
 });
 
 function GetApp() {
+  const [countdown, setCountdown] = useState(4);
+
+  // Auto-start the APK download, then send the user into the live Aurora site
+  // so the flow never dead-ends on a Chrome warning.
+  useEffect(() => {
+    const dl = window.setTimeout(() => {
+      const a = document.createElement("a");
+      a.href = "/download/aurora.apk";
+      a.download = "aurora.apk";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }, 400);
+
+    const tick = window.setInterval(
+      () => setCountdown((c) => (c > 0 ? c - 1 : 0)),
+      1000,
+    );
+    const go = window.setTimeout(() => {
+      window.location.href = "/";
+    }, 4500);
+
+    return () => {
+      window.clearTimeout(dl);
+      window.clearInterval(tick);
+      window.clearTimeout(go);
+    };
+  }, []);
+
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-6 px-6 py-16">
       <h1 className="text-3xl font-semibold tracking-tight">Aurora for Android</h1>
       <p className="text-muted-foreground text-sm">
-        Tap the button below on your phone. When Chrome asks, choose “Download
-        anyway”, then open the file and allow installing from this source.
+        Your download started automatically. If Chrome shows a warning, choose
+        “Download anyway”. Taking you to Aurora in {countdown}…
       </p>
+
+      <a
+        href="/"
+        className="bg-primary text-primary-foreground rounded-lg px-5 py-4 text-center text-base font-medium"
+      >
+        Open Aurora now
+      </a>
 
       <a
         href="/download/aurora.apk"
         download="aurora.apk"
-        className="bg-primary text-primary-foreground rounded-lg px-5 py-4 text-center text-base font-medium"
+        className="border-border text-foreground rounded-lg border px-5 py-4 text-center text-base font-medium"
       >
-        Download Aurora (3.6 MB)
+        Download again (3.6 MB)
       </a>
 
       <ol className="text-muted-foreground list-decimal space-y-2 pl-5 text-sm">
-        <li>Tap Download. If a warning appears, choose “Download anyway”.</li>
+        <li>Download starts by itself. If a warning appears, choose “Download anyway”.</li>
         <li>Open the downloaded file from the notification or Downloads.</li>
         <li>Allow “install unknown apps” for Chrome or Files, then Install.</li>
         <li>Open Aurora from your home screen and sign in.</li>
       </ol>
 
       <p className="text-muted-foreground text-xs">
-        If nothing happens, you may be inside another app’s browser. Open this
-        page in Chrome and try again.
+        Already installed or prefer the browser? You’re being sent to the live
+        Aurora site automatically.
       </p>
     </main>
   );

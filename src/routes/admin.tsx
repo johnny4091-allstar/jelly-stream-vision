@@ -43,6 +43,14 @@ function AdminPage() {
 
   const accounts = useQuery({ queryKey: ["accounts"], queryFn: () => list() });
 
+  const activity = useQuery({
+    queryKey: ["active-sessions"],
+    queryFn: () => getActiveSessionsFn(),
+    refetchInterval: 5000,
+    refetchIntervalInBackground: false,
+  });
+
+
   const empty = { username: "", password: "", jfUsername: "", jfPassword: "", isAdmin: false };
   const [form, setForm] = useState(empty);
   const [error, setError] = useState<string | null>(null);

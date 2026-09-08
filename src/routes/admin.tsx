@@ -10,6 +10,8 @@ import {
   setPasswordFn,
 } from "@/lib/accounts.functions";
 import { getSessionFn } from "@/lib/auth.functions";
+import { getActiveSessionsFn } from "@/lib/jellyfin.functions";
+
 
 export const Route = createFileRoute("/admin")({
   beforeLoad: async () => {

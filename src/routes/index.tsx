@@ -1,4 +1,4 @@
-import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { Info, Play } from "lucide-react";
 
@@ -33,7 +33,12 @@ export const Route = createFileRoute("/")({
     const session = await getSessionFn();
     if (!session) throw redirect({ to: "/login" });
   },
-  loader: ({ context }) => context.queryClient.ensureQueryData(homeQuery),
+  loader: async ({ context }) => {
+    await Promise.all([
+      context.queryClient.ensureQueryData(homeQuery),
+      context.queryClient.ensureQueryData(postersQuery),
+    ]);
+  },
   head: () => ({
     meta: [
       { title: "Aurora — Home" },
@@ -49,7 +54,7 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   const { data } = useSuspenseQuery(homeQuery);
-  const { data: posters = [] } = useQuery(postersQuery);
+  const { data: posters = [] } = useSuspenseQuery(postersQuery);
   const hero = data.hero;
   const [filter, setFilter] = useMediaFilter();
   const posterIndex = buildPosterIndex(posters);

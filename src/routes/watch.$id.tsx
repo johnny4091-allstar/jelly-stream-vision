@@ -350,6 +350,7 @@ function WatchPage() {
         deviceId: deviceIdRef.current,
         positionTicks: Math.floor(time * 10_000_000),
         kind: "Started",
+        playMethod: playMethodRef.current,
       },
     });
     const timer = setInterval(() => {
@@ -362,6 +363,7 @@ function WatchPage() {
           deviceId: deviceIdRef.current,
           positionTicks: Math.floor(v.currentTime * 10_000_000),
           kind: "Progress",
+          playMethod: playMethodRef.current,
           isPaused: v.paused,
         },
       });
@@ -405,6 +407,7 @@ function WatchPage() {
           deviceId: deviceIdRef.current,
           positionTicks: Math.floor((v?.currentTime ?? time) * 10_000_000),
           kind: "Stopped",
+          playMethod: playMethodRef.current,
         },
       });
     };
@@ -423,6 +426,7 @@ function WatchPage() {
           deviceId: deviceIdRef.current,
           positionTicks: Math.floor((v?.currentTime ?? 0) * 10_000_000),
           kind: "Stopped",
+          playMethod: playMethodRef.current,
         },
       });
       if (sid) void stopTranscode({ data: { playSessionId: sid, deviceId: deviceIdRef.current } });
@@ -550,6 +554,7 @@ function WatchPage() {
           deviceId: deviceIdRef.current,
               positionTicks: Math.floor(e.currentTarget.currentTime * 10_000_000),
               kind: "Progress",
+              playMethod: playMethodRef.current,
               isPaused: true,
             },
           });
@@ -563,6 +568,7 @@ function WatchPage() {
           deviceId: deviceIdRef.current,
               positionTicks: Math.floor(e.currentTarget.currentTime * 10_000_000),
               kind: "Progress",
+              playMethod: playMethodRef.current,
               isPaused: e.currentTarget.paused,
             },
           });
@@ -576,6 +582,7 @@ function WatchPage() {
           deviceId: deviceIdRef.current,
               positionTicks: Math.floor(e.currentTarget.currentTime * 10_000_000),
               kind: "Stopped",
+              playMethod: playMethodRef.current,
             },
           });
           if (!markedPlayedRef.current) {

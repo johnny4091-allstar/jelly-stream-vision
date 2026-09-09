@@ -17,6 +17,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ProfilesRouteImport } from './routes/profiles'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SetupRouteImport } from './routes/setup'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as WatchlistRouteImport } from './routes/watchlist'
 import { Route as LibraryIdRouteImport } from './routes/library.$id'
 import { Route as TitleIdRouteImport } from './routes/title.$id'
@@ -63,6 +64,11 @@ const SetupRoute = SetupRouteImport.update({
   path: '/setup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WatchlistRoute = WatchlistRouteImport.update({
   id: '/watchlist',
   path: '/watchlist',
@@ -98,6 +104,7 @@ export interface FileRoutesByFullPath {
   '/profiles': typeof ProfilesRoute
   '/search': typeof SearchRoute
   '/setup': typeof SetupRoute
+  '/signup': typeof SignupRoute
   '/watchlist': typeof WatchlistRoute
   '/library/$id': typeof LibraryIdRoute
   '/title/$id': typeof TitleIdRoute
@@ -113,6 +120,7 @@ export interface FileRoutesByTo {
   '/profiles': typeof ProfilesRoute
   '/search': typeof SearchRoute
   '/setup': typeof SetupRoute
+  '/signup': typeof SignupRoute
   '/watchlist': typeof WatchlistRoute
   '/library/$id': typeof LibraryIdRoute
   '/title/$id': typeof TitleIdRoute
@@ -129,6 +137,7 @@ export interface FileRoutesById {
   '/profiles': typeof ProfilesRoute
   '/search': typeof SearchRoute
   '/setup': typeof SetupRoute
+  '/signup': typeof SignupRoute
   '/watchlist': typeof WatchlistRoute
   '/library/$id': typeof LibraryIdRoute
   '/title/$id': typeof TitleIdRoute
@@ -146,6 +155,7 @@ export interface FileRouteTypes {
     | '/profiles'
     | '/search'
     | '/setup'
+    | '/signup'
     | '/watchlist'
     | '/library/$id'
     | '/title/$id'
@@ -161,6 +171,7 @@ export interface FileRouteTypes {
     | '/profiles'
     | '/search'
     | '/setup'
+    | '/signup'
     | '/watchlist'
     | '/library/$id'
     | '/title/$id'
@@ -176,6 +187,7 @@ export interface FileRouteTypes {
     | '/profiles'
     | '/search'
     | '/setup'
+    | '/signup'
     | '/watchlist'
     | '/library/$id'
     | '/title/$id'
@@ -192,6 +204,7 @@ export interface RootRouteChildren {
   ProfilesRoute: typeof ProfilesRoute
   SearchRoute: typeof SearchRoute
   SetupRoute: typeof SetupRoute
+  SignupRoute: typeof SignupRoute
   WatchlistRoute: typeof WatchlistRoute
   LibraryIdRoute: typeof LibraryIdRoute
   TitleIdRoute: typeof TitleIdRoute
@@ -257,6 +270,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SetupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/watchlist': {
       id: '/watchlist'
       path: '/watchlist'
@@ -304,6 +324,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfilesRoute: ProfilesRoute,
   SearchRoute: SearchRoute,
   SetupRoute: SetupRoute,
+  SignupRoute: SignupRoute,
   WatchlistRoute: WatchlistRoute,
   LibraryIdRoute: LibraryIdRoute,
   TitleIdRoute: TitleIdRoute,

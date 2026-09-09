@@ -1,4 +1,4 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 
@@ -101,6 +101,13 @@ function LoginPage() {
           >
             {busy ? "Signing in…" : "Sign In"}
           </button>
+          <p className="text-center text-sm text-muted-foreground">
+            New here?{" "}
+            <Link to="/signup" className="font-medium text-primary hover:underline">
+              Create an account
+            </Link>
+          </p>
+
         </form>
       </div>
     </div>

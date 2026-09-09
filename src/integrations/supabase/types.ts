@@ -17,6 +17,7 @@ export type Database = {
       app_users: {
         Row: {
           created_at: string
+          expires_at: string | null
           id: string
           is_admin: boolean
           jf_password_enc: string | null
@@ -27,6 +28,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          expires_at?: string | null
           id?: string
           is_admin?: boolean
           jf_password_enc?: string | null
@@ -37,6 +39,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          expires_at?: string | null
           id?: string
           is_admin?: boolean
           jf_password_enc?: string | null

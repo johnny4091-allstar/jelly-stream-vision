@@ -90,6 +90,9 @@ function WatchPage() {
   const [duration, setDuration] = useState(0);
   const [showControls, setShowControls] = useState(true);
   const [playbackError, setPlaybackError] = useState<string | null>(null);
+  const [playMode, setPlayMode] = useState<"DirectPlay" | "DirectStream" | "Transcode" | null>(null);
+  const playMethodRef = useRef<"DirectPlay" | "DirectStream" | "Transcode">("Transcode");
+
   const retryPlaybackRef = useRef<(() => void) | null>(null);
   const [seekFlash, setSeekFlash] = useState<{ dir: -1 | 1; key: number } | null>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);

@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { getSessionFn } from "@/lib/auth.functions";
 import { logWatchFn } from "@/lib/history.functions";
 import {
-  getItemFn,
+  getPlayableItemFn,
   getPlaybackInfoFn,
   reportPlayingFn,
   stopTranscodeFn,
@@ -26,7 +26,7 @@ import {
 import { episodeLabel } from "@/lib/jellyfin.types";
 
 const itemQuery = (id: string) =>
-  queryOptions({ queryKey: ["item", id], queryFn: () => getItemFn({ data: { id } }) });
+  queryOptions({ queryKey: ["playable-item", id], queryFn: () => getPlayableItemFn({ data: { id } }) });
 
 export const Route = createFileRoute("/watch/$id")({
   beforeLoad: async () => {

@@ -34,11 +34,7 @@ export const Route = createFileRoute("/watch/$id")({
     if (!session) throw redirect({ to: "/login" });
   },
   loader: async ({ context, params }) => {
-    const item = await context.queryClient.ensureQueryData(itemQuery(params.id));
-    if (item.Id !== params.id) {
-      throw redirect({ to: "/watch/$id", params: { id: item.Id }, replace: true });
-    }
-    return item;
+    return context.queryClient.ensureQueryData(itemQuery(params.id));
   },
   head: ({ loaderData }) => ({
     meta: [
@@ -114,8 +110,11 @@ function WatchPage() {
   );
 
   const title = item.SeriesName ? `${item.SeriesName} — ${episodeLabel(item)}` : item.Name;
+  // Old links can contain a truncated Jellyfin ID. getItemFn resolves those,
+  // and every playback request must use the canonical ID returned by Jellyfin.
+  const playbackId = item.Id;
   const savedSeconds =
-    typeof window !== "undefined" ? Number(localStorage.getItem(posKey(id)) ?? 0) : 0;
+    typeof window !== "undefined" ? Number(localStorage.getItem(posKey(playbackId)) ?? 0) : 0;
   const startTicks = Math.max(
     item.UserData?.PlaybackPositionTicks ?? 0,
     Math.floor(savedSeconds * 10_000_000),
@@ -136,7 +135,7 @@ function WatchPage() {
       if (cancelled) return;
       let info: Awaited<ReturnType<typeof getPlaybackInfo>>;
       try {
-        info = await getPlaybackInfo({ data: { itemId: id, startTicks, deviceId, capabilities } });
+        info = await getPlaybackInfo({ data: { itemId: playbackId, startTicks, deviceId, capabilities } });
       } catch {
         if (!cancelled) setPlaybackError("The stream could not be started. Tap retry.");
         return;
@@ -184,14 +183,14 @@ function WatchPage() {
             negotiated.searchParams.delete("BreakOnNonKeyFrames");
             return `/api/proxy${negotiated.pathname}${negotiated.search}`;
           })()
-        : `/api/proxy/Videos/${id}/master.m3u8?${params.toString()}`;
+        : `/api/proxy/Videos/${playbackId}/master.m3u8?${params.toString()}`;
       const directParams = new URLSearchParams({
         static: "true",
         mediaSourceId: info.mediaSourceId,
         PlaySessionId: info.playSessionId,
         DeviceId: deviceId,
       });
-      const directUrl = `/api/proxy/Videos/${id}/stream?${directParams.toString()}`;
+      const directUrl = `/api/proxy/Videos/${playbackId}/stream?${directParams.toString()}`;
       const video = videoRef.current;
       const resumeSeconds = startTicks / 10_000_000;
       let resumeApplied = false;
@@ -354,7 +353,7 @@ function WatchPage() {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [playbackId]);
 
 
   // Progress reporting
@@ -362,7 +361,7 @@ function WatchPage() {
     if (!playing) return;
     void reportPlaying({
       data: {
-        itemId: id,
+        itemId: playbackId,
         playSessionId: playSessionRef.current,
         deviceId: deviceIdRef.current,
         positionTicks: Math.floor(time * 10_000_000),
@@ -375,7 +374,7 @@ function WatchPage() {
       if (!v) return;
       void reportPlaying({
         data: {
-          itemId: id,
+          itemId: playbackId,
           playSessionId: playSessionRef.current,
           deviceId: deviceIdRef.current,
           positionTicks: Math.floor(v.currentTime * 10_000_000),
@@ -397,7 +396,7 @@ function WatchPage() {
       lastLogged = now;
       void logWatch({
         data: {
-          itemId: id,
+          itemId: playbackId,
           title: histTitle,
           subtitle: histSubtitle,
           itemType: item.Type ?? "Movie",
@@ -419,7 +418,7 @@ function WatchPage() {
       const v = videoRef.current;
       void reportPlaying({
         data: {
-          itemId: id,
+          itemId: playbackId,
           playSessionId: playSessionRef.current,
           deviceId: deviceIdRef.current,
           positionTicks: Math.floor((v?.currentTime ?? time) * 10_000_000),
@@ -429,7 +428,7 @@ function WatchPage() {
       });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, playing]);
+  }, [playbackId, playing]);
 
   // Closing the tab or backgrounding the phone must also kill the server-side transcode.
   useEffect(() => {
@@ -438,7 +437,7 @@ function WatchPage() {
       const sid = playSessionRef.current;
       void reportPlaying({
         data: {
-          itemId: id,
+          itemId: playbackId,
           playSessionId: sid,
           deviceId: deviceIdRef.current,
           positionTicks: Math.floor((v?.currentTime ?? 0) * 10_000_000),
@@ -451,7 +450,7 @@ function WatchPage() {
     window.addEventListener("pagehide", teardown);
     return () => window.removeEventListener("pagehide", teardown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [playbackId]);
 
   // Unlock orientation when leaving fullscreen
   useEffect(() => {
@@ -542,7 +541,7 @@ function WatchPage() {
     const whole = Math.floor(seconds);
     if (whole === lastSavedSecond.current) return;
     lastSavedSecond.current = whole;
-    localStorage.setItem(posKey(id), String(seconds));
+    localStorage.setItem(posKey(playbackId), String(seconds));
   }
 
   return (
@@ -566,7 +565,7 @@ function WatchPage() {
           savePosition(e.currentTarget.currentTime);
           void reportPlaying({
             data: {
-              itemId: id,
+              itemId: playbackId,
               playSessionId: playSessionRef.current,
           deviceId: deviceIdRef.current,
               positionTicks: Math.floor(e.currentTarget.currentTime * 10_000_000),
@@ -580,7 +579,7 @@ function WatchPage() {
           savePosition(e.currentTarget.currentTime);
           void reportPlaying({
             data: {
-              itemId: id,
+              itemId: playbackId,
               playSessionId: playSessionRef.current,
           deviceId: deviceIdRef.current,
               positionTicks: Math.floor(e.currentTarget.currentTime * 10_000_000),
@@ -591,10 +590,10 @@ function WatchPage() {
           });
         }}
         onEnded={(e) => {
-          localStorage.removeItem(posKey(id));
+          localStorage.removeItem(posKey(playbackId));
           void reportPlaying({
             data: {
-              itemId: id,
+              itemId: playbackId,
               playSessionId: playSessionRef.current,
           deviceId: deviceIdRef.current,
               positionTicks: Math.floor(e.currentTarget.currentTime * 10_000_000),
@@ -604,7 +603,7 @@ function WatchPage() {
           });
           if (!markedPlayedRef.current) {
             markedPlayedRef.current = true;
-            void setPlayed({ data: { itemId: id, played: true } });
+            void setPlayed({ data: { itemId: playbackId, played: true } });
           }
         }}
         onTimeUpdate={(e) => {
@@ -617,8 +616,8 @@ function WatchPage() {
             v.currentTime / v.duration >= 0.95
           ) {
             markedPlayedRef.current = true;
-            localStorage.removeItem(posKey(id));
-            void setPlayed({ data: { itemId: id, played: true } });
+            localStorage.removeItem(posKey(playbackId));
+            void setPlayed({ data: { itemId: playbackId, played: true } });
           }
         }}
         onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}

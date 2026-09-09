@@ -155,7 +155,7 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
         VideoCodec: c.videoCodecs.join(","),
         AudioCodec: c.audioCodecs.join(","),
       }));
-    const res = await jfPost<{
+    type PlaybackInfoResponse = {
       PlaySessionId: string;
       MediaSources: {
         Id: string;
@@ -166,9 +166,9 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
         Container?: string;
         MediaStreams?: { Type: string; Index: number; IsDefault?: boolean }[];
       }[];
-    }>(
-      `/Items/${data.itemId}/PlaybackInfo?UserId=${s.userId}&StartTimeTicks=${data.startTicks ?? 0}`,
-      {
+    };
+    const playbackPath = `/Items/${data.itemId}/PlaybackInfo?UserId=${s.userId}&StartTimeTicks=${data.startTicks ?? 0}`;
+    const fixedProfile = {
         DeviceProfile: {
           // Keep transcoded TV episodes comfortably ahead of playback. Original
           // files can still direct-play at the higher static bitrate below.
@@ -194,10 +194,45 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
         },
 
         AutoOpenLiveStream: true,
-      },
-      s.token,
-      data.deviceId,
-    );
+    };
+    let res: PlaybackInfoResponse | null = null;
+    try {
+      res = await jfPost<PlaybackInfoResponse>(playbackPath, fixedProfile, s.token, data.deviceId);
+    } catch (error) {
+      // Some Jellyfin versions reject detailed browser profiles intermittently.
+      // Retry with the minimal HLS profile before falling back to the known-good
+      // master playlist endpoint.
+      console.warn("Jellyfin playback negotiation failed; retrying minimal HLS", error);
+      try {
+        res = await jfPost<PlaybackInfoResponse>(
+          playbackPath,
+          {
+            DeviceProfile: {
+              MaxStreamingBitrate: 8_000_000,
+              MaxStaticBitrate: 8_000_000,
+              DirectPlayProfiles: [],
+              TranscodingProfiles: [
+                {
+                  Type: "Video",
+                  Container: "ts",
+                  Protocol: "hls",
+                  VideoCodec: "h264",
+                  AudioCodec: "aac",
+                  MaxAudioChannels: "2",
+                  Context: "Streaming",
+                },
+              ],
+              SubtitleProfiles: [],
+            },
+            AutoOpenLiveStream: true,
+          },
+          s.token,
+          data.deviceId,
+        );
+      } catch (retryError) {
+        console.warn("Jellyfin playback negotiation unavailable; using direct HLS endpoint", retryError);
+      }
+    }
     const src = res?.MediaSources?.[0];
     const audioIndex =
       src?.DefaultAudioStreamIndex ??
@@ -205,8 +240,8 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
       src?.MediaStreams?.find((m) => m.Type === "Audio")?.Index;
     const canDirect = Boolean(src?.SupportsDirectPlay || src?.SupportsDirectStream);
     return {
-      playSessionId: res?.PlaySessionId ?? "",
-      mediaSourceId: src?.Id ?? "",
+      playSessionId: res?.PlaySessionId ?? crypto.randomUUID().replaceAll("-", ""),
+      mediaSourceId: src?.Id ?? data.itemId,
       audioStreamIndex: audioIndex ?? null,
       // Jellyfin's own transcode URL already carries the correct, working parameters.
       transcodingUrl: src?.TranscodingUrl
@@ -220,12 +255,13 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
         : null,
       supportsDirectPlay: Boolean(src?.SupportsDirectPlay),
       supportsDirectStream: Boolean(src?.SupportsDirectStream),
-      playMethod: (canDirect
+      playMethod: (src && canDirect
         ? src?.SupportsDirectPlay
           ? "DirectPlay"
           : "DirectStream"
         : "Transcode") as "DirectPlay" | "DirectStream" | "Transcode",
       container: src?.Container ?? null,
+      usedFallback: !src,
     };
 
   });

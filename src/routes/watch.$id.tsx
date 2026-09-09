@@ -180,6 +180,15 @@ function WatchPage() {
             // A default ASS/PGS subtitle made Jellyfin burn every frame for many
             // episodes, producing a 120 Mbps stream that never started in time.
             negotiated.searchParams.set("SubtitleStreamIndex", "-1");
+            // Force browser-playable stereo AAC: Jellyfin often negotiates a
+            // copy of EAC3/DTS/TrueHD, which plays video but produces no sound.
+            negotiated.searchParams.set("AudioCodec", "aac");
+            negotiated.searchParams.set("TranscodingMaxAudioChannels", "2");
+            negotiated.searchParams.set("MaxAudioChannels", "2");
+            negotiated.searchParams.set("AudioBitrate", "192000");
+            negotiated.searchParams.delete("AudioStreamIndexCopy");
+            if (info.audioStreamIndex != null)
+              negotiated.searchParams.set("AudioStreamIndex", String(info.audioStreamIndex));
             negotiated.searchParams.delete("BreakOnNonKeyFrames");
             return `/api/proxy${negotiated.pathname}${negotiated.search}`;
           })()

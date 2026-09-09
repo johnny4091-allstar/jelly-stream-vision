@@ -49,6 +49,9 @@ export const loginFn = createServerFn({ method: "POST" })
       if (auth.reason === "no_user") {
         return { ok: false as const, error: `No Aurora account named "${data.username.trim()}" exists. Check the spelling or ask the admin to create it.` };
       }
+      if (auth.reason === "expired") {
+        return { ok: false as const, error: "This account has expired. Ask the admin to extend it." };
+      }
       if (auth.reason === "bad_password") {
         return { ok: false as const, error: "That password doesn't match this Aurora account." };
       }

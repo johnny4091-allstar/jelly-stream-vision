@@ -428,3 +428,31 @@ export const getActiveSessionsFn = createServerFn({ method: "GET" }).handler(
     });
   },
 );
+
+/**
+ * Series and Season IDs are not playable — Jellyfin returns 500 for PlaybackInfo
+ * on them. Resolve those to the next-up (or first) episode before playback.
+ */
+export const getPlayableItemFn = createServerFn({ method: "GET" })
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    const s = await requireSession();
+    const fields = "Overview,People,Genres,MediaSources";
+    const item = await getItemFn({ data: { id: data.id } });
+    if (item.Type !== "Series" && item.Type !== "Season") return item;
+
+    const seriesId = item.Type === "Season" ? (item.SeriesId ?? item.Id) : item.Id;
+    const nextUp = await jfGet<{ Items?: JfItem[] }>(
+      `/Shows/NextUp?UserId=${s.userId}&SeriesId=${seriesId}&Limit=1&Fields=${fields}`,
+      s.token,
+    );
+    const candidate =
+      nextUp.Items?.[0] ??
+      (
+        await jfGet<{ Items?: JfItem[] }>(
+          `/Shows/${seriesId}/Episodes?UserId=${s.userId}${item.Type === "Season" ? `&SeasonId=${item.Id}` : ""}&Limit=1&Fields=${fields}`,
+          s.token,
+        )
+      ).Items?.[0];
+    return candidate ?? item;
+  });

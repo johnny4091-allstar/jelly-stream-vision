@@ -56,9 +56,10 @@ function GetApp() {
     <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center gap-6 px-6 py-16">
       <h1 className="text-3xl font-semibold tracking-tight">Aurora for Android</h1>
       <p className="text-muted-foreground text-sm">
-        Your download started automatically. If Chrome shows a warning, choose
-        “Download anyway”. Taking you to Aurora in {countdown}…
+        Version 1.1.0. Your download started automatically. If Chrome shows a
+        warning, choose “Download anyway”. Taking you to Aurora in {countdown}…
       </p>
+
 
       <a
         href="/"
@@ -72,7 +73,7 @@ function GetApp() {
         download="aurora.apk"
         className="border-border text-foreground rounded-lg border px-5 py-4 text-center text-base font-medium"
       >
-        Download again (3.6 MB)
+        Download again (v1.1.0 · 4.1 MB)
       </a>
 
       <ol className="text-muted-foreground list-decimal space-y-2 pl-5 text-sm">

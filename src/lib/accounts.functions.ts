@@ -49,6 +49,7 @@ export const createAccountFn = createServerFn({ method: "POST" })
       jfUsername: string;
       jfPassword?: string;
       isAdmin: boolean;
+      expiresAt?: string | null;
     }) => data,
   )
   .handler(async ({ data }) => {
@@ -73,6 +74,18 @@ export const createAccountFn = createServerFn({ method: "POST" })
         error: msg.includes("duplicate") ? "That username is already taken." : msg,
       };
     }
+    return { ok: true as const };
+  });
+
+export const setExpiryFn = createServerFn({ method: "POST" })
+  .inputValidator((data: { id: string; expiresAt: string | null }) => data)
+  .handler(async ({ data }) => {
+    await requireAdmin();
+    if (data.expiresAt && Number.isNaN(new Date(data.expiresAt).getTime())) {
+      return { ok: false as const, error: "That date could not be understood." };
+    }
+    const { setExpiry } = await import("./accounts.server");
+    await setExpiry(data.id, data.expiresAt ? new Date(data.expiresAt).toISOString() : null);
     return { ok: true as const };
   });
 

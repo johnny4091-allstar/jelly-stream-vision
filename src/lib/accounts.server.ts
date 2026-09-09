@@ -9,6 +9,7 @@ export type AppUserRow = {
   jf_user_id: string | null;
   is_admin: boolean;
   created_at: string;
+  expires_at: string | null;
 };
 
 async function admin() {
@@ -29,12 +30,12 @@ export async function listAccounts() {
   const db = await admin();
   const { data, error } = await db
     .from("app_users")
-    .select("id, username, jf_username, is_admin, created_at")
+    .select("id, username, jf_username, is_admin, created_at, expires_at")
     .order("created_at", { ascending: true });
   if (error) throw error;
   return (data ?? []) as Pick<
     AppUserRow,
-    "id" | "username" | "jf_username" | "is_admin" | "created_at"
+    "id" | "username" | "jf_username" | "is_admin" | "created_at" | "expires_at"
   >[];
 }
 
@@ -45,6 +46,7 @@ export async function createAccount(input: {
   jfPassword?: string;
   jfUserId?: string;
   isAdmin: boolean;
+  expiresAt?: string | null;
 }) {
   const db = await admin();
   const { error } = await db.from("app_users").insert({
@@ -54,6 +56,7 @@ export async function createAccount(input: {
     jf_password_enc: input.jfPassword ? await encryptSecret(input.jfPassword) : null,
     jf_user_id: input.jfUserId ?? null,
     is_admin: input.isAdmin,
+    expires_at: input.expiresAt || null,
   });
   if (error) throw new Error(error.message);
 }
@@ -61,6 +64,12 @@ export async function createAccount(input: {
 export async function deleteAccount(id: string) {
   const db = await admin();
   const { error } = await db.from("app_users").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+export async function setExpiry(id: string, expiresAt: string | null) {
+  const db = await admin();
+  const { error } = await db.from("app_users").update({ expires_at: expiresAt }).eq("id", id);
   if (error) throw new Error(error.message);
 }
 
@@ -85,7 +94,7 @@ export type AuthResult =
         jfPassword: string | null;
       };
     }
-  | { ok: false; reason: "db_error" | "no_user" | "bad_password"; detail?: string };
+  | { ok: false; reason: "db_error" | "no_user" | "bad_password" | "expired"; detail?: string };
 
 /** Authenticates against the Aurora account table, reporting why a failure happened. */
 export async function authenticateAccount(
@@ -103,6 +112,9 @@ export async function authenticateAccount(
   if (!row) return { ok: false, reason: "no_user" };
   if (!(await verifyPassword(password, row.password_hash))) {
     return { ok: false, reason: "bad_password" };
+  }
+  if (row.expires_at && new Date(row.expires_at).getTime() <= Date.now()) {
+    return { ok: false, reason: "expired", detail: row.expires_at };
   }
   return {
     ok: true,

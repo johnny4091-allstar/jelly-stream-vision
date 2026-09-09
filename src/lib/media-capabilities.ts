@@ -30,7 +30,9 @@ const AUDIO_CODEC_MIMES: Record<string, string[]> = {
 /** container -> base MIME types worth probing for that container */
 const CONTAINERS: { container: string; mimes: string[] }[] = [
   { container: 'mp4,m4v,mov', mimes: ['video/mp4'] },
-  { container: 'mkv', mimes: ['video/x-matroska', 'video/mp4'] },
+  // Do not infer Matroska support from MP4 codec support. Chrome/WebView can
+  // decode many codecs found in MKV but cannot demux the MKV container itself.
+  { container: 'mkv', mimes: ['video/x-matroska'] },
   { container: 'webm', mimes: ['video/webm'] },
   { container: 'ts', mimes: ['video/mp2t'] },
 ];

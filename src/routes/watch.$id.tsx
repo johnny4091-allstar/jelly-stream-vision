@@ -166,7 +166,19 @@ function WatchPage() {
       // Prefer the exact transcode URL Jellyfin negotiated for this item;
       // it already has the right stream indexes for TV episodes (mkv/HEVC).
       const hlsUrl = info.transcodingUrl
-        ? `/api/proxy${info.transcodingUrl.replace(/^\//, "/")}`
+        ? (() => {
+            const negotiated = new URL(info.transcodingUrl, window.location.origin);
+            negotiated.searchParams.set("MaxStreamingBitrate", "8000000");
+            negotiated.searchParams.set("VideoBitrate", "6500000");
+            negotiated.searchParams.set("AudioBitrate", "192000");
+            negotiated.searchParams.set("MaxWidth", "1920");
+            negotiated.searchParams.set("MaxHeight", "1080");
+            // A default ASS/PGS subtitle made Jellyfin burn every frame for many
+            // episodes, producing a 120 Mbps stream that never started in time.
+            negotiated.searchParams.set("SubtitleStreamIndex", "-1");
+            negotiated.searchParams.delete("BreakOnNonKeyFrames");
+            return `/api/proxy${negotiated.pathname}${negotiated.search}`;
+          })()
         : `/api/proxy/Videos/${id}/master.m3u8?${params.toString()}`;
       const directParams = new URLSearchParams({
         static: "true",

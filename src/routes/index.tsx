@@ -33,7 +33,12 @@ export const Route = createFileRoute("/")({
     const session = await getSessionFn();
     if (!session) throw redirect({ to: "/login" });
   },
-  loader: ({ context }) => context.queryClient.ensureQueryData(homeQuery),
+  loader: async ({ context }) => {
+    await Promise.all([
+      context.queryClient.ensureQueryData(homeQuery),
+      context.queryClient.ensureQueryData(postersQuery),
+    ]);
+  },
   head: () => ({
     meta: [
       { title: "Aurora — Home" },

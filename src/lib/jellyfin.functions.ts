@@ -60,10 +60,25 @@ export const getItemFn = createServerFn({ method: "GET" })
   .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }) => {
     const s = await requireSession();
-    return await jfGet<JfItem>(
-      `/Users/${s.userId}/Items/${data.id}?Fields=Overview,People,Genres,MediaSources`,
-      s.token,
-    );
+    const fields = "Overview,People,Genres,MediaSources";
+    try {
+      return await jfGet<JfItem>(
+        `/Users/${s.userId}/Items/${data.id}?Fields=${fields}`,
+        s.token,
+      );
+    } catch (error) {
+      // Older links could lose the final character of Jellyfin's 32-character ID.
+      // Resolve a unique hexadecimal prefix so those links remain usable.
+      if (!/^[a-f0-9]{24,31}$/i.test(data.id)) throw error;
+      const result = await jfGet<{ Items?: JfItem[] }>(
+        `/Users/${s.userId}/Items?Recursive=true&IncludeItemTypes=Movie,Episode,Series&Fields=${fields}&Limit=10000`,
+        s.token,
+      );
+      const matches = (result.Items ?? []).filter((item) => item.Id.startsWith(data.id));
+      const match = matches[0];
+      if (matches.length !== 1 || !match) throw error;
+      return match;
+    }
   });
 
 export const getSeasonsFn = createServerFn({ method: "GET" })

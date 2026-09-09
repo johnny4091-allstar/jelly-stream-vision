@@ -33,8 +33,13 @@ export const Route = createFileRoute("/watch/$id")({
     const session = await getSessionFn();
     if (!session) throw redirect({ to: "/login" });
   },
-  loader: ({ context, params }) =>
-    context.queryClient.ensureQueryData(itemQuery(params.id)),
+  loader: async ({ context, params }) => {
+    const item = await context.queryClient.ensureQueryData(itemQuery(params.id));
+    if (item.Id !== params.id) {
+      throw redirect({ to: "/watch/$id", params: { id: item.Id }, replace: true });
+    }
+    return item;
+  },
   head: ({ loaderData }) => ({
     meta: [
       { title: `Watching ${loaderData?.Name ?? ""} — Aurora` },

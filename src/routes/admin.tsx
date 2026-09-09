@@ -7,6 +7,7 @@ import {
   createAccountFn,
   deleteAccountFn,
   listAccountsFn,
+  setExpiryFn,
   setPasswordFn,
 } from "@/lib/accounts.functions";
 import { getSessionFn } from "@/lib/auth.functions";
@@ -49,6 +50,7 @@ function AdminPage() {
   const create = useServerFn(createAccountFn);
   const remove = useServerFn(deleteAccountFn);
   const setPassword = useServerFn(setPasswordFn);
+  const setExpiry = useServerFn(setExpiryFn);
 
   const accounts = useQuery({ queryKey: ["accounts"], queryFn: () => list() });
 
@@ -60,7 +62,7 @@ function AdminPage() {
   });
 
 
-  const empty = { username: "", password: "", jfUsername: "", jfPassword: "", isAdmin: false };
+  const empty = { username: "", password: "", jfUsername: "", jfPassword: "", isAdmin: false, expiresAt: "" };
   const [form, setForm] = useState(empty);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -196,6 +198,16 @@ function AdminPage() {
                 className={field}
               />
             </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Access expires on</label>
+              <input
+                type="date"
+                value={form.expiresAt}
+                onChange={(e) => setForm({ ...form, expiresAt: e.target.value })}
+                className={field}
+              />
+              <p className="text-xs text-muted-foreground">Leave blank for no expiry.</p>
+            </div>
           </div>
           <label className="flex items-center gap-2 text-sm text-muted-foreground">
             <input
@@ -239,6 +251,11 @@ function AdminPage() {
                   )}
                 </p>
                 <p className="text-xs text-muted-foreground">Media server: {a.jf_username}</p>
+                <p className="text-xs text-muted-foreground">
+                  {a.expires_at
+                    ? `${new Date(a.expires_at).getTime() <= Date.now() ? "Expired" : "Expires"} ${new Date(a.expires_at).toLocaleDateString()}`
+                    : "No expiry"}
+                </p>
               </div>
               <div className="flex gap-2">
                 <button
@@ -251,6 +268,23 @@ function AdminPage() {
                   className="rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:border-foreground hover:text-foreground"
                 >
                   Change password
+                </button>
+                <button
+                  onClick={async () => {
+                    const input = window.prompt(
+                      `Expiry date for ${a.username} (YYYY-MM-DD, blank to remove)`,
+                      a.expires_at ? new Date(a.expires_at).toISOString().slice(0, 10) : "",
+                    );
+                    if (input === null) return;
+                    const res = await setExpiry({
+                      data: { id: a.id, expiresAt: input.trim() ? input.trim() : null },
+                    });
+                    if (!res.ok) window.alert(res.error);
+                    await accounts.refetch();
+                  }}
+                  className="rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground hover:border-foreground hover:text-foreground"
+                >
+                  Set expiry
                 </button>
                 <button
                   onClick={async () => {

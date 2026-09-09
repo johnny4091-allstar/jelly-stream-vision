@@ -660,10 +660,16 @@ function WatchPage() {
           </Link>
           <div>
             <h1 className="text-lg font-bold text-foreground sm:text-xl">{title}</h1>
-            {item.Type === "Episode" && (
-              <p className="text-sm text-muted-foreground">{item.Name}</p>
-            )}
+            <p className="text-sm text-muted-foreground">
+              {item.Type === "Episode" ? item.Name : null}
+              {playMode ? (
+                <span className="ml-2 rounded bg-secondary px-1.5 py-0.5 text-[11px] uppercase tracking-wide">
+                  {playMode === "Transcode" ? "Converted" : "Direct"}
+                </span>
+              ) : null}
+            </p>
           </div>
+
         </div>
 
         {/* Big center controls (mobile-first) */}

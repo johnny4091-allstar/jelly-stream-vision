@@ -129,3 +129,78 @@ export const createFirstAdminFn = createServerFn({ method: "POST" })
     });
     return { ok: true as const };
   });
+
+/** Creates a matching Jellyfin profile, then an Aurora account linked to it. */
+export const signupFn = createServerFn({ method: "POST" })
+  .inputValidator((data: { username: string; password: string }) => data)
+  .handler(async ({ data }) => {
+    const username = data.username.trim();
+    if (!/^[A-Za-z0-9._-]{3,32}$/.test(username)) {
+      return {
+        ok: false as const,
+        error: "Pick a name 3-32 characters long using letters, numbers, dots, dashes or underscores.",
+      };
+    }
+    if (data.password.length < 6) {
+      return { ok: false as const, error: "Password must be at least 6 characters." };
+    }
+
+    const { countAccounts, createAccount } = await import("./accounts.server");
+    const key = process.env["JELLYFIN_API_KEY"]!;
+
+    // Reuse an existing media profile with the same name, otherwise create one.
+    let jfUserId = await findJfUserId(username);
+    if (!jfUserId) {
+      const res = await fetch(jfBase() + "/Users/New", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Emby-Token": key,
+          "X-Emby-Authorization":
+            'MediaBrowser Client="Aurora", Device="Web", DeviceId="aurora-web", Version="1.0.0"',
+        },
+        body: JSON.stringify({ Name: username, Password: data.password }),
+      });
+      if (!res.ok) {
+        const detail = (await res.text().catch(() => "")).slice(0, 160).replace(/\s+/g, " ");
+        return {
+          ok: false as const,
+          error: `Could not create a media-server profile for "${username}". ${detail}`.trim(),
+        };
+      }
+      const created = (await res.json()) as { Id: string };
+      jfUserId = created.Id;
+    }
+
+    // Make sure the media password matches the Aurora one.
+    await fetch(jfBase() + `/Users/${jfUserId}/Password`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Emby-Token": key,
+        "X-Emby-Authorization":
+          'MediaBrowser Client="Aurora", Device="Web", DeviceId="aurora-web", Version="1.0.0"',
+      },
+      body: JSON.stringify({ CurrentPw: "", NewPw: data.password, ResetPassword: false }),
+    }).catch(() => null);
+
+    const isFirst = (await countAccounts()) === 0;
+    try {
+      await createAccount({
+        username,
+        password: data.password,
+        jfUsername: username,
+        jfPassword: data.password,
+        jfUserId,
+        isAdmin: isFirst,
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Could not create the account.";
+      return {
+        ok: false as const,
+        error: msg.includes("duplicate") ? "That username is already taken." : msg,
+      };
+    }
+    return { ok: true as const };
+  });
+

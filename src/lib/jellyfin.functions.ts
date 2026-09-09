@@ -121,10 +121,40 @@ export const getWatchlistFn = createServerFn({ method: "GET" }).handler(async ()
   return res.Items ?? [];
 });
 
+export interface ClientDirectPlayProfile {
+  container: string;
+  videoCodecs: string[];
+  audioCodecs: string[];
+}
+
+const FALLBACK_DIRECT_PLAY: ClientDirectPlayProfile[] = [
+  { container: "mp4,m4v", videoCodecs: ["h264", "vp9", "av1"], audioCodecs: ["aac", "mp3", "opus"] },
+  { container: "webm", videoCodecs: ["vp8", "vp9", "av1"], audioCodecs: ["vorbis", "opus"] },
+];
+
 export const getPlaybackInfoFn = createServerFn({ method: "POST" })
-  .inputValidator((data: { itemId: string; startTicks?: number; deviceId?: string }) => data)
+  .inputValidator(
+    (data: {
+      itemId: string;
+      startTicks?: number;
+      deviceId?: string;
+      capabilities?: ClientDirectPlayProfile[];
+    }) => data,
+  )
   .handler(async ({ data }) => {
     const s = await requireSession();
+    // Direct-play profiles come from what the device reports it can decode, so
+    // MKV/HEVC/AC3 files play untouched where supported and transcode elsewhere.
+    const caps =
+      data.capabilities && data.capabilities.length ? data.capabilities : FALLBACK_DIRECT_PLAY;
+    const directPlayProfiles = caps
+      .filter((c) => c.container && c.videoCodecs?.length && c.audioCodecs?.length)
+      .map((c) => ({
+        Type: "Video",
+        Container: c.container,
+        VideoCodec: c.videoCodecs.join(","),
+        AudioCodec: c.audioCodecs.join(","),
+      }));
     const res = await jfPost<{
       PlaySessionId: string;
       MediaSources: {
@@ -140,19 +170,9 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
       `/Items/${data.itemId}/PlaybackInfo?UserId=${s.userId}&StartTimeTicks=${data.startTicks ?? 0}`,
       {
         DeviceProfile: {
-          // Browsers can only direct-play mp4/webm with browser-safe codecs.
-          // Listing mkv/hevc here made TV episodes "direct play" and fail silently.
-          MaxStreamingBitrate: 8_000_000,
-          MaxStaticBitrate: 8_000_000,
-          DirectPlayProfiles: [
-            {
-              Type: "Video",
-              Container: "mp4,m4v",
-              VideoCodec: "h264,vp9,av1",
-              AudioCodec: "aac,mp3,opus",
-            },
-            { Type: "Video", Container: "webm", VideoCodec: "vp8,vp9,av1", AudioCodec: "vorbis,opus" },
-          ],
+          MaxStreamingBitrate: 120_000_000,
+          MaxStaticBitrate: 200_000_000,
+          DirectPlayProfiles: directPlayProfiles,
           TranscodingProfiles: [
             {
               Type: "Video",
@@ -177,6 +197,7 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
       src?.DefaultAudioStreamIndex ??
       src?.MediaStreams?.find((m) => m.Type === "Audio" && m.IsDefault)?.Index ??
       src?.MediaStreams?.find((m) => m.Type === "Audio")?.Index;
+    const canDirect = Boolean(src?.SupportsDirectPlay || src?.SupportsDirectStream);
     return {
       playSessionId: res?.PlaySessionId ?? "",
       mediaSourceId: src?.Id ?? "",
@@ -192,14 +213,21 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
           })()
         : null,
       supportsDirectPlay: Boolean(src?.SupportsDirectPlay),
+      supportsDirectStream: Boolean(src?.SupportsDirectStream),
+      playMethod: (canDirect
+        ? src?.SupportsDirectPlay
+          ? "DirectPlay"
+          : "DirectStream"
+        : "Transcode") as "DirectPlay" | "DirectStream" | "Transcode",
       container: src?.Container ?? null,
     };
 
   });
 
+
 export const reportPlayingFn = createServerFn({ method: "POST" })
   .inputValidator(
-    (data: { itemId: string; positionTicks: number; playSessionId: string; kind: "Started" | "Progress" | "Stopped"; isPaused?: boolean; deviceId?: string }) => data,
+    (data: { itemId: string; positionTicks: number; playSessionId: string; kind: "Started" | "Progress" | "Stopped"; isPaused?: boolean; deviceId?: string; playMethod?: "DirectPlay" | "DirectStream" | "Transcode" }) => data,
   )
   .handler(async ({ data }) => {
     const s = await requireSession();
@@ -213,8 +241,9 @@ export const reportPlayingFn = createServerFn({ method: "POST" })
         PositionTicks: Math.floor(data.positionTicks),
         CanSeek: true,
         IsPaused: data.isPaused ?? false,
-        PlayMethod: "Transcode",
+        PlayMethod: data.playMethod ?? "Transcode",
       },
+
       s.token,
       data.deviceId,
       );

@@ -90,6 +90,9 @@ function WatchPage() {
   const [duration, setDuration] = useState(0);
   const [showControls, setShowControls] = useState(true);
   const [playbackError, setPlaybackError] = useState<string | null>(null);
+  const [playMode, setPlayMode] = useState<"DirectPlay" | "DirectStream" | "Transcode" | null>(null);
+  const playMethodRef = useRef<"DirectPlay" | "DirectStream" | "Transcode">("Transcode");
+
   const retryPlaybackRef = useRef<(() => void) | null>(null);
   const [seekFlash, setSeekFlash] = useState<{ dir: -1 | 1; key: number } | null>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -113,8 +116,9 @@ function WatchPage() {
     Math.floor(savedSeconds * 10_000_000),
   );
 
-  // Attach the Jellyfin-transcoded HLS stream. TV episodes are commonly MKV
-  // with AC3/EAC3 audio, so they must never fall back to the raw source file.
+  // Play the original file (MKV/MP4/MOV/TS/WebM) when this device can decode it,
+  // otherwise fall back to Jellyfin's converted HLS stream. Never fall back to a
+  // raw file the browser cannot decode.
   useEffect(() => {
     let cancelled = false;
     let hls: import("hls.js").default | null = null;
@@ -122,15 +126,20 @@ function WatchPage() {
     async function setup() {
       setPlaybackError(null);
       const deviceId = deviceIdRef.current;
+      const { detectDirectPlayProfiles } = await import("@/lib/media-capabilities");
+      const capabilities = detectDirectPlayProfiles();
+      if (cancelled) return;
       let info: Awaited<ReturnType<typeof getPlaybackInfo>>;
       try {
-        info = await getPlaybackInfo({ data: { itemId: id, startTicks, deviceId } });
+        info = await getPlaybackInfo({ data: { itemId: id, startTicks, deviceId, capabilities } });
       } catch {
-        if (!cancelled) setPlaybackError("The TV stream could not be started. Tap retry.");
+        if (!cancelled) setPlaybackError("The stream could not be started. Tap retry.");
         return;
       }
       if (cancelled || !videoRef.current) return;
       playSessionRef.current = info.playSessionId;
+      playMethodRef.current = info.playMethod;
+      setPlayMode(info.playMethod);
 
       const params = new URLSearchParams({
         mediaSourceId: info.mediaSourceId,
@@ -159,6 +168,13 @@ function WatchPage() {
       const hlsUrl = info.transcodingUrl
         ? `/api/proxy${info.transcodingUrl.replace(/^\//, "/")}`
         : `/api/proxy/Videos/${id}/master.m3u8?${params.toString()}`;
+      const directParams = new URLSearchParams({
+        static: "true",
+        mediaSourceId: info.mediaSourceId,
+        PlaySessionId: info.playSessionId,
+        DeviceId: deviceId,
+      });
+      const directUrl = `/api/proxy/Videos/${id}/stream?${directParams.toString()}`;
       const video = videoRef.current;
       const resumeSeconds = startTicks / 10_000_000;
       let resumeApplied = false;
@@ -172,6 +188,33 @@ function WatchPage() {
       const mut = localStorage.getItem("aurora-muted");
       if (vol != null) video.volume = Math.min(1, Math.max(0, Number(vol)));
       if (mut != null) video.muted = mut === "1";
+
+      const attachDirect = () => {
+        video.src = directUrl;
+        video.addEventListener("loadedmetadata", applyResumePosition, { once: true });
+        retryPlaybackRef.current = () => {
+          setPlaybackError(null);
+          const at = video.currentTime;
+          video.src = directUrl;
+          video.addEventListener(
+            "loadedmetadata",
+            () => {
+              if (Number.isFinite(at) && at > 0) video.currentTime = at;
+              void video.play().catch(() => {});
+            },
+            { once: true },
+          );
+          video.load();
+        };
+        video.load();
+      };
+
+      // Original file plays untouched — best quality, no server load.
+      if (info.playMethod === "DirectPlay") {
+        attachDirect();
+        void video.play().catch(() => {});
+        return;
+      }
 
       const { default: Hls } = await import("hls.js");
       if (cancelled) return;
@@ -225,7 +268,7 @@ function WatchPage() {
             return;
           }
           h.stopLoad();
-          setPlaybackError("The TV stream was interrupted. Tap retry to continue.");
+          setPlaybackError("The stream was interrupted. Tap retry to continue.");
         });
 
         // Keep playback moving if the buffer stalls mid-segment.
@@ -254,13 +297,18 @@ function WatchPage() {
           }, { once: true });
           video.load();
         };
+      } else if (info.supportsDirectStream) {
+        playMethodRef.current = "DirectStream";
+        setPlayMode("DirectStream");
+        attachDirect();
       } else {
-        setPlaybackError("This Android version cannot play the compatible TV stream.");
+        setPlaybackError("This device cannot play the compatible stream.");
         return;
       }
       void video.play().catch(() => {});
 
     }
+
 
     void setup();
     return () => {
@@ -302,6 +350,7 @@ function WatchPage() {
         deviceId: deviceIdRef.current,
         positionTicks: Math.floor(time * 10_000_000),
         kind: "Started",
+        playMethod: playMethodRef.current,
       },
     });
     const timer = setInterval(() => {
@@ -314,6 +363,7 @@ function WatchPage() {
           deviceId: deviceIdRef.current,
           positionTicks: Math.floor(v.currentTime * 10_000_000),
           kind: "Progress",
+          playMethod: playMethodRef.current,
           isPaused: v.paused,
         },
       });
@@ -357,6 +407,7 @@ function WatchPage() {
           deviceId: deviceIdRef.current,
           positionTicks: Math.floor((v?.currentTime ?? time) * 10_000_000),
           kind: "Stopped",
+          playMethod: playMethodRef.current,
         },
       });
     };
@@ -375,6 +426,7 @@ function WatchPage() {
           deviceId: deviceIdRef.current,
           positionTicks: Math.floor((v?.currentTime ?? 0) * 10_000_000),
           kind: "Stopped",
+          playMethod: playMethodRef.current,
         },
       });
       if (sid) void stopTranscode({ data: { playSessionId: sid, deviceId: deviceIdRef.current } });
@@ -502,6 +554,7 @@ function WatchPage() {
           deviceId: deviceIdRef.current,
               positionTicks: Math.floor(e.currentTarget.currentTime * 10_000_000),
               kind: "Progress",
+              playMethod: playMethodRef.current,
               isPaused: true,
             },
           });
@@ -515,6 +568,7 @@ function WatchPage() {
           deviceId: deviceIdRef.current,
               positionTicks: Math.floor(e.currentTarget.currentTime * 10_000_000),
               kind: "Progress",
+              playMethod: playMethodRef.current,
               isPaused: e.currentTarget.paused,
             },
           });
@@ -528,6 +582,7 @@ function WatchPage() {
           deviceId: deviceIdRef.current,
               positionTicks: Math.floor(e.currentTarget.currentTime * 10_000_000),
               kind: "Stopped",
+              playMethod: playMethodRef.current,
             },
           });
           if (!markedPlayedRef.current) {
@@ -605,10 +660,16 @@ function WatchPage() {
           </Link>
           <div>
             <h1 className="text-lg font-bold text-foreground sm:text-xl">{title}</h1>
-            {item.Type === "Episode" && (
-              <p className="text-sm text-muted-foreground">{item.Name}</p>
-            )}
+            <p className="text-sm text-muted-foreground">
+              {item.Type === "Episode" ? item.Name : null}
+              {playMode ? (
+                <span className="ml-2 rounded bg-secondary px-1.5 py-0.5 text-[11px] uppercase tracking-wide">
+                  {playMode === "Transcode" ? "Converted" : "Direct"}
+                </span>
+              ) : null}
+            </p>
           </div>
+
         </div>
 
         {/* Big center controls (mobile-first) */}

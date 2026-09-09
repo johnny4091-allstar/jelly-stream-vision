@@ -170,7 +170,9 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
       `/Items/${data.itemId}/PlaybackInfo?UserId=${s.userId}&StartTimeTicks=${data.startTicks ?? 0}`,
       {
         DeviceProfile: {
-          MaxStreamingBitrate: 120_000_000,
+          // Keep transcoded TV episodes comfortably ahead of playback. Original
+          // files can still direct-play at the higher static bitrate below.
+          MaxStreamingBitrate: 8_000_000,
           MaxStaticBitrate: 200_000_000,
           DirectPlayProfiles: directPlayProfiles,
           TranscodingProfiles: [
@@ -184,7 +186,11 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
               Context: "Streaming",
             },
           ],
-          SubtitleProfiles: [],
+          SubtitleProfiles: [
+            { Format: "vtt", Method: "External" },
+            { Format: "srt", Method: "External" },
+            { Format: "subrip", Method: "External" },
+          ],
         },
 
         AutoOpenLiveStream: true,

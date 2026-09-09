@@ -227,7 +227,7 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
 
 export const reportPlayingFn = createServerFn({ method: "POST" })
   .inputValidator(
-    (data: { itemId: string; positionTicks: number; playSessionId: string; kind: "Started" | "Progress" | "Stopped"; isPaused?: boolean; deviceId?: string }) => data,
+    (data: { itemId: string; positionTicks: number; playSessionId: string; kind: "Started" | "Progress" | "Stopped"; isPaused?: boolean; deviceId?: string; playMethod?: "DirectPlay" | "DirectStream" | "Transcode" }) => data,
   )
   .handler(async ({ data }) => {
     const s = await requireSession();
@@ -241,8 +241,9 @@ export const reportPlayingFn = createServerFn({ method: "POST" })
         PositionTicks: Math.floor(data.positionTicks),
         CanSeek: true,
         IsPaused: data.isPaused ?? false,
-        PlayMethod: "Transcode",
+        PlayMethod: data.playMethod ?? "Transcode",
       },
+
       s.token,
       data.deviceId,
       );

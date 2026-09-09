@@ -54,7 +54,7 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   const { data } = useSuspenseQuery(homeQuery);
-  const { data: posters = [] } = useQuery(postersQuery);
+  const { data: posters = [] } = useSuspenseQuery(postersQuery);
   const hero = data.hero;
   const [filter, setFilter] = useMediaFilter();
   const posterIndex = buildPosterIndex(posters);

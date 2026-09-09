@@ -75,8 +75,9 @@ export const getItemFn = createServerFn({ method: "GET" })
         s.token,
       );
       const matches = (result.Items ?? []).filter((item) => item.Id.startsWith(data.id));
-      if (matches.length !== 1) throw error;
-      return matches[0];
+      const match = matches[0];
+      if (matches.length !== 1 || !match) throw error;
+      return match;
     }
   });
 

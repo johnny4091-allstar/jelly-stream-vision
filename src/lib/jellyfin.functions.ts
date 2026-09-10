@@ -192,7 +192,9 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
         }[];
       }[];
     };
-    const playbackPath = `/Items/${data.itemId}/PlaybackInfo?UserId=${s.userId}&StartTimeTicks=${data.startTicks ?? 0}`;
+    const playbackPath =
+      `/Items/${data.itemId}/PlaybackInfo?UserId=${s.userId}&StartTimeTicks=${data.startTicks ?? 0}` +
+      (data.audioStreamIndex != null ? `&AudioStreamIndex=${data.audioStreamIndex}` : "");
     const fixedProfile = {
         DeviceProfile: {
           // Keep transcoded TV episodes comfortably ahead of playback. Original

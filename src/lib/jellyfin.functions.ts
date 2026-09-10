@@ -152,6 +152,7 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
     (data: {
       itemId: string;
       startTicks?: number;
+      audioStreamIndex?: number;
       deviceId?: string;
       capabilities?: ClientDirectPlayProfile[];
     }) => data,
@@ -179,10 +180,21 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
         SupportsDirectStream?: boolean;
         SupportsDirectPlay?: boolean;
         Container?: string;
-        MediaStreams?: { Type: string; Index: number; IsDefault?: boolean }[];
+        MediaStreams?: {
+          Type: string;
+          Index: number;
+          IsDefault?: boolean;
+          Language?: string;
+          DisplayTitle?: string;
+          Title?: string;
+          Codec?: string;
+          Channels?: number;
+        }[];
       }[];
     };
-    const playbackPath = `/Items/${data.itemId}/PlaybackInfo?UserId=${s.userId}&StartTimeTicks=${data.startTicks ?? 0}`;
+    const playbackPath =
+      `/Items/${data.itemId}/PlaybackInfo?UserId=${s.userId}&StartTimeTicks=${data.startTicks ?? 0}` +
+      (data.audioStreamIndex != null ? `&AudioStreamIndex=${data.audioStreamIndex}` : "");
     const fixedProfile = {
         DeviceProfile: {
           // Keep transcoded TV episodes comfortably ahead of playback. Original
@@ -250,14 +262,25 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
     }
     const src = res?.MediaSources?.[0];
     const audioIndex =
+      data.audioStreamIndex ??
       src?.DefaultAudioStreamIndex ??
       src?.MediaStreams?.find((m) => m.Type === "Audio" && m.IsDefault)?.Index ??
       src?.MediaStreams?.find((m) => m.Type === "Audio")?.Index;
+    const audioTracks = (src?.MediaStreams ?? [])
+      .filter((m) => m.Type === "Audio")
+      .map((m) => ({
+        index: m.Index,
+        language: m.Language ?? null,
+        label: m.DisplayTitle ?? m.Title ?? m.Language ?? `Track ${m.Index}`,
+        codec: m.Codec ?? null,
+        channels: m.Channels ?? null,
+      }));
     const canDirect = Boolean(src?.SupportsDirectPlay || src?.SupportsDirectStream);
     return {
       playSessionId: res?.PlaySessionId ?? crypto.randomUUID().replaceAll("-", ""),
       mediaSourceId: src?.Id ?? data.itemId,
       audioStreamIndex: audioIndex ?? null,
+      audioTracks,
       // Jellyfin's own transcode URL already carries the correct, working parameters.
       transcodingUrl: src?.TranscodingUrl
         ? (() => {

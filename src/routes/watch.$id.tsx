@@ -10,6 +10,7 @@ import {
   RotateCw,
   Volume2,
   VolumeX,
+  Languages,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -59,6 +60,15 @@ function formatTime(seconds: number) {
     : `${m}:${String(s).padStart(2, "0")}`;
 }
 
+function languageName(code: string | null) {
+  if (!code) return null;
+  try {
+    return new Intl.DisplayNames([navigator.language || "en"], { type: "language" }).of(code) ?? code;
+  } catch {
+    return code;
+  }
+}
+
 const posKey = (id: string) => `aurora-pos-${id}`;
 
 function WatchPage() {
@@ -91,6 +101,11 @@ function WatchPage() {
   const [duration, setDuration] = useState(0);
   const [showControls, setShowControls] = useState(true);
   const [playbackError, setPlaybackError] = useState<string | null>(null);
+  const [audioTracks, setAudioTracks] = useState<
+    { index: number; language: string | null; label: string; codec: string | null; channels: number | null }[]
+  >([]);
+  const [audioIndex, setAudioIndex] = useState<number | null>(null);
+  const [showAudioMenu, setShowAudioMenu] = useState(false);
   const [playMode, setPlayMode] = useState<"DirectPlay" | "DirectStream" | "Transcode" | null>(null);
   const playMethodRef = useRef<"DirectPlay" | "DirectStream" | "Transcode">("Transcode");
 
@@ -135,13 +150,22 @@ function WatchPage() {
       if (cancelled) return;
       let info: Awaited<ReturnType<typeof getPlaybackInfo>>;
       try {
-        info = await getPlaybackInfo({ data: { itemId: playbackId, startTicks, deviceId, capabilities } });
+        info = await getPlaybackInfo({
+          data: {
+            itemId: playbackId,
+            startTicks,
+            deviceId,
+            capabilities,
+            ...(audioIndex != null ? { audioStreamIndex: audioIndex } : {}),
+          },
+        });
       } catch {
         if (!cancelled) setPlaybackError("The stream could not be started. Tap retry.");
         return;
       }
       if (cancelled || !videoRef.current) return;
       playSessionRef.current = info.playSessionId;
+      setAudioTracks(info.audioTracks ?? []);
       playMethodRef.current = info.playMethod;
       setPlayMode(info.playMethod);
 
@@ -235,7 +259,9 @@ function WatchPage() {
       };
 
       // Original file plays untouched — best quality, no server load.
-      if (info.playMethod === "DirectPlay") {
+      // A hand-picked language needs the server to remux/transcode that track:
+      // the browser cannot switch audio tracks inside a direct-played file.
+      if (info.playMethod === "DirectPlay" && audioIndex == null) {
         attachDirect();
         void video.play().catch(() => {});
         return;
@@ -362,7 +388,7 @@ function WatchPage() {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playbackId]);
+  }, [playbackId, audioIndex]);
 
 
   // Progress reporting
@@ -695,6 +721,44 @@ function WatchPage() {
             </p>
           </div>
 
+          {audioTracks.length > 1 && (
+            <div className="relative ml-auto">
+              <button
+                type="button"
+                onClick={() => setShowAudioMenu((v) => !v)}
+                aria-label="Change audio language"
+                className="flex items-center gap-2 rounded-full bg-black/50 px-3 py-2 text-sm text-foreground transition-colors hover:bg-accent"
+              >
+                <Languages className="h-5 w-5" />
+                <span className="hidden sm:inline">Audio</span>
+              </button>
+              {showAudioMenu && (
+                <div className="absolute right-0 z-30 mt-2 w-56 overflow-hidden rounded-lg border border-border bg-popover py-1 shadow-xl">
+                  {audioTracks.map((track) => {
+                    const active = (audioIndex ?? -1) === track.index;
+                    return (
+                      <button
+                        key={track.index}
+                        type="button"
+                        onClick={() => {
+                          setShowAudioMenu(false);
+                          const v = videoRef.current;
+                          if (v) savePosition(v.currentTime);
+                          setAudioIndex(track.index);
+                        }}
+                        className={`block w-full px-3 py-2 text-left text-sm transition-colors hover:bg-accent ${
+                          active ? "text-primary" : "text-foreground"
+                        }`}
+                      >
+                        {languageName(track.language) ?? track.label}
+                        <span className="block text-xs text-muted-foreground">{track.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Big center controls (mobile-first) */}

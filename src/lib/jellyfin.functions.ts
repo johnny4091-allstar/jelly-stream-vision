@@ -179,7 +179,16 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
         SupportsDirectStream?: boolean;
         SupportsDirectPlay?: boolean;
         Container?: string;
-        MediaStreams?: { Type: string; Index: number; IsDefault?: boolean }[];
+        MediaStreams?: {
+          Type: string;
+          Index: number;
+          IsDefault?: boolean;
+          Language?: string;
+          DisplayTitle?: string;
+          Title?: string;
+          Codec?: string;
+          Channels?: number;
+        }[];
       }[];
     };
     const playbackPath = `/Items/${data.itemId}/PlaybackInfo?UserId=${s.userId}&StartTimeTicks=${data.startTicks ?? 0}`;

@@ -152,6 +152,7 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
     (data: {
       itemId: string;
       startTicks?: number;
+      audioStreamIndex?: number;
       deviceId?: string;
       capabilities?: ClientDirectPlayProfile[];
     }) => data,

@@ -197,9 +197,9 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
       (data.audioStreamIndex != null ? `&AudioStreamIndex=${data.audioStreamIndex}` : "");
     const fixedProfile = {
         DeviceProfile: {
-          // Keep transcoded TV episodes comfortably ahead of playback. Original
-          // files can still direct-play at the higher static bitrate below.
-          MaxStreamingBitrate: 8_000_000,
+          // High cap so H.264 sources are remuxed (video copied) into HLS instead
+          // of re-encoded — re-encoding pins the server CPU and stalls playback.
+          MaxStreamingBitrate: 120_000_000,
           MaxStaticBitrate: 200_000_000,
           DirectPlayProfiles: directPlayProfiles,
           TranscodingProfiles: [
@@ -235,8 +235,8 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
           playbackPath,
           {
             DeviceProfile: {
-              MaxStreamingBitrate: 8_000_000,
-              MaxStaticBitrate: 8_000_000,
+              MaxStreamingBitrate: 120_000_000,
+              MaxStaticBitrate: 120_000_000,
               DirectPlayProfiles: [],
               TranscodingProfiles: [
                 {

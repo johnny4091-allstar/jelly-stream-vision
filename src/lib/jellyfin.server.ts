@@ -1,5 +1,13 @@
+/** Server-wide API key (Emby first, legacy Jellyfin value as fallback). */
+export function jfKey() {
+  return process.env['EMBY_API_KEY'] ?? process.env['JELLYFIN_API_KEY'] ?? "";
+}
+
 export function jfBase() {
-  const raw = (process.env['JELLYFIN_SERVER_URL'] ?? "").replace(/\/$/, "");
+  const raw = (process.env['EMBY_SERVER_URL'] ?? process.env['JELLYFIN_SERVER_URL'] ?? "").replace(
+    /\/$/,
+    "",
+  );
   // Cloudflare Workers refuse outbound fetches to bare IP addresses (error 1003),
   // so map the IP to an equivalent hostname that resolves to it.
   return raw.replace(

@@ -204,6 +204,7 @@ function WatchPage() {
             // A default ASS/PGS subtitle made Jellyfin burn every frame for many
             // episodes, producing a 120 Mbps stream that never started in time.
             negotiated.searchParams.set("SubtitleStreamIndex", "-1");
+            negotiated.searchParams.delete("SubtitleMethod");
             // Force browser-playable stereo AAC: Jellyfin often negotiates a
             // copy of EAC3/DTS/TrueHD, which plays video but produces no sound.
             negotiated.searchParams.set("AudioCodec", "aac");

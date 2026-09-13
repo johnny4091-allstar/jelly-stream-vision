@@ -267,7 +267,13 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
                   Context: "Streaming",
                 },
               ],
-              SubtitleProfiles: [],
+              // External-only: an empty list makes the server burn subtitles in,
+              // which kills its encoder.
+              SubtitleProfiles: [
+                { Format: "vtt", Method: "External" },
+                { Format: "srt", Method: "External" },
+                { Format: "subrip", Method: "External" },
+              ],
             },
             AutoOpenLiveStream: true,
           },
@@ -306,6 +312,10 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
             // The proxy authenticates upstream; never expose the Jellyfin token in the browser URL.
             url.searchParams.delete("ApiKey");
             url.searchParams.delete("api_key");
+            // Burning subtitles into the picture makes the server's encoder fail
+            // outright ("Error starting ffmpeg"), so strip it in every case.
+            url.searchParams.delete("SubtitleMethod");
+            url.searchParams.set("SubtitleStreamIndex", "-1");
             return `${url.pathname}${url.search}`;
           })()
         : null,

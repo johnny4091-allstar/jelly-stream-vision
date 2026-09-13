@@ -11,7 +11,11 @@ import {
   setPasswordFn,
 } from "@/lib/accounts.functions";
 import { getSessionFn } from "@/lib/auth.functions";
-import { getActiveSessionsFn } from "@/lib/jellyfin.functions";
+import {
+  getActiveSessionsFn,
+  getServerUsageFn,
+  setBitrateCapFn,
+} from "@/lib/jellyfin.functions";
 
 
 export const Route = createFileRoute("/admin")({
@@ -302,6 +306,129 @@ function AdminPage() {
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+function mbps(bps: number) {
+  return (bps / 1_000_000).toFixed(1);
+}
+
+function ServerUsagePanel() {
+  const usageFn = useServerFn(getServerUsageFn);
+  const setCap = useServerFn(setBitrateCapFn);
+  const usage = useQuery({
+    queryKey: ["server-usage"],
+    queryFn: () => usageFn(),
+    refetchInterval: 5000,
+    refetchIntervalInBackground: false,
+  });
+  const [draft, setDraft] = useState<string>("");
+  const [saving, setSaving] = useState(false);
+
+  const u = usage.data;
+  const current = u ? Number(mbps(u.capBps)) : 6;
+  const value = draft === "" ? String(current) : draft;
+
+  async function save(next: number) {
+    setSaving(true);
+    try {
+      await setCap({ data: { mbps: next } });
+      setDraft("");
+      await usage.refetch();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="space-y-3 rounded-lg bg-card p-6 shadow-xl">
+      <div className="flex items-center gap-2">
+        <h2 className="text-lg font-bold text-foreground">Server usage</h2>
+        <span className="flex h-2 w-2 animate-pulse rounded-full bg-primary" />
+        <span className="text-xs text-muted-foreground">updates every 5s</span>
+      </div>
+
+      {!u && <p className="text-sm text-muted-foreground">Checking…</p>}
+
+      {u && (
+        <>
+          <p className="text-xs text-muted-foreground">
+            {u.serverName}
+            {u.version ? ` · v${u.version}` : ""}
+            {u.os ? ` · ${u.os}` : ""}
+          </p>
+
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Stat label="Streams" value={String(u.activeStreams)} />
+            <Stat label="Converting (CPU)" value={String(u.transcodingStreams)} />
+            <Stat label="Playing as-is" value={String(u.directStreams)} />
+            <Stat label="Bandwidth" value={`${mbps(u.totalBitrate)} Mbps`} />
+          </div>
+
+          {u.streams.length > 0 && (
+            <div className="space-y-2">
+              {u.streams.map((s) => (
+                <div key={s.id} className="rounded-md bg-secondary px-3 py-2 text-xs">
+                  <p className="font-semibold text-foreground">
+                    {s.userName} — {s.title}
+                  </p>
+                  <p className="text-muted-foreground">
+                    {s.method === "Transcode" ? "Converting" : "Playing as-is"}
+                    {s.bitrate ? ` · ${mbps(s.bitrate)} Mbps` : ""}
+                    {s.framerate ? ` · ${Math.round(s.framerate)} fps` : ""}
+                    {s.videoCodec ? ` · ${s.videoCodec}` : ""}
+                    {s.audioCodec ? `/${s.audioCodec}` : ""}
+                    {s.hardware ? " · hardware" : ""}
+                  </p>
+                  {s.reasons.length > 0 && (
+                    <p className="text-muted-foreground">Why: {s.reasons.join(", ")}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="space-y-2 border-t border-border pt-4">
+            <label className="text-sm font-medium text-foreground">
+              Quality cap — currently {current} Mbps
+            </label>
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                min={1}
+                max={40}
+                step={1}
+                value={value}
+                onChange={(e) => setDraft(e.target.value)}
+                className="w-full accent-primary"
+              />
+              <span className="w-20 shrink-0 text-sm text-foreground">{value} Mbps</span>
+              <button
+                type="button"
+                disabled={saving || Number(value) === current}
+                onClick={() => save(Number(value))}
+                className="rounded-md bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+              >
+                {saving ? "Saving…" : "Save"}
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Lower it if playback keeps stalling; raise it for sharper picture. Takes effect the
+              next time someone starts a title.
+            </p>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md bg-secondary px-3 py-2">
+      <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="text-lg font-bold text-foreground">{value}</p>
     </div>
   );
 }

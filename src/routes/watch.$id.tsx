@@ -143,6 +143,14 @@ function WatchPage() {
   useEffect(() => {
     let cancelled = false;
     let hls: import("hls.js").default | null = null;
+    // Never leave the loading screen up forever: reveal the player and its
+    // play button if the stream hasn't announced itself in time.
+    const bailout = setTimeout(() => {
+      if (!cancelled) {
+        setLoading(false);
+        setShowControls(true);
+      }
+    }, 25_000);
 
     async function setup() {
       setPlaybackError(null);

@@ -207,12 +207,15 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
     };
     const playbackPath =
       `/Items/${data.itemId}/PlaybackInfo?UserId=${s.userId}&StartTimeTicks=${data.startTicks ?? 0}` +
+      // Never burn subtitles into the picture: that forces a full re-encode, which
+      // pins the server CPU and stalls playback a few minutes in.
+      `&SubtitleStreamIndex=-1&MaxStreamingBitrate=20000000` +
       (data.audioStreamIndex != null ? `&AudioStreamIndex=${data.audioStreamIndex}` : "");
     const fixedProfile = {
         DeviceProfile: {
-          // High cap so H.264 sources are remuxed (video copied) into HLS instead
-          // of re-encoded — re-encoding pins the server CPU and stalls playback.
-          MaxStreamingBitrate: 120_000_000,
+          // Capped so the server remuxes (copies) H.264 video into HLS instead of
+          // re-encoding it at an absurd bitrate.
+          MaxStreamingBitrate: 20_000_000,
           MaxStaticBitrate: 200_000_000,
           DirectPlayProfiles: directPlayProfiles,
           TranscodingProfiles: [
@@ -248,8 +251,8 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
           playbackPath,
           {
             DeviceProfile: {
-              MaxStreamingBitrate: 120_000_000,
-              MaxStaticBitrate: 120_000_000,
+              MaxStreamingBitrate: 20_000_000,
+              MaxStaticBitrate: 20_000_000,
               DirectPlayProfiles: [],
               TranscodingProfiles: [
                 {

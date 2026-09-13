@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 
-import { jfBase } from "./jellyfin.server";
+import { jfBase, jfKey } from "./jellyfin.server";
 import { readJfSession } from "./session.server";
 
 async function requireAdmin() {

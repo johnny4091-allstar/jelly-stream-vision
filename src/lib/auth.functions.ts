@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { updateSession, clearSession } from "@tanstack/react-start/server";
 
-import { jfBase } from "./jellyfin.server";
+import { jfBase, jfKey } from "./jellyfin.server";
 import { getJfSessionConfig, readJfSession, type JfSession } from "./session.server";
 
 async function jellyfinLogin(username: string, password: string) {

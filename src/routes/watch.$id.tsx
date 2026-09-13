@@ -687,7 +687,7 @@ function WatchPage() {
 
       {loading && !playbackError && (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black">
-          {item.BackdropImageTags?.length || item.ImageTags?.Primary ? (
+          {item.BackdropImageTags?.length || item.ImageTags?.["Primary"] ? (
             <div
               className="absolute inset-0 bg-cover bg-center opacity-40"
               style={{

@@ -685,6 +685,33 @@ function WatchPage() {
         }}
       />
 
+      {loading && !playbackError && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black">
+          {item.BackdropImageTags?.length || item.ImageTags?.Primary ? (
+            <div
+              className="absolute inset-0 bg-cover bg-center opacity-40"
+              style={{
+                backgroundImage: `url('/api/proxy/Items/${playbackId}/Images/${
+                  item.BackdropImageTags?.length ? "Backdrop" : "Primary"
+                }?fillHeight=720&fillWidth=1280&quality=80')`,
+              }}
+            />
+          ) : null}
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/30" />
+          <div className="relative z-10 flex w-full max-w-xs flex-col items-center px-6 text-center">
+            <h2 className="mb-1 text-lg font-semibold text-foreground line-clamp-2">{title}</h2>
+            <p className="mb-8 text-sm text-muted-foreground">Loading your stream…</p>
+            <div className="text-5xl font-bold tabular-nums text-foreground">{loadingPercent}%</div>
+            <div className="mt-8 h-1 w-full overflow-hidden rounded-full bg-white/20">
+              <div
+                className="h-full bg-primary transition-[width] duration-300 ease-out"
+                style={{ width: `${loadingPercent}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {playbackError && (
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-background/90 px-6 text-center">
           <p className="max-w-md text-sm text-foreground">{playbackError}</p>

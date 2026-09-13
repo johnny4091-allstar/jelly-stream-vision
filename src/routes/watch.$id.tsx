@@ -107,6 +107,8 @@ function WatchPage() {
   const [audioIndex, setAudioIndex] = useState<number | null>(null);
   const [showAudioMenu, setShowAudioMenu] = useState(false);
   const [playMode, setPlayMode] = useState<"DirectPlay" | "DirectStream" | "Transcode" | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadingPercent, setLoadingPercent] = useState(0);
   const playMethodRef = useRef<"DirectPlay" | "DirectStream" | "Transcode">("Transcode");
 
   const retryPlaybackRef = useRef<(() => void) | null>(null);
@@ -144,6 +146,8 @@ function WatchPage() {
 
     async function setup() {
       setPlaybackError(null);
+      setLoading(true);
+      setLoadingPercent(0);
       const deviceId = deviceIdRef.current;
       const { detectDirectPlayProfiles } = await import("@/lib/media-capabilities");
       const capabilities = detectDirectPlayProfiles();
@@ -164,6 +168,7 @@ function WatchPage() {
         return;
       }
       if (cancelled || !videoRef.current) return;
+      setLoadingPercent(20);
       playSessionRef.current = info.playSessionId;
       setAudioTracks(info.audioTracks ?? []);
       playMethodRef.current = info.playMethod;
@@ -240,8 +245,13 @@ function WatchPage() {
       if (mut != null) video.muted = mut === "1";
 
       const attachDirect = () => {
+        setLoadingPercent(35);
         video.src = directUrl;
-        video.addEventListener("loadedmetadata", applyResumePosition, { once: true });
+        video.addEventListener("loadedmetadata", () => {
+          applyResumePosition();
+          setLoadingPercent(70);
+        }, { once: true });
+        video.addEventListener("canplay", () => setLoadingPercent(90), { once: true });
         retryPlaybackRef.current = () => {
           setPlaybackError(null);
           const at = video.currentTime;
@@ -332,13 +342,22 @@ function WatchPage() {
 
         hls.on(Hls.Events.MEDIA_ATTACHED, () => hls?.loadSource(hlsUrl));
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          setLoadingPercent(50);
           applyResumePosition();
           void video.play().catch(() => {});
         });
+        hls.on(Hls.Events.FRAG_BUFFERED, () => setLoadingPercent((p) => Math.min(95, p + 10)));
+        hls.on(Hls.Events.LEVEL_LOADED, () => setLoadingPercent(40));
+        video.addEventListener("canplay", () => setLoadingPercent(90), { once: true });
         hls.attachMedia(video);
       } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        setLoadingPercent(35);
         video.src = hlsUrl;
-        video.addEventListener("loadedmetadata", applyResumePosition, { once: true });
+        video.addEventListener("loadedmetadata", () => {
+          applyResumePosition();
+          setLoadingPercent(70);
+        }, { once: true });
+        video.addEventListener("canplay", () => setLoadingPercent(90), { once: true });
         retryPlaybackRef.current = () => {
           setPlaybackError(null);
           const at = video.currentTime;
@@ -594,6 +613,8 @@ function WatchPage() {
         onTouchEnd={isTouch ? handleTouchTap : undefined}
         onPlay={() => {
           setPlaying(true);
+          setLoading(false);
+          setLoadingPercent(100);
           enterImmersiveMode();
         }}
         onPause={(e) => {
@@ -663,6 +684,33 @@ function WatchPage() {
           localStorage.setItem("aurora-volume", String(e.currentTarget.volume));
         }}
       />
+
+      {loading && !playbackError && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black">
+          {item.BackdropImageTags?.length || item.ImageTags?.["Primary"] ? (
+            <div
+              className="absolute inset-0 bg-cover bg-center opacity-40"
+              style={{
+                backgroundImage: `url('/api/proxy/Items/${playbackId}/Images/${
+                  item.BackdropImageTags?.length ? "Backdrop" : "Primary"
+                }?fillHeight=720&fillWidth=1280&quality=80')`,
+              }}
+            />
+          ) : null}
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/30" />
+          <div className="relative z-10 flex w-full max-w-xs flex-col items-center px-6 text-center">
+            <h2 className="mb-1 text-lg font-semibold text-foreground line-clamp-2">{title}</h2>
+            <p className="mb-8 text-sm text-muted-foreground">Loading your stream…</p>
+            <div className="text-5xl font-bold tabular-nums text-foreground">{loadingPercent}%</div>
+            <div className="mt-8 h-1 w-full overflow-hidden rounded-full bg-white/20">
+              <div
+                className="h-full bg-primary transition-[width] duration-300 ease-out"
+                style={{ width: `${loadingPercent}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {playbackError && (
         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-background/90 px-6 text-center">

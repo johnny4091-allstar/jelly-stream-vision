@@ -95,7 +95,21 @@ export const logoutFn = createServerFn({ method: "POST" }).handler(async () => {
 });
 
 export const getSessionFn = createServerFn({ method: "GET" }).handler(async () => {
-  return await readJfSession();
+  const session = await readJfSession();
+  if (!session) return null;
+  // A session minted against a previous media server is no longer valid.
+  try {
+    const res = await fetch(jfBase() + `/Users/${session.userId}`, {
+      headers: { "X-Emby-Token": session.token },
+    });
+    if (res.status === 401 || res.status === 404) {
+      await clearSession(getJfSessionConfig());
+      return null;
+    }
+  } catch {
+    // Server unreachable: keep the session rather than logging the user out.
+  }
+  return session;
 });
 
 /** True when no accounts exist yet, so the first-run setup page should be shown. */

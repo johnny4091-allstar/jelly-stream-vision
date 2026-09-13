@@ -142,4 +142,30 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
   }
+
+  /* D-pad / remote navigation: every focusable element gets a clear highlight
+     and is scrolled comfortably into view when focused. */
+  a:focus-visible,
+  button:focus-visible,
+  [tabindex]:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  [role="button"]:focus-visible {
+    outline: 3px solid var(--ring);
+    outline-offset: 3px;
+    border-radius: var(--radius);
+  }
+
+  a,
+  button,
+  [tabindex] {
+    scroll-margin: 6rem;
+  }
+}
+
+/* Ten-foot UI: larger type and spacing on TV-sized screens. */
+@media (min-width: 1600px) {
+  html {
+    font-size: 18px;
+  }
 }

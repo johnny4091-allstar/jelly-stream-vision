@@ -19,9 +19,10 @@ export function MediaCard({ item }: { item: JfItem }) {
     <Link
       to="/title/$id"
       params={{ id: item.Type === "Episode" && item.SeriesId ? item.SeriesId : item.Id }}
-      className="group relative block w-28 shrink-0 snap-start sm:w-40 md:w-44"
+      tabIndex={0}
+      className="group relative block w-28 shrink-0 snap-start scroll-mx-8 sm:w-40 md:w-44"
     >
-      <div className="relative aspect-[2/3] overflow-hidden rounded-md bg-muted transition-transform duration-300 group-hover:scale-105 group-hover:ring-2 group-hover:ring-primary/60">
+      <div className="relative aspect-[2/3] overflow-hidden rounded-md bg-muted transition-transform duration-300 group-hover:scale-105 group-hover:ring-2 group-hover:ring-primary/60 group-focus-visible:scale-105 group-focus-visible:ring-2 group-focus-visible:ring-primary">
         <img
           src={itemImageUrl(poster.id, poster.type, 400)}
           alt={item.Name}

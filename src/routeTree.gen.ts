@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as GetAppRouteImport } from './routes/get-app'
+import { Route as GetTvAppRouteImport } from './routes/get-tv-app'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ProfilesRouteImport } from './routes/profiles'
@@ -37,6 +38,11 @@ const AdminRoute = AdminRouteImport.update({
 const GetAppRoute = GetAppRouteImport.update({
   id: '/get-app',
   path: '/get-app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GetTvAppRoute = GetTvAppRouteImport.update({
+  id: '/get-tv-app',
+  path: '/get-tv-app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HistoryRoute = HistoryRouteImport.update({
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/get-app': typeof GetAppRoute
+  '/get-tv-app': typeof GetTvAppRoute
   '/history': typeof HistoryRoute
   '/login': typeof LoginRoute
   '/profiles': typeof ProfilesRoute
@@ -115,6 +122,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/get-app': typeof GetAppRoute
+  '/get-tv-app': typeof GetTvAppRoute
   '/history': typeof HistoryRoute
   '/login': typeof LoginRoute
   '/profiles': typeof ProfilesRoute
@@ -132,6 +140,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/get-app': typeof GetAppRoute
+  '/get-tv-app': typeof GetTvAppRoute
   '/history': typeof HistoryRoute
   '/login': typeof LoginRoute
   '/profiles': typeof ProfilesRoute
@@ -150,6 +159,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/get-app'
+    | '/get-tv-app'
     | '/history'
     | '/login'
     | '/profiles'
@@ -166,6 +176,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/get-app'
+    | '/get-tv-app'
     | '/history'
     | '/login'
     | '/profiles'
@@ -182,6 +193,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/get-app'
+    | '/get-tv-app'
     | '/history'
     | '/login'
     | '/profiles'
@@ -199,6 +211,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   GetAppRoute: typeof GetAppRoute
+  GetTvAppRoute: typeof GetTvAppRoute
   HistoryRoute: typeof HistoryRoute
   LoginRoute: typeof LoginRoute
   ProfilesRoute: typeof ProfilesRoute
@@ -233,6 +246,13 @@ declare module '@tanstack/react-router' {
       path: '/get-app'
       fullPath: '/get-app'
       preLoaderRoute: typeof GetAppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/get-tv-app': {
+      id: '/get-tv-app'
+      path: '/get-tv-app'
+      fullPath: '/get-tv-app'
+      preLoaderRoute: typeof GetTvAppRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/history': {
@@ -319,6 +339,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   GetAppRoute: GetAppRoute,
+  GetTvAppRoute: GetTvAppRoute,
   HistoryRoute: HistoryRoute,
   LoginRoute: LoginRoute,
   ProfilesRoute: ProfilesRoute,

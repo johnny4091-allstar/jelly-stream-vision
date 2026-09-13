@@ -497,3 +497,107 @@ export const getPlayableItemFn = createServerFn({ method: "GET" })
       ).Items?.[0];
     return candidate ?? item;
   });
+
+export interface ServerUsage {
+  serverName: string;
+  version: string;
+  os: string;
+  activeStreams: number;
+  transcodingStreams: number;
+  directStreams: number;
+  /** Sum of the bitrates the server is currently pushing, in bits per second. */
+  totalBitrate: number;
+  capBps: number;
+  streams: {
+    id: string;
+    userName: string;
+    title: string;
+    method: string;
+    bitrate: number | null;
+    framerate: number | null;
+    videoCodec: string | null;
+    audioCodec: string | null;
+    hardware: boolean;
+    reasons: string[];
+  }[];
+}
+
+/** Server load + bandwidth Aurora is pulling right now (admin only). */
+export const getServerUsageFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<ServerUsage> => {
+    const s = await requireSession();
+    if (!s.isAdmin) throw new Error("Forbidden");
+    const { getBitrateCap } = await import("./settings.server");
+    const capBps = await getBitrateCap();
+
+    type Info = { ServerName?: string; Version?: string; OperatingSystemDisplayName?: string };
+    type Raw = {
+      Id: string;
+      UserName?: string;
+      NowPlayingItem?: { Name?: string; SeriesName?: string };
+      PlayState?: { PlayMethod?: string };
+      TranscodingInfo?: {
+        Bitrate?: number;
+        Framerate?: number;
+        VideoCodec?: string;
+        AudioCodec?: string;
+        IsVideoDirect?: boolean;
+        IsAudioDirect?: boolean;
+        HardwareAccelerationType?: string;
+        TranscodeReasons?: string[];
+      };
+    };
+
+    let info: Info = {};
+    let raw: Raw[] = [];
+    try {
+      [info, raw] = await Promise.all([
+        jfGet<Info>("/System/Info"),
+        jfGet<Raw[]>("/Sessions?ActiveWithinSeconds=120"),
+      ]);
+    } catch (err) {
+      console.warn("Server usage fetch failed", err);
+    }
+
+    const playing = (raw ?? []).filter((r) => r.NowPlayingItem);
+    const streams = playing.map((r) => {
+      const t = r.TranscodingInfo;
+      const method = r.PlayState?.PlayMethod ?? "Unknown";
+      return {
+        id: r.Id,
+        userName: r.UserName ?? "Unknown",
+        title: r.NowPlayingItem?.SeriesName ?? r.NowPlayingItem?.Name ?? "Unknown",
+        method,
+        bitrate: t?.Bitrate ?? null,
+        framerate: t?.Framerate ?? null,
+        videoCodec: t?.VideoCodec ?? null,
+        audioCodec: t?.AudioCodec ?? null,
+        hardware: Boolean(t?.HardwareAccelerationType),
+        reasons: t?.TranscodeReasons ?? [],
+      };
+    });
+
+    return {
+      serverName: info.ServerName ?? "Media server",
+      version: info.Version ?? "",
+      os: info.OperatingSystemDisplayName ?? "",
+      activeStreams: streams.length,
+      transcodingStreams: streams.filter((x) => x.method === "Transcode").length,
+      directStreams: streams.filter((x) => x.method !== "Transcode").length,
+      totalBitrate: streams.reduce((sum, x) => sum + (x.bitrate ?? 0), 0),
+      capBps,
+      streams,
+    };
+  },
+);
+
+/** Change the streaming quality ceiling (admin only). */
+export const setBitrateCapFn = createServerFn({ method: "POST" })
+  .inputValidator((input: { mbps: number }) => input)
+  .handler(async ({ data }): Promise<{ capBps: number }> => {
+    const s = await requireSession();
+    if (!s.isAdmin) throw new Error("Forbidden");
+    const { setBitrateCap } = await import("./settings.server");
+    const capBps = await setBitrateCap(Math.round(data.mbps * 1_000_000));
+    return { capBps };
+  });

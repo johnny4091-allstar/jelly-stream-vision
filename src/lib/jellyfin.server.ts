@@ -1,5 +1,13 @@
+/** Server-wide API key (Emby first, legacy Jellyfin value as fallback). */
+export function jfKey() {
+  return process.env['EMBY_API_KEY'] ?? process.env['JELLYFIN_API_KEY'] ?? "";
+}
+
 export function jfBase() {
-  const raw = (process.env['JELLYFIN_SERVER_URL'] ?? "").replace(/\/$/, "");
+  const raw = (process.env['EMBY_SERVER_URL'] ?? process.env['JELLYFIN_SERVER_URL'] ?? "").replace(
+    /\/$/,
+    "",
+  );
   // Cloudflare Workers refuse outbound fetches to bare IP addresses (error 1003),
   // so map the IP to an equivalent hostname that resolves to it.
   return raw.replace(
@@ -10,7 +18,7 @@ export function jfBase() {
 
 function jfHeaders(token?: string, deviceId?: string): Record<string, string> {
   return {
-    "X-Emby-Token": token ?? process.env['JELLYFIN_API_KEY']!,
+    "X-Emby-Token": token ?? jfKey(),
     "X-Emby-Authorization": `MediaBrowser Client="Aurora", Device="Web", DeviceId="${deviceId ?? "aurora-web"}", Version="1.0.0"`,
     "User-Agent":
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",

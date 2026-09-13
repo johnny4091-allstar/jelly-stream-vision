@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 
-import { jfBase } from "./jellyfin.server";
+import { jfBase, jfKey } from "./jellyfin.server";
 import { readJfSession } from "./session.server";
 
 async function requireAdmin() {
@@ -31,7 +31,7 @@ export const listAccountsFn = createServerFn({ method: "GET" }).handler(async ()
 async function findJfUserId(name: string): Promise<string | null> {
   try {
     const res = await fetch(jfBase() + "/Users", {
-      headers: { "X-Emby-Token": process.env["JELLYFIN_API_KEY"]! },
+      headers: { "X-Emby-Token": jfKey() },
     });
     if (!res.ok) return null;
     const users = (await res.json()) as { Id: string; Name: string }[];

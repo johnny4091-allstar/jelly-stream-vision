@@ -611,6 +611,13 @@ function WatchPage() {
         playsInline
         onClick={isTouch ? undefined : togglePlay}
         onTouchEnd={isTouch ? handleTouchTap : undefined}
+        onCanPlay={() => {
+          // Mobile browsers block autoplay, so "play" may never fire.
+          // The stream is ready here — drop the loading screen either way.
+          setLoadingPercent(100);
+          setLoading(false);
+          setShowControls(true);
+        }}
         onPlay={() => {
           setPlaying(true);
           setLoading(false);

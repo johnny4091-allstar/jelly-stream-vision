@@ -107,6 +107,8 @@ function WatchPage() {
   const [audioIndex, setAudioIndex] = useState<number | null>(null);
   const [showAudioMenu, setShowAudioMenu] = useState(false);
   const [playMode, setPlayMode] = useState<"DirectPlay" | "DirectStream" | "Transcode" | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadingPercent, setLoadingPercent] = useState(0);
   const playMethodRef = useRef<"DirectPlay" | "DirectStream" | "Transcode">("Transcode");
 
   const retryPlaybackRef = useRef<(() => void) | null>(null);

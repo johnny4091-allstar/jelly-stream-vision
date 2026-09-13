@@ -30,7 +30,7 @@ async function jellyfinLogin(username: string, password: string) {
 async function findJfUserId(name: string): Promise<string | null> {
   try {
     const res = await fetch(jfBase() + "/Users", {
-      headers: { "X-Emby-Token": process.env["JELLYFIN_API_KEY"]! },
+      headers: { "X-Emby-Token": jfKey() },
     });
     if (!res.ok) return null;
     const users = (await res.json()) as { Id: string; Name: string }[];
@@ -70,7 +70,7 @@ export const loginFn = createServerFn({ method: "POST" })
     if (!token) {
       // Fall back to the server-wide key, resolving the linked profile by name.
       if (!jfUserId) jfUserId = await findJfUserId(account.jfUsername);
-      if (jfUserId) token = process.env["JELLYFIN_API_KEY"] ?? null;
+      if (jfUserId) token = jfKey() || null;
     }
     if (!token || !jfUserId) {
       return {
@@ -149,7 +149,7 @@ export const signupFn = createServerFn({ method: "POST" })
     }
 
     const { countAccounts, createAccount } = await import("./accounts.server");
-    const key = process.env["JELLYFIN_API_KEY"]!;
+    const key = jfKey();
 
     // Reuse an existing media profile with the same name, otherwise create one.
     let jfUserId = await findJfUserId(username);

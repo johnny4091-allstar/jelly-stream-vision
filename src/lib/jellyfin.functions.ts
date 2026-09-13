@@ -267,7 +267,13 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
                   Context: "Streaming",
                 },
               ],
-              SubtitleProfiles: [],
+              // External-only: an empty list makes the server burn subtitles in,
+              // which kills its encoder.
+              SubtitleProfiles: [
+                { Format: "vtt", Method: "External" },
+                { Format: "srt", Method: "External" },
+                { Format: "subrip", Method: "External" },
+              ],
             },
             AutoOpenLiveStream: true,
           },

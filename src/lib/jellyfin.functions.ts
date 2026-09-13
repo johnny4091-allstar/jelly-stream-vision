@@ -205,17 +205,19 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
         }[];
       }[];
     };
+    const { getBitrateCap } = await import("./settings.server");
+    const cap = await getBitrateCap();
     const playbackPath =
       `/Items/${data.itemId}/PlaybackInfo?UserId=${s.userId}&StartTimeTicks=${data.startTicks ?? 0}` +
       // Never burn subtitles into the picture: that forces a full re-encode, which
       // pins the server CPU and stalls playback a few minutes in.
-      `&SubtitleStreamIndex=-1&MaxStreamingBitrate=6000000` +
+      `&SubtitleStreamIndex=-1&MaxStreamingBitrate=${cap}` +
       (data.audioStreamIndex != null ? `&AudioStreamIndex=${data.audioStreamIndex}` : "");
     const fixedProfile = {
         DeviceProfile: {
           // Capped so the server remuxes (copies) H.264 video into HLS instead of
           // re-encoding it at an absurd bitrate.
-          MaxStreamingBitrate: 6_000_000,
+          MaxStreamingBitrate: cap,
           MaxStaticBitrate: 200_000_000,
           DirectPlayProfiles: directPlayProfiles,
           TranscodingProfiles: [

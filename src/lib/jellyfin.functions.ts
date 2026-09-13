@@ -33,7 +33,9 @@ export interface HomeData {
 export const getHomeFn = createServerFn({ method: "GET" }).handler(async (): Promise<HomeData> => {
   const s = await requireSession();
   const t = s.token;
-  const viewsRes = await jfGet<{ Items: JfItem[] }>(`/Users/${s.userId}/Views`, t);
+  const viewsRes = await jfGet<{ Items: JfItem[] }>(`/Users/${s.userId}/Views`, t).catch(
+    dropStaleSession,
+  );
   const views = (viewsRes.Items ?? []).filter(
     (v) => v.CollectionType === "movies" || v.CollectionType === "tvshows",
   );

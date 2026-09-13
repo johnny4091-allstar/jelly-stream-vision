@@ -128,3 +128,10 @@ export async function authenticateAccount(
     },
   };
 }
+
+/** Re-link an account to the current media server's profile id. */
+export async function setJfUserId(id: string, jfUserId: string) {
+  const db = await admin();
+  const { error } = await db.from("app_users").update({ jf_user_id: jfUserId }).eq("id", id);
+  if (error) throw error;
+}

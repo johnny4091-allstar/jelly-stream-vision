@@ -245,8 +245,13 @@ function WatchPage() {
       if (mut != null) video.muted = mut === "1";
 
       const attachDirect = () => {
+        setLoadingPercent(35);
         video.src = directUrl;
-        video.addEventListener("loadedmetadata", applyResumePosition, { once: true });
+        video.addEventListener("loadedmetadata", () => {
+          applyResumePosition();
+          setLoadingPercent(70);
+        }, { once: true });
+        video.addEventListener("canplay", () => setLoadingPercent(90), { once: true });
         retryPlaybackRef.current = () => {
           setPlaybackError(null);
           const at = video.currentTime;

@@ -635,7 +635,7 @@ function WatchPage() {
                 /* Fully blocked — leave the play button visible. */
               });
               const unmute = () => {
-                v.muted = mutedRef.current;
+                v.muted = localStorage.getItem("aurora-muted") === "1";
                 containerRef.current?.removeEventListener("click", unmute);
                 containerRef.current?.removeEventListener("touchend", unmute);
               };

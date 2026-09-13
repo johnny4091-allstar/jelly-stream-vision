@@ -155,7 +155,7 @@ function AdminPage() {
           ))}
         </div>
 
-
+        <ServerUsagePanel />
 
         <form onSubmit={onCreate} className="space-y-4 rounded-lg bg-card p-6 shadow-xl">
           <h2 className="text-lg font-bold text-foreground">Add a person</h2>

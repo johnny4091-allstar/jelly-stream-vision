@@ -601,6 +601,57 @@ function WatchPage() {
     }
   }
 
+  // TV remote / keyboard control: OK plays-pauses, left/right skip 10s, back exits.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      switch (e.key) {
+        case "Enter":
+        case " ":
+        case "MediaPlayPause":
+          e.preventDefault();
+          togglePlay();
+          break;
+        case "MediaPlay":
+          e.preventDefault();
+          void videoRef.current?.play();
+          break;
+        case "MediaPause":
+          e.preventDefault();
+          videoRef.current?.pause();
+          break;
+        case "ArrowRight":
+        case "MediaFastForward":
+          e.preventDefault();
+          seekBy(10);
+          break;
+        case "ArrowLeft":
+        case "MediaRewind":
+          e.preventDefault();
+          seekBy(-10);
+          break;
+        case "ArrowUp":
+        case "ArrowDown":
+          pokeControls();
+          break;
+        case "Escape":
+        case "Backspace":
+        case "GoBack":
+          if (document.fullscreenElement) {
+            e.preventDefault();
+            void document.exitFullscreen();
+          } else {
+            window.history.back();
+          }
+          break;
+        default:
+          break;
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function savePosition(seconds: number) {
     const whole = Math.floor(seconds);
     if (whole === lastSavedSecond.current) return;

@@ -342,9 +342,13 @@ function WatchPage() {
 
         hls.on(Hls.Events.MEDIA_ATTACHED, () => hls?.loadSource(hlsUrl));
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          setLoadingPercent(50);
           applyResumePosition();
           void video.play().catch(() => {});
         });
+        hls.on(Hls.Events.FRAG_BUFFERED, () => setLoadingPercent((p) => Math.min(95, p + 10)));
+        hls.on(Hls.Events.LEVEL_LOADED, () => setLoadingPercent(40));
+        video.addEventListener("canplay", () => setLoadingPercent(90), { once: true });
         hls.attachMedia(video);
       } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
         video.src = hlsUrl;

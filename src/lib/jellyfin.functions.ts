@@ -253,8 +253,8 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
           playbackPath,
           {
             DeviceProfile: {
-              MaxStreamingBitrate: 6_000_000,
-              MaxStaticBitrate: 6_000_000,
+              MaxStreamingBitrate: cap,
+              MaxStaticBitrate: cap,
               DirectPlayProfiles: [],
               TranscodingProfiles: [
                 {

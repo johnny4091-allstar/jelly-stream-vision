@@ -392,6 +392,7 @@ function WatchPage() {
     void setup();
     return () => {
       cancelled = true;
+      clearTimeout(bailout);
       retryPlaybackRef.current = null;
       const sid = playSessionRef.current;
       const v = videoRef.current;

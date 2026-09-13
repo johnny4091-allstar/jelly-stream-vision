@@ -41,8 +41,30 @@ export const Route = createFileRoute("/api/proxy/$")({
         }
         // Playlists must never be cached, or the player replays a stale segment list and stalls.
         const path = params._splat ?? "";
-        if (/\.m3u8$/i.test(path)) out.set("cache-control", "no-store");
-        else if (!out.has("cache-control")) out.set("cache-control", "private, max-age=3600");
+        if (/\.m3u8$/i.test(path)) {
+          out.set("cache-control", "no-store");
+          out.set("content-type", "application/vnd.apple.mpegurl");
+          out.delete("content-length");
+          // Emby writes `#EXTINF:3.0000, nodesc` and relative URIs. Some players
+          // mis-parse the title and request a bogus path, so normalise both here.
+          const dir = path.replace(/[^/]*$/, "");
+          const body = (await upstream.text())
+            .split("\n")
+            .map((line) => {
+              const l = line.trim();
+              if (l.startsWith("#EXTINF:")) {
+                const dur = l.slice("#EXTINF:".length).split(",")[0]?.trim() ?? "";
+                return `#EXTINF:${dur},`;
+              }
+              if (!l || l.startsWith("#")) return l;
+              if (/^https?:\/\//i.test(l)) return l;
+              if (l.startsWith("/")) return `/api/proxy${l}`;
+              return `/api/proxy/${dir}${l}`;
+            })
+            .join("\n");
+          return new Response(body, { status: upstream.status, headers: out });
+        }
+        if (!out.has("cache-control")) out.set("cache-control", "private, max-age=3600");
 
         return new Response(upstream.body, { status: upstream.status, headers: out });
       },

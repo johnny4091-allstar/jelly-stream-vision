@@ -146,6 +146,8 @@ function WatchPage() {
 
     async function setup() {
       setPlaybackError(null);
+      setLoading(true);
+      setLoadingPercent(0);
       const deviceId = deviceIdRef.current;
       const { detectDirectPlayProfiles } = await import("@/lib/media-capabilities");
       const capabilities = detectDirectPlayProfiles();

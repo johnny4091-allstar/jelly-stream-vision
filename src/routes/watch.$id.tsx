@@ -168,6 +168,7 @@ function WatchPage() {
         return;
       }
       if (cancelled || !videoRef.current) return;
+      setLoadingPercent(20);
       playSessionRef.current = info.playSessionId;
       setAudioTracks(info.audioTracks ?? []);
       playMethodRef.current = info.playMethod;

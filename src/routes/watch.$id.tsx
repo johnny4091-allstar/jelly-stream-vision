@@ -620,12 +620,29 @@ function WatchPage() {
         playsInline
         onClick={isTouch ? undefined : togglePlay}
         onTouchEnd={isTouch ? handleTouchTap : undefined}
-        onCanPlay={() => {
-          // Mobile browsers block autoplay, so "play" may never fire.
-          // The stream is ready here — drop the loading screen either way.
+        onCanPlay={(e) => {
+          // Loading hit 100% — drop the loading screen and try to autoplay.
           setLoadingPercent(100);
           setLoading(false);
           setShowControls(true);
+          const v = e.currentTarget;
+          if (v.paused) {
+            v.play().catch(() => {
+              // Autoplay with sound blocked: start muted, then restore sound
+              // on the viewer's first tap anywhere on the player.
+              v.muted = true;
+              v.play().catch(() => {
+                /* Fully blocked — leave the play button visible. */
+              });
+              const unmute = () => {
+                v.muted = localStorage.getItem("aurora-muted") === "1";
+                containerRef.current?.removeEventListener("click", unmute);
+                containerRef.current?.removeEventListener("touchend", unmute);
+              };
+              containerRef.current?.addEventListener("click", unmute);
+              containerRef.current?.addEventListener("touchend", unmute);
+            });
+          }
         }}
         onPlay={() => {
           setPlaying(true);

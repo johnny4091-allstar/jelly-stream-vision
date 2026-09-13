@@ -1,13 +1,24 @@
 import { createServerFn } from "@tanstack/react-start";
+import { clearSession } from "@tanstack/react-start/server";
 
 import { jfDelete, jfGet, jfPost } from "./jellyfin.server";
-import { readJfSession } from "./session.server";
+import { getJfSessionConfig, readJfSession } from "./session.server";
 import type { JfItem } from "./jellyfin.types";
 
 async function requireSession() {
   const s = await readJfSession();
   if (!s) throw new Error("Unauthorized");
   return s;
+}
+
+/** A session minted against the old server is no longer valid; drop it. */
+async function dropStaleSession(err: unknown): Promise<never> {
+  const msg = err instanceof Error ? err.message : String(err);
+  if (msg.includes(" 401 ")) {
+    await clearSession(getJfSessionConfig());
+    throw new Error("Unauthorized");
+  }
+  throw err;
 }
 
 export interface HomeData {

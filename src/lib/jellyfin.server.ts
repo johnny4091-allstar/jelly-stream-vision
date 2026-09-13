@@ -18,7 +18,7 @@ export function jfBase() {
 
 function jfHeaders(token?: string, deviceId?: string): Record<string, string> {
   return {
-    "X-Emby-Token": token ?? process.env['JELLYFIN_API_KEY']!,
+    "X-Emby-Token": token ?? jfKey(),
     "X-Emby-Authorization": `MediaBrowser Client="Aurora", Device="Web", DeviceId="${deviceId ?? "aurora-web"}", Version="1.0.0"`,
     "User-Agent":
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",

@@ -68,8 +68,14 @@ export const loginFn = createServerFn({ method: "POST" })
       }
     }
     if (!token) {
-      // Fall back to the server-wide key, resolving the linked profile by name.
-      if (!jfUserId) jfUserId = await findJfUserId(account.jfUsername);
+      // Fall back to the server-wide key. Always resolve the profile by name so a
+      // stored id from a previous media server cannot produce a dead session.
+      const resolved = await findJfUserId(account.jfUsername);
+      if (resolved && resolved !== jfUserId) {
+        jfUserId = resolved;
+        const { setJfUserId } = await import("./accounts.server");
+        await setJfUserId(account.id, resolved).catch(() => {});
+      }
       if (jfUserId) token = jfKey() || null;
     }
     if (!token || !jfUserId) {

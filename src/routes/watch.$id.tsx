@@ -143,6 +143,14 @@ function WatchPage() {
   useEffect(() => {
     let cancelled = false;
     let hls: import("hls.js").default | null = null;
+    // Never leave the loading screen up forever: reveal the player and its
+    // play button if the stream hasn't announced itself in time.
+    const bailout = setTimeout(() => {
+      if (!cancelled) {
+        setLoading(false);
+        setShowControls(true);
+      }
+    }, 25_000);
 
     async function setup() {
       setPlaybackError(null);
@@ -384,6 +392,7 @@ function WatchPage() {
     void setup();
     return () => {
       cancelled = true;
+      clearTimeout(bailout);
       retryPlaybackRef.current = null;
       const sid = playSessionRef.current;
       const v = videoRef.current;
@@ -611,6 +620,13 @@ function WatchPage() {
         playsInline
         onClick={isTouch ? undefined : togglePlay}
         onTouchEnd={isTouch ? handleTouchTap : undefined}
+        onCanPlay={() => {
+          // Mobile browsers block autoplay, so "play" may never fire.
+          // The stream is ready here — drop the loading screen either way.
+          setLoadingPercent(100);
+          setLoading(false);
+          setShowControls(true);
+        }}
         onPlay={() => {
           setPlaying(true);
           setLoading(false);

@@ -613,6 +613,8 @@ function WatchPage() {
         onTouchEnd={isTouch ? handleTouchTap : undefined}
         onPlay={() => {
           setPlaying(true);
+          setLoading(false);
+          setLoadingPercent(100);
           enterImmersiveMode();
         }}
         onPause={(e) => {

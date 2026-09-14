@@ -3,6 +3,7 @@ import { X } from "lucide-react";
 
 import type { JfItem } from "@/lib/jellyfin.types";
 import type { PosterRecord } from "@/lib/posters.types";
+import { useLanguage } from "@/lib/i18n";
 
 export interface MediaFilter {
   genre: string;
@@ -63,6 +64,7 @@ export function FilterBar({ posters, value, onChange }: {
   value: MediaFilter;
   onChange: (f: MediaFilter) => void;
 }) {
+  const { t } = useLanguage();
   const genres = useMemo(() => options(posters, (p) => p.genres), [posters]);
   const years = useMemo(() => options(posters, (p) => [p.year]), [posters]);
   const ratings = useMemo(() => options(posters, (p) => [p.rating]), [posters]);
@@ -71,30 +73,30 @@ export function FilterBar({ posters, value, onChange }: {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <select
-        aria-label="Filter by genre"
+        aria-label={t("allGenres")}
         className={selectCls}
         value={value.genre}
         onChange={(e) => onChange({ ...value, genre: e.target.value })}
       >
-        <option value="">All genres</option>
+        <option value="">{t("allGenres")}</option>
         {genres.map((g) => <option key={g} value={g}>{g}</option>)}
       </select>
       <select
-        aria-label="Filter by year"
+        aria-label={t("allYears")}
         className={selectCls}
         value={value.year}
         onChange={(e) => onChange({ ...value, year: e.target.value })}
       >
-        <option value="">All years</option>
+        <option value="">{t("allYears")}</option>
         {years.map((y) => <option key={y} value={y}>{y}</option>)}
       </select>
       <select
-        aria-label="Filter by rating"
+        aria-label={t("allRatings")}
         className={selectCls}
         value={value.rating}
         onChange={(e) => onChange({ ...value, rating: e.target.value })}
       >
-        <option value="">All ratings</option>
+        <option value="">{t("allRatings")}</option>
         {ratings.map((r) => <option key={r} value={r}>{r}</option>)}
       </select>
       {active && (
@@ -103,7 +105,7 @@ export function FilterBar({ posters, value, onChange }: {
           onClick={() => onChange(emptyFilter)}
           className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
-          <X className="h-3.5 w-3.5" /> Clear
+          <X className="h-3.5 w-3.5" /> {t("clear")}
         </button>
       )}
     </div>

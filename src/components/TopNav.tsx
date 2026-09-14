@@ -4,8 +4,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { Bookmark, History, LogOut, Play, Search, Users } from "lucide-react";
 
 import { getSessionFn, logoutFn } from "@/lib/auth.functions";
+import { LanguageSelect, useLanguage } from "@/lib/i18n";
 
 export function TopNav({ userName }: { userName: string }) {
+  const { t } = useLanguage();
   const session = useQuery({ queryKey: ["session"], queryFn: () => getSessionFn() });
   const navigate = useNavigate();
   const logout = useServerFn(logoutFn);
@@ -19,21 +21,21 @@ export function TopNav({ userName }: { userName: string }) {
         <div className="flex items-center gap-1.5 sm:gap-3">
           <Link
             to="/watchlist"
-            aria-label="My watchlist"
+            aria-label={t("watchlist")}
             className="rounded-full p-2 text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
           >
             <Bookmark className="h-5 w-5" />
           </Link>
           <Link
             to="/history"
-            aria-label="Watch history"
+            aria-label={t("history")}
             className="rounded-full p-2 text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
           >
             <History className="h-5 w-5" />
           </Link>
           <Link
             to="/search"
-            aria-label="Search"
+            aria-label={t("search")}
             className="rounded-full p-2 text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
           >
             <Search className="h-5 w-5" />
@@ -41,12 +43,13 @@ export function TopNav({ userName }: { userName: string }) {
           {session.data?.isAdmin && (
             <Link
               to="/admin"
-              aria-label="Manage people"
+              aria-label={t("people")}
               className="rounded-full p-2 text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
             >
               <Users className="h-5 w-5" />
             </Link>
           )}
+          <LanguageSelect compact />
           <div className="flex h-8 w-8 items-center justify-center rounded bg-primary text-sm font-bold text-primary-foreground">
             {userName.charAt(0).toUpperCase()}
           </div>
@@ -56,7 +59,7 @@ export function TopNav({ userName }: { userName: string }) {
                 void navigate({ to: "/login" });
               })
             }
-            aria-label="Sign out"
+            aria-label={t("signOut")}
             className="rounded-full p-2 text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
           >
             <LogOut className="h-5 w-5" />

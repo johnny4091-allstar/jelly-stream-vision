@@ -1,15 +1,13 @@
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { Info, Play } from "lucide-react";
 
+import { FeaturedSlideshow } from "@/components/FeaturedSlideshow";
 import { buildPosterIndex, FilterBar, filterItems, useMediaFilter } from "@/components/FilterBar";
-import { MobilePosterRail } from "@/components/MobilePosterRail";
 import { Row } from "@/components/Row";
 import { TopNav } from "@/components/TopNav";
 import { getSessionFn } from "@/lib/auth.functions";
 import { getHomeFn } from "@/lib/jellyfin.functions";
 import { listPostersFn, syncPostersFn } from "@/lib/posters.functions";
-import { backdropUrl, formatRuntime } from "@/lib/jellyfin.types";
 import { useLanguage } from "@/lib/i18n";
 
 const homeQuery = queryOptions({
@@ -63,64 +61,20 @@ function HomePage() {
   const { t } = useLanguage();
   const { data } = useSuspenseQuery(homeQuery);
   const { data: posters = [] } = useSuspenseQuery(postersQuery);
-  const hero = data.hero;
   const [filter, setFilter] = useMediaFilter();
   const posterIndex = buildPosterIndex(posters);
+  const featured = [
+    ...(data.hero ? [data.hero] : []),
+    ...data.resume,
+    ...data.nextUp,
+    ...data.rows.flatMap((row) => row.items),
+  ];
 
   return (
     <div className="min-h-screen bg-background pb-20">
       <TopNav userName={data.userName} />
 
-      {/* Mobile-only swipeable poster home screen, from the poster database */}
-      <MobilePosterRail posters={posters.slice(0, 20)} />
-
-
-      {/* Desktop hero */}
-      {hero && (
-        <div className="relative hidden h-[70vh] min-h-[420px] w-full overflow-hidden sm:block">
-          <img
-            src={backdropUrl(hero)}
-            alt={hero.Name}
-            className="h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-background/20" />
-          <div className="absolute inset-x-0 bottom-0 space-y-3 px-4 pb-12 sm:space-y-4 sm:px-8 sm:pb-16">
-            <h1 className="max-w-2xl text-3xl font-black tracking-tight text-foreground drop-shadow-lg sm:text-6xl">
-              {hero.SeriesName ?? hero.Name}
-            </h1>
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              {hero.ProductionYear && <span>{hero.ProductionYear}</span>}
-              {hero.OfficialRating && (
-                <span className="rounded border border-border px-1.5 py-0.5 text-xs">
-                  {hero.OfficialRating}
-                </span>
-              )}
-              {hero.RunTimeTicks ? <span>{formatRuntime(hero.RunTimeTicks)}</span> : null}
-            </div>
-            {hero.Overview && (
-              <p className="line-clamp-2 max-w-xl text-xs text-foreground/85 sm:line-clamp-3 sm:text-base">
-                {hero.Overview}
-              </p>
-            )}
-            <div className="flex items-center gap-3 pt-2">
-              <Link
-                to="/watch/$id"
-                params={{ id: hero.Id }}
-                className="inline-flex items-center gap-2 rounded-md bg-foreground px-5 py-2 text-xs font-bold text-background transition-colors hover:bg-foreground/80 sm:px-6 sm:py-2.5 sm:text-sm"
-              >
-                <Play className="h-5 w-5 fill-current" /> {t("play")}
-              </Link>
-              <Link
-                to="/title/$id"
-                params={{ id: hero.Type === "Episode" && hero.SeriesId ? hero.SeriesId : hero.Id }}
-                className="inline-flex items-center gap-2 rounded-md bg-accent/80 px-5 py-2 text-xs font-bold text-accent-foreground transition-colors hover:bg-accent sm:px-6 sm:py-2.5 sm:text-sm"
-              >
-                <Info className="h-5 w-5" /> {t("moreInfo")}
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
+      <FeaturedSlideshow items={featured} />
 
       <div className="relative z-10 -mt-10 space-y-10">
         <div className="px-4 sm:px-8">

@@ -90,6 +90,16 @@ export const Route = createFileRoute("/api/proxy/$")({
           return new Response(body, { status: upstream.status, headers: out });
         }
 
+        // Missing artwork (common for Live TV channels) must not surface as a
+        // server error in the app; answer with a plain empty 404 instead.
+        if (/\/Images\//i.test(path) && !upstream.ok) {
+          await upstream.body?.cancel().catch(() => {});
+          return new Response(null, {
+            status: 404,
+            headers: { "cache-control": "private, max-age=300" },
+          });
+        }
+
         if (!out.has("cache-control")) out.set("cache-control", "private, max-age=3600");
 
         return new Response(upstream.body, { status: upstream.status, headers: out });

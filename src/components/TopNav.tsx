@@ -1,7 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Bookmark, History, LogOut, Play, Radio, Search, Users } from "lucide-react";
+import { Bookmark, History, LogOut, Play, Radio, RefreshCw, Search, Users } from "lucide-react";
+import { useState } from "react";
 
 import { getSessionFn, logoutFn } from "@/lib/auth.functions";
 import { LanguageSelect, useLanguage } from "@/lib/i18n";
@@ -11,6 +12,19 @@ export function TopNav({ userName }: { userName: string }) {
   const session = useQuery({ queryKey: ["session"], queryFn: () => getSessionFn() });
   const navigate = useNavigate();
   const logout = useServerFn(logoutFn);
+  const queryClient = useQueryClient();
+  const [syncing, setSyncing] = useState(false);
+
+  async function syncNow() {
+    if (syncing) return;
+    setSyncing(true);
+    try {
+      await queryClient.invalidateQueries();
+      await queryClient.refetchQueries({ type: "active" });
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   return (
     <header className="fixed inset-x-0 top-0 z-40 bg-gradient-to-b from-background via-background/80 to-transparent">
@@ -56,6 +70,15 @@ export function TopNav({ userName }: { userName: string }) {
               <Users className="h-5 w-5" />
             </Link>
           )}
+          <button
+            onClick={() => void syncNow()}
+            disabled={syncing}
+            aria-label="Sync progress"
+            title="Sync progress"
+            className="shrink-0 rounded-full p-1.5 text-foreground/80 transition-colors hover:bg-accent hover:text-foreground disabled:opacity-60 sm:p-2"
+          >
+            <RefreshCw className={`h-5 w-5 ${syncing ? "animate-spin" : ""}`} />
+          </button>
           <LanguageSelect compact />
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-primary text-sm font-bold text-primary-foreground">
             {userName.charAt(0).toUpperCase()}

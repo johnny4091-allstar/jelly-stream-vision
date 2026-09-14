@@ -47,10 +47,15 @@ export const logWatchFn = createServerFn({ method: "POST" })
       const db = await admin();
       const { data: existing } = await db
         .from("watch_history")
-        .select("seconds_watched, play_count")
+        .select("seconds_watched, play_count, last_position_seconds, runtime_seconds")
         .eq("jf_user_id", s.userId)
         .eq("jf_item_id", data.itemId)
         .maybeSingle();
+
+      // A just-started (or abandoned) play must never wipe a good saved spot.
+      const incomingPos = Math.max(0, Math.floor(data.positionSeconds));
+      const keptPos =
+        incomingPos < 10 ? Math.max(incomingPos, existing?.last_position_seconds ?? 0) : incomingPos;
 
       const row = {
         jf_user_id: s.userId,
@@ -61,11 +66,14 @@ export const logWatchFn = createServerFn({ method: "POST" })
         image_item_id: data.imageItemId ?? data.itemId,
         seconds_watched:
           (existing?.seconds_watched ?? 0) + Math.max(0, Math.floor(data.secondsDelta)),
-        last_position_seconds: Math.max(0, Math.floor(data.positionSeconds)),
-        runtime_seconds: data.runtimeSeconds ? Math.floor(data.runtimeSeconds) : null,
+        last_position_seconds: keptPos,
+        runtime_seconds: data.runtimeSeconds
+          ? Math.floor(data.runtimeSeconds)
+          : (existing?.runtime_seconds ?? null),
         play_count: (existing?.play_count ?? 0) + (data.isNewPlay || !existing ? 1 : 0),
         last_played_at: new Date().toISOString(),
       };
+
 
       const { error } = await db
         .from("watch_history")

@@ -232,6 +232,74 @@ export const getGuideFn = createServerFn({ method: "GET" })
     }));
   });
 
+/**
+ * Public guide preview for the landing page — no sign-in required.
+ * Uses the server API key only; returns a small slice of channels with
+ * current and upcoming programs. Never exposes user data.
+ */
+export const getPublicGuideFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<{ channels: LiveChannel[]; programs: GuideProgram[] }> => {
+    const res = await jfGet<{ Items?: RawChannel[] }>(
+      `/LiveTv/Channels?AddCurrentProgram=true&EnableImages=true&Limit=40&SortBy=SortName`,
+    );
+    const channels: LiveChannel[] = (res.Items ?? []).map((c) => ({
+      id: c.Id,
+      name: c.Name ?? "Channel",
+      number: c.ChannelNumber ?? c.Number ?? "",
+      hasImage: Boolean(c.ImageTags?.["Primary"]),
+      favorite: false,
+      category: categoryOf(c.Name ?? ""),
+      now: c.CurrentProgram
+        ? {
+            id: c.CurrentProgram.Id,
+            name: c.CurrentProgram.Name ?? "",
+            start: c.CurrentProgram.StartDate ?? null,
+            end: c.CurrentProgram.EndDate ?? null,
+          }
+        : null,
+    }));
+    if (!channels.length) return { channels: [], programs: [] };
+
+    const start = new Date();
+    const end = new Date(start.getTime() + 6 * 3_600_000);
+    type Raw = {
+      Id: string;
+      ChannelId: string;
+      Name?: string;
+      Overview?: string;
+      StartDate?: string;
+      EndDate?: string;
+      IsSeries?: boolean;
+      IsNews?: boolean;
+      IsSports?: boolean;
+      IsKids?: boolean;
+    };
+    const query = new URLSearchParams({
+      ChannelIds: channels.map((c) => c.id).join(","),
+      MinEndDate: start.toISOString(),
+      MaxStartDate: end.toISOString(),
+      SortBy: "StartDate",
+      Limit: "800",
+    });
+    const progs = await jfGet<{ Items?: Raw[] }>(`/LiveTv/Programs?${query.toString()}`).catch(
+      () => ({ Items: [] as Raw[] }),
+    );
+    const programs: GuideProgram[] = (progs.Items ?? []).map((p) => ({
+      id: p.Id,
+      channelId: p.ChannelId,
+      name: p.Name ?? "",
+      overview: null,
+      start: p.StartDate ?? null,
+      end: p.EndDate ?? null,
+      isSeries: Boolean(p.IsSeries),
+      isNews: Boolean(p.IsNews),
+      isSports: Boolean(p.IsSports),
+      isKids: Boolean(p.IsKids),
+    }));
+    return { channels, programs };
+  },
+);
+
 export const getLiveChannelFn = createServerFn({ method: "GET" })
   .inputValidator((data: { channelId: string }) => data)
   .handler(async ({ data }): Promise<LiveChannel | null> => {

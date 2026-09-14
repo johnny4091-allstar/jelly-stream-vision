@@ -1,10 +1,25 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Bookmark, CalendarClock, History, Home, LayoutList, LogOut, Play, PlayCircle, Radio, RefreshCw, Search, Users } from "lucide-react";
+import {
+  Bookmark,
+  CalendarClock,
+  History,
+  Home,
+  LayoutList,
+  LogOut,
+  Menu,
+  Play,
+  PlayCircle,
+  Radio,
+  RefreshCw,
+  Search,
+  Users,
+} from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useState } from "react";
 
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { getSessionFn, logoutFn } from "@/lib/auth.functions";
 import { LanguageSelect, useLanguage } from "@/lib/i18n";
 
@@ -17,6 +32,7 @@ export function TopNav({ userName }: { userName: string }) {
   const logout = useServerFn(logoutFn);
   const queryClient = useQueryClient();
   const [syncing, setSyncing] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   async function syncNow() {
     if (syncing) return;
@@ -118,50 +134,88 @@ export function TopNav({ userName }: { userName: string }) {
         </div>
       </nav>
 
-      {/* Phone / tablet: top bar */}
+      {/* Phone / tablet: compact top bar with hamburger drawer */}
       <header className="fixed inset-x-0 top-0 z-40 bg-gradient-to-b from-background via-background/80 to-transparent xl:hidden">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-4 py-3 sm:flex sm:justify-between sm:px-8 sm:py-4">
+        <div className="flex items-center justify-between px-4 py-3 sm:px-8 sm:py-4">
           <Link
             to="/"
             className="min-w-0 truncate text-lg font-black tracking-tight text-primary sm:text-2xl"
           >
             AURORA
           </Link>
-          <div className="flex shrink-0 items-center gap-0.5 sm:gap-3">
-            {items
-              .filter((i) => i.to !== "/")
-              .map(({ to, label, icon: Icon, hideOnPhone }) => (
-                <Link
-                  key={to}
-                  to={to}
-                  aria-label={label}
-                  className={`shrink-0 rounded-full p-1.5 text-foreground/80 transition-colors hover:bg-accent hover:text-foreground sm:p-2 ${
-                    hideOnPhone ? "hidden min-[480px]:block" : ""
-                  }`}
-                >
-                  <Icon className="h-5 w-5" />
-                </Link>
-              ))}
-            <button
-              onClick={() => void syncNow()}
-              disabled={syncing}
-              aria-label="Sync progress"
-              className="shrink-0 rounded-full p-1.5 text-foreground/80 transition-colors hover:bg-accent hover:text-foreground disabled:opacity-60 sm:p-2"
-            >
-              <RefreshCw className={`h-5 w-5 ${syncing ? "animate-spin" : ""}`} />
-            </button>
-            <LanguageSelect compact />
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-primary text-sm font-bold text-primary-foreground">
-              {userName.charAt(0).toUpperCase()}
-            </div>
-            <button
-              onClick={signOut}
-              aria-label={t("signOut")}
-              className="shrink-0 rounded-full p-1.5 text-foreground/80 transition-colors hover:bg-accent hover:text-foreground sm:p-2"
-            >
-              <LogOut className="h-5 w-5" />
-            </button>
-          </div>
+
+          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+            <SheetTrigger asChild>
+              <button
+                aria-label="Open menu"
+                className="flex h-10 w-10 items-center justify-center rounded-full text-foreground/90 transition-colors hover:bg-accent hover:text-foreground"
+              >
+                <Menu className="h-6 w-6" />
+              </button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[min(20rem,85vw)] border-border bg-background p-0">
+              <SheetTitle className="sr-only">Navigation menu</SheetTitle>
+
+              <div className="flex h-full flex-col">
+                <div className="flex items-center gap-3 border-b border-border px-5 py-4">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-base font-bold text-primary-foreground">
+                    {userName.charAt(0).toUpperCase()}
+                  </span>
+                  <span className="truncate text-lg font-semibold text-foreground">{userName}</span>
+                </div>
+
+                <nav className="flex-1 overflow-y-auto px-3 py-3">
+                  <ul className="flex flex-col gap-1">
+                    {items.map(({ to, label, icon: Icon }) => (
+                      <li key={to}>
+                        <Link
+                          to={to}
+                          onClick={() => setMenuOpen(false)}
+                          activeOptions={{ exact: to === "/" }}
+                          activeProps={{ className: "bg-accent text-foreground" }}
+                          className="flex items-center gap-4 rounded-md px-3 py-3 text-foreground/80 transition-colors hover:bg-accent hover:text-foreground [&.active]:text-primary"
+                        >
+                          <Icon className="h-5 w-5 shrink-0" />
+                          <span className="text-base font-medium">{label}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
+
+                <div className="border-t border-border px-3 py-3">
+                  <button
+                    onClick={() => {
+                      void syncNow();
+                      setMenuOpen(false);
+                    }}
+                    disabled={syncing}
+                    aria-label="Sync progress"
+                    className="flex w-full items-center gap-4 rounded-md px-3 py-3 text-foreground/80 transition-colors hover:bg-accent hover:text-foreground disabled:opacity-60"
+                  >
+                    <RefreshCw className={`h-5 w-5 shrink-0 ${syncing ? "animate-spin" : ""}`} />
+                    <span className="text-base font-medium">Sync</span>
+                  </button>
+
+                  <div className="px-3 py-3">
+                    <LanguageSelect compact />
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      signOut();
+                      setMenuOpen(false);
+                    }}
+                    aria-label={t("signOut")}
+                    className="flex w-full items-center gap-4 rounded-md px-3 py-3 text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
+                  >
+                    <LogOut className="h-5 w-5 shrink-0" />
+                    <span className="text-base font-medium">{t("signOut")}</span>
+                  </button>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </header>
     </>

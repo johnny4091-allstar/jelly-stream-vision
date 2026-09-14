@@ -14,6 +14,7 @@ import {
   itemImageUrl,
   type JfItem,
 } from "@/lib/jellyfin.types";
+import { useLanguage } from "@/lib/i18n";
 
 const itemQuery = (id: string) =>
   queryOptions({ queryKey: ["item", id], queryFn: () => getItemFn({ data: { id } }) });
@@ -44,6 +45,7 @@ export const Route = createFileRoute("/title/$id")({
 });
 
 function TitlePage() {
+  const { t } = useLanguage();
   const { id } = Route.useParams();
   const { data: item } = useSuspenseQuery(itemQuery(id));
   const isSeries = item.Type === "Series";
@@ -92,7 +94,7 @@ function TitlePage() {
             className="inline-flex items-center gap-2 rounded-md bg-foreground px-6 py-2.5 text-sm font-bold text-background transition-colors hover:bg-foreground/80"
           >
             {pct > 0 ? <RotateCcw className="h-5 w-5" /> : <Play className="h-5 w-5 fill-current" />}
-            {pct > 0 ? `Resume (${Math.round(pct)}%)` : "Play"}
+            {pct > 0 ? `${t("resume")} (${Math.round(pct)}%)` : t("play")}
           </Link>
           <SyncActions item={item} />
         </div>
@@ -103,7 +105,7 @@ function TitlePage() {
         )}
         {cast.length > 0 && (
           <p className="max-w-3xl text-sm text-muted-foreground">
-            <span className="font-semibold text-foreground/70">Starring: </span>
+            <span className="font-semibold text-foreground/70">{t("starring")}: </span>
             {cast.map((p) => p.Name).join(", ")}
           </p>
         )}
@@ -111,7 +113,7 @@ function TitlePage() {
         {isSeries && activeSeason && (
           <div className="space-y-4 pt-4">
             <div className="flex items-center gap-3">
-              <h2 className="text-xl font-bold text-foreground">Episodes</h2>
+              <h2 className="text-xl font-bold text-foreground">{t("episodes")}</h2>
               <select
                 value={activeSeason}
                 onChange={(e) => setSeasonId(e.target.value)}

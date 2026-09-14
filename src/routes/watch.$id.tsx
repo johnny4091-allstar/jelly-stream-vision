@@ -25,6 +25,7 @@ import {
   setPlayedFn,
 } from "@/lib/jellyfin.functions";
 import { episodeLabel } from "@/lib/jellyfin.types";
+import { audioLanguageCodes, LanguageSelect, useLanguage } from "@/lib/i18n";
 
 const itemQuery = (id: string) =>
   queryOptions({ queryKey: ["playable-item", id], queryFn: () => getPlayableItemFn({ data: { id } }) });
@@ -72,6 +73,7 @@ function languageName(code: string | null) {
 const posKey = (id: string) => `aurora-pos-${id}`;
 
 function WatchPage() {
+  const { language, t } = useLanguage();
   const { id } = Route.useParams();
   const { data: item } = useSuspenseQuery(itemQuery(id));
   const getPlaybackInfo = useServerFn(getPlaybackInfoFn);
@@ -125,6 +127,15 @@ function WatchPage() {
     () => typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches,
     [],
   );
+
+  useEffect(() => {
+    if (audioIndex != null || audioTracks.length < 2) return;
+    const codes = audioLanguageCodes[language];
+    const preferred = audioTracks.find((track) =>
+      track.language ? codes.includes(track.language.toLowerCase()) : false,
+    );
+    if (preferred) setAudioIndex(preferred.index);
+  }, [audioIndex, audioTracks, language]);
 
   const title = item.SeriesName ? `${item.SeriesName} — ${episodeLabel(item)}` : item.Name;
   // Old links can contain a truncated Jellyfin ID. getItemFn resolves those,
@@ -784,7 +795,7 @@ function WatchPage() {
           <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/30" />
           <div className="relative z-10 flex w-full max-w-xs flex-col items-center px-6 text-center">
             <h2 className="mb-1 text-lg font-semibold text-foreground line-clamp-2">{title}</h2>
-            <p className="mb-8 text-sm text-muted-foreground">Loading your stream…</p>
+            <p className="mb-8 text-sm text-muted-foreground">{t("loadingStream")}</p>
             <div className="text-5xl font-bold tabular-nums text-foreground">{loadingPercent}%</div>
             <div className="mt-8 h-1 w-full overflow-hidden rounded-full bg-white/20">
               <div
@@ -804,7 +815,7 @@ function WatchPage() {
             onClick={() => retryPlaybackRef.current?.()}
             size="lg"
           >
-            Retry playback
+            {t("retryPlayback")}
           </Button>
         </div>
       )}
@@ -837,7 +848,7 @@ function WatchPage() {
           <Link
             to="/title/$id"
             params={{ id: item.SeriesId ?? item.Id }}
-            aria-label="Back"
+            aria-label={t("back")}
             className="rounded-full p-2 text-foreground transition-colors hover:bg-accent"
           >
             <ArrowLeft className="h-6 w-6" />
@@ -848,22 +859,24 @@ function WatchPage() {
               {item.Type === "Episode" ? item.Name : null}
               {playMode ? (
                 <span className="ml-2 rounded bg-secondary px-1.5 py-0.5 text-[11px] uppercase tracking-wide">
-                  {playMode === "Transcode" ? "Converted" : "Direct"}
+                   {playMode === "Transcode" ? t("converted") : t("direct")}
                 </span>
               ) : null}
             </p>
           </div>
 
-          {audioTracks.length > 1 && (
-            <div className="relative ml-auto">
+          <div className="relative ml-auto flex items-center gap-2">
+            <LanguageSelect compact />
+            {audioTracks.length > 1 && (
+              <div className="relative">
               <button
                 type="button"
                 onClick={() => setShowAudioMenu((v) => !v)}
-                aria-label="Change audio language"
+                aria-label={t("audio")}
                 className="flex items-center gap-2 rounded-full bg-black/50 px-3 py-2 text-sm text-foreground transition-colors hover:bg-accent"
               >
                 <Languages className="h-5 w-5" />
-                <span className="hidden sm:inline">Audio</span>
+                <span className="hidden sm:inline">{t("audio")}</span>
               </button>
               {showAudioMenu && (
                 <div className="absolute right-0 z-30 mt-2 w-56 overflow-hidden rounded-lg border border-border bg-popover py-1 shadow-xl">
@@ -890,8 +903,9 @@ function WatchPage() {
                   })}
                 </div>
               )}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Big center controls (mobile-first) */}

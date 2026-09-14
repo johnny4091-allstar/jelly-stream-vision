@@ -322,6 +322,7 @@ function LiveWatchPage() {
           setPlaying(true);
           setLoadingPercent(100);
           setLoading(false);
+          enterImmersiveMode();
           pokeControls();
         }}
         onPause={() => setPlaying(false)}

@@ -63,7 +63,21 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   const { t } = useLanguage();
-  const { data } = useSuspenseQuery(homeQuery);
+  const { data, refetch } = useSuspenseQuery(homeQuery);
+
+  // TV/phone apps resume from background without a window focus event.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void refetch();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("pageshow", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("pageshow", onVisible);
+    };
+  }, [refetch]);
+
   const { data: posters = [] } = useSuspenseQuery(postersQuery);
   const [filter, setFilter] = useMediaFilter();
   const posterIndex = buildPosterIndex(posters);

@@ -105,6 +105,26 @@ export const getHomeFn = createServerFn({ method: "GET" }).handler(async (): Pro
       applyProgress(found);
       resume.push(...found);
     }
+
+    // Live TV has no position to resume, but the channel you were last on
+    // belongs in Continue Watching too (last 12 hours).
+    const cutoff = Date.now() - 12 * 60 * 60 * 1000;
+    const seenChannels = new Set<string>();
+    const liveItems: JfItem[] = [];
+    for (const h of hist ?? []) {
+      if (h.item_type !== "TvChannel") continue;
+      if (new Date(h.last_played_at).getTime() < cutoff) continue;
+      if (seenChannels.has(h.jf_item_id)) continue;
+      seenChannels.add(h.jf_item_id);
+      liveItems.push({
+        Id: h.jf_item_id,
+        Name: h.title,
+        Type: "TvChannel",
+        Overview: h.subtitle ?? undefined,
+      });
+      if (liveItems.length >= 4) break;
+    }
+    resume.unshift(...liveItems);
   } catch (err) {
     console.warn("history progress merge failed", err);
   }

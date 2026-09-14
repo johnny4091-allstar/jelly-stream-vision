@@ -255,8 +255,21 @@ function LiveWatchPage() {
         playsInline
         autoPlay
         onClick={togglePlay}
+        onCanPlay={(e) => {
+          setLoadingPercent(100);
+          setLoading(false);
+          pokeControls();
+          const v = e.currentTarget;
+          if (v.paused) {
+            v.play().catch(() => {
+              v.muted = true;
+              void v.play().catch(() => {});
+            });
+          }
+        }}
         onPlay={() => {
           setPlaying(true);
+          setLoadingPercent(100);
           setLoading(false);
           pokeControls();
         }}
@@ -265,8 +278,29 @@ function LiveWatchPage() {
       />
 
       {loading && !error && (
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-black">
-          <p className="text-sm text-muted-foreground">{t("loadingStream")}</p>
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black">
+          {channel.data?.hasImage ? (
+            <div
+              className="absolute inset-0 bg-contain bg-center bg-no-repeat opacity-30"
+              style={{
+                backgroundImage: `url('/api/proxy/Items/${channelId}/Images/Primary?fillHeight=720&fillWidth=1280&quality=80')`,
+              }}
+            />
+          ) : null}
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/30" />
+          <div className="relative z-10 flex w-full max-w-xs flex-col items-center px-6 text-center">
+            <h2 className="mb-1 text-lg font-semibold text-foreground line-clamp-2">
+              {channel.data?.name ?? t("liveTv")}
+            </h2>
+            <p className="mb-8 text-sm text-muted-foreground">{t("loadingStream")}</p>
+            <div className="text-5xl font-bold tabular-nums text-foreground">{loadingPercent}%</div>
+            <div className="mt-8 h-1 w-full overflow-hidden rounded-full bg-white/20">
+              <div
+                className="h-full bg-primary transition-[width] duration-300 ease-out"
+                style={{ width: `${loadingPercent}%` }}
+              />
+            </div>
+          </div>
         </div>
       )}
 

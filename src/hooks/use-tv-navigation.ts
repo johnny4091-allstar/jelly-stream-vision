@@ -21,7 +21,10 @@ function isVisible(el: HTMLElement) {
 }
 
 function candidates(): HTMLElement[] {
-  return Array.from(document.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(isVisible);
+  // When an overlay (drawer / menu) is open, only its contents are selectable.
+  const scopes = Array.from(document.querySelectorAll<HTMLElement>("[data-tv-scope]"));
+  const root = scopes.length ? scopes[scopes.length - 1]! : document;
+  return Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(isVisible);
 }
 
 function center(el: Element) {

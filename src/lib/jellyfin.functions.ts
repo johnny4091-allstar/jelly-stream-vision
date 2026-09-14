@@ -339,18 +339,21 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
 
 export const reportPlayingFn = createServerFn({ method: "POST" })
   .inputValidator(
-    (data: { itemId: string; positionTicks: number; playSessionId: string; kind: "Started" | "Progress" | "Stopped"; isPaused?: boolean; deviceId?: string; playMethod?: "DirectPlay" | "DirectStream" | "Transcode" }) => data,
+    (data: { itemId: string; positionTicks: number; playSessionId: string; kind: "Started" | "Progress" | "Stopped"; isPaused?: boolean; deviceId?: string; mediaSourceId?: string; playMethod?: "DirectPlay" | "DirectStream" | "Transcode" }) => data,
   )
   .handler(async ({ data }) => {
     const s = await requireSession();
+    const ticks = Math.max(0, Math.floor(data.positionTicks));
     // Progress reporting is best-effort telemetry: never let it break playback.
     try {
       await jfPost(
       `/Sessions/Playing/${data.kind}`,
       {
+        UserId: s.userId,
         ItemId: data.itemId,
+        ...(data.mediaSourceId ? { MediaSourceId: data.mediaSourceId } : {}),
         PlaySessionId: data.playSessionId,
-        PositionTicks: Math.floor(data.positionTicks),
+        PositionTicks: ticks,
         CanSeek: true,
         IsPaused: data.isPaused ?? false,
         PlayMethod: data.playMethod ?? "Transcode",
@@ -359,12 +362,23 @@ export const reportPlayingFn = createServerFn({ method: "POST" })
       s.token,
       data.deviceId,
       );
+      // Belt and braces: the session report is transient, this writes the resume
+      // position straight onto the user's item data so Continue Watching sticks.
+      if (data.kind !== "Started" && ticks > 0) {
+        await jfPost(
+          `/Users/${s.userId}/PlayingItems/${data.itemId}/Progress?PositionTicks=${ticks}&IsPaused=${data.isPaused ?? false}&PlaySessionId=${encodeURIComponent(data.playSessionId)}`,
+          null,
+          s.token,
+          data.deviceId,
+        ).catch(() => null);
+      }
     } catch (err) {
       console.warn("Jellyfin progress report failed", err);
       return { ok: false as const };
     }
     return { ok: true as const };
   });
+
 
 /** Toggle favourite ("My List" / heart) on the Jellyfin account itself. */
 export const setFavoriteFn = createServerFn({ method: "POST" })

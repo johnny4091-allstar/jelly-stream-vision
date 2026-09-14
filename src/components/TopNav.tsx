@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Bookmark, History, LogOut, Play, Search, Users } from "lucide-react";
+import { Bookmark, History, LogOut, Play, Radio, Search, Users } from "lucide-react";
 
 import { getSessionFn, logoutFn } from "@/lib/auth.functions";
 import { LanguageSelect, useLanguage } from "@/lib/i18n";
@@ -19,6 +19,13 @@ export function TopNav({ userName }: { userName: string }) {
           AURORA
         </Link>
         <div className="flex shrink-0 items-center gap-0.5 sm:gap-3">
+          <Link
+            to="/live"
+            aria-label={t("liveTv")}
+            className="shrink-0 rounded-full p-1.5 text-foreground/80 transition-colors hover:bg-accent hover:text-foreground sm:p-2"
+          >
+            <Radio className="h-5 w-5" />
+          </Link>
           <Link
             to="/watchlist"
             aria-label={t("watchlist")}

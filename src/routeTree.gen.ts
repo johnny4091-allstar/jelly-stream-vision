@@ -28,6 +28,7 @@ import { Route as LiveRecordingsRouteImport } from './routes/live.recordings'
 import { Route as TitleIdRouteImport } from './routes/title.$id'
 import { Route as WatchIdRouteImport } from './routes/watch.$id'
 import { Route as ApiProxySplatRouteImport } from './routes/api/proxy/$'
+import { Route as LiveWatchChannelIdRouteImport } from './routes/live.watch.$channelId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -124,6 +125,11 @@ const ApiProxySplatRoute = ApiProxySplatRouteImport.update({
   path: '/api/proxy/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LiveWatchChannelIdRoute = LiveWatchChannelIdRouteImport.update({
+  id: '/watch/$channelId',
+  path: '/watch/$channelId',
+  getParentRoute: () => LiveRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -145,6 +151,7 @@ export interface FileRoutesByFullPath {
   '/watch/$id': typeof WatchIdRoute
   '/live/': typeof LiveIndexRoute
   '/api/proxy/$': typeof ApiProxySplatRoute
+  '/live/watch/$channelId': typeof LiveWatchChannelIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -165,6 +172,7 @@ export interface FileRoutesByTo {
   '/watch/$id': typeof WatchIdRoute
   '/live': typeof LiveIndexRoute
   '/api/proxy/$': typeof ApiProxySplatRoute
+  '/live/watch/$channelId': typeof LiveWatchChannelIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -187,6 +195,7 @@ export interface FileRoutesById {
   '/watch/$id': typeof WatchIdRoute
   '/live/': typeof LiveIndexRoute
   '/api/proxy/$': typeof ApiProxySplatRoute
+  '/live/watch/$channelId': typeof LiveWatchChannelIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -210,6 +219,7 @@ export interface FileRouteTypes {
     | '/watch/$id'
     | '/live/'
     | '/api/proxy/$'
+    | '/live/watch/$channelId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -230,6 +240,7 @@ export interface FileRouteTypes {
     | '/watch/$id'
     | '/live'
     | '/api/proxy/$'
+    | '/live/watch/$channelId'
   id:
     | '__root__'
     | '/'
@@ -251,6 +262,7 @@ export interface FileRouteTypes {
     | '/watch/$id'
     | '/live/'
     | '/api/proxy/$'
+    | '/live/watch/$channelId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -407,6 +419,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiProxySplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/live/watch/$channelId': {
+      id: '/live/watch/$channelId'
+      path: '/watch/$channelId'
+      fullPath: '/live/watch/$channelId'
+      preLoaderRoute: typeof LiveWatchChannelIdRouteImport
+      parentRoute: typeof LiveRoute
+    }
   }
 }
 
@@ -414,12 +433,14 @@ interface LiveRouteChildren {
   LiveGuideRoute: typeof LiveGuideRoute
   LiveRecordingsRoute: typeof LiveRecordingsRoute
   LiveIndexRoute: typeof LiveIndexRoute
+  LiveWatchChannelIdRoute: typeof LiveWatchChannelIdRoute
 }
 
 const LiveRouteChildren: LiveRouteChildren = {
   LiveGuideRoute: LiveGuideRoute,
   LiveRecordingsRoute: LiveRecordingsRoute,
   LiveIndexRoute: LiveIndexRoute,
+  LiveWatchChannelIdRoute: LiveWatchChannelIdRoute,
 }
 
 const LiveRouteWithChildren = LiveRoute._addFileChildren(LiveRouteChildren)

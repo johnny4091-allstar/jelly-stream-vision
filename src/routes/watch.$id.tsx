@@ -119,6 +119,7 @@ function WatchPage() {
   const [loading, setLoading] = useState(true);
   const [loadingPercent, setLoadingPercent] = useState(0);
   const playMethodRef = useRef<"DirectPlay" | "DirectStream" | "Transcode">("Transcode");
+  const mediaSourceIdRef = useRef("");
 
   const retryPlaybackRef = useRef<(() => void) | null>(null);
   const [seekFlash, setSeekFlash] = useState<{ dir: -1 | 1; key: number } | null>(null);
@@ -206,6 +207,7 @@ function WatchPage() {
       setLoadingPercent(20);
       playSessionRef.current = info.playSessionId;
       setMediaSourceId(info.mediaSourceId);
+      mediaSourceIdRef.current = info.mediaSourceId;
       setAudioTracks(info.audioTracks ?? []);
       setSubtitleTracks(info.subtitleTracks ?? []);
       playMethodRef.current = info.playMethod;
@@ -456,6 +458,7 @@ function WatchPage() {
         deviceId: deviceIdRef.current,
         positionTicks: Math.floor(time * 10_000_000),
         kind: "Started",
+        mediaSourceId: mediaSourceIdRef.current,
         playMethod: playMethodRef.current,
       },
     });
@@ -469,6 +472,7 @@ function WatchPage() {
           deviceId: deviceIdRef.current,
           positionTicks: Math.floor(v.currentTime * 10_000_000),
           kind: "Progress",
+          mediaSourceId: mediaSourceIdRef.current,
           playMethod: playMethodRef.current,
           isPaused: v.paused,
         },
@@ -479,6 +483,7 @@ function WatchPage() {
     const histSubtitle = item.SeriesName ? (item.Name ?? null) : null;
     let lastLogged = videoRef.current?.currentTime ?? time;
     let firstLog = true;
+    const runtimeFallback = item.RunTimeTicks ? item.RunTimeTicks / 10_000_000 : null;
     const logDelta = () => {
       const v = videoRef.current;
       const now = v?.currentTime ?? time;
@@ -493,10 +498,12 @@ function WatchPage() {
           imageItemId: item.SeriesId ?? item.Id,
           secondsDelta: delta,
           positionSeconds: now,
-          runtimeSeconds: v?.duration && Number.isFinite(v.duration) ? v.duration : null,
+          runtimeSeconds:
+            v?.duration && Number.isFinite(v.duration) ? v.duration : runtimeFallback,
           isNewPlay: firstLog,
         },
       });
+
       firstLog = false;
     };
     logDelta();
@@ -513,6 +520,7 @@ function WatchPage() {
           deviceId: deviceIdRef.current,
           positionTicks: Math.floor((v?.currentTime ?? time) * 10_000_000),
           kind: "Stopped",
+          mediaSourceId: mediaSourceIdRef.current,
           playMethod: playMethodRef.current,
         },
       });
@@ -532,6 +540,7 @@ function WatchPage() {
           deviceId: deviceIdRef.current,
           positionTicks: Math.floor((v?.currentTime ?? 0) * 10_000_000),
           kind: "Stopped",
+          mediaSourceId: mediaSourceIdRef.current,
           playMethod: playMethodRef.current,
         },
       });
@@ -747,6 +756,7 @@ function WatchPage() {
           deviceId: deviceIdRef.current,
               positionTicks: Math.floor(e.currentTarget.currentTime * 10_000_000),
               kind: "Progress",
+              mediaSourceId: mediaSourceIdRef.current,
               playMethod: playMethodRef.current,
               isPaused: true,
             },
@@ -761,6 +771,7 @@ function WatchPage() {
           deviceId: deviceIdRef.current,
               positionTicks: Math.floor(e.currentTarget.currentTime * 10_000_000),
               kind: "Progress",
+              mediaSourceId: mediaSourceIdRef.current,
               playMethod: playMethodRef.current,
               isPaused: e.currentTarget.paused,
             },
@@ -775,6 +786,7 @@ function WatchPage() {
           deviceId: deviceIdRef.current,
               positionTicks: Math.floor(e.currentTarget.currentTime * 10_000_000),
               kind: "Stopped",
+              mediaSourceId: mediaSourceIdRef.current,
               playMethod: playMethodRef.current,
             },
           });
@@ -790,7 +802,7 @@ function WatchPage() {
           if (
             !markedPlayedRef.current &&
             v.duration > 0 &&
-            v.currentTime / v.duration >= 0.95
+            v.currentTime / v.duration >= 0.92
           ) {
             markedPlayedRef.current = true;
             localStorage.removeItem(posKey(playbackId));

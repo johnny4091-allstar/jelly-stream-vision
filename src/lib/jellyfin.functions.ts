@@ -55,19 +55,74 @@ export const getHomeFn = createServerFn({ method: "GET" }).handler(async (): Pro
     );
     rows.push({ title: `Recently Added in ${view.Name}`, viewId: view.Id, items: latest ?? [] });
   }
+
+  const resume = resumeRes.Items ?? [];
+  // The app keeps its own watch record, so progress survives when the media
+  // server misses a report. Use it to fill in bars and Continue Watching.
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: hist } = await supabaseAdmin
+      .from("watch_history")
+      .select("jf_item_id, last_position_seconds, runtime_seconds, last_played_at")
+      .eq("jf_user_id", s.userId)
+      .order("last_played_at", { ascending: false })
+      .limit(60);
+
+    const pct = new Map<string, { percent: number; seconds: number }>();
+    for (const h of hist ?? []) {
+      const runtime = h.runtime_seconds ?? 0;
+      const pos = h.last_position_seconds ?? 0;
+      if (runtime <= 0 || pos <= 0) continue;
+      const percent = (pos / runtime) * 100;
+      if (percent < 1 || percent > 92) continue;
+      if (!pct.has(h.jf_item_id)) pct.set(h.jf_item_id, { percent, seconds: pos });
+    }
+
+    const applyProgress = (items: JfItem[]) => {
+      for (const it of items) {
+        const p = pct.get(it.Id);
+        if (!p) continue;
+        const serverPct = it.UserData?.PlayedPercentage ?? 0;
+        if (serverPct >= p.percent) continue;
+        it.UserData = {
+          ...(it.UserData ?? {}),
+          PlayedPercentage: p.percent,
+          PlaybackPositionTicks: Math.floor(p.seconds * 10_000_000),
+        };
+      }
+    };
+    applyProgress(resume);
+    applyProgress(nextUpRes.Items ?? []);
+    for (const r of rows) applyProgress(r.items);
+
+    const missing = [...pct.keys()].filter((id) => !resume.some((i) => i.Id === id)).slice(0, 8);
+    if (missing.length) {
+      const extra = await jfGet<{ Items: JfItem[] }>(
+        `/Users/${s.userId}/Items?Ids=${missing.join(",")}&Fields=Overview`,
+        t,
+      ).catch(() => ({ Items: [] as JfItem[] }));
+      const found = (extra.Items ?? []).filter((i) => !i.UserData?.Played);
+      applyProgress(found);
+      resume.push(...found);
+    }
+  } catch (err) {
+    console.warn("history progress merge failed", err);
+  }
+
   const hero =
-    resumeRes.Items?.find((i) => i.Type === "Movie") ??
+    resume.find((i) => i.Type === "Movie") ??
     rows.flatMap((r) => r.items).find((i) => i.Type === "Movie" || i.Type === "Series") ??
     null;
   return {
     userName: s.userName,
     views,
-    resume: resumeRes.Items ?? [],
+    resume,
     nextUp: nextUpRes.Items ?? [],
     rows,
     hero,
   };
 });
+
 
 export const getItemFn = createServerFn({ method: "GET" })
   .inputValidator((data: { id: string }) => data)
@@ -339,18 +394,21 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
 
 export const reportPlayingFn = createServerFn({ method: "POST" })
   .inputValidator(
-    (data: { itemId: string; positionTicks: number; playSessionId: string; kind: "Started" | "Progress" | "Stopped"; isPaused?: boolean; deviceId?: string; playMethod?: "DirectPlay" | "DirectStream" | "Transcode" }) => data,
+    (data: { itemId: string; positionTicks: number; playSessionId: string; kind: "Started" | "Progress" | "Stopped"; isPaused?: boolean; deviceId?: string; mediaSourceId?: string; playMethod?: "DirectPlay" | "DirectStream" | "Transcode" }) => data,
   )
   .handler(async ({ data }) => {
     const s = await requireSession();
+    const ticks = Math.max(0, Math.floor(data.positionTicks));
     // Progress reporting is best-effort telemetry: never let it break playback.
     try {
       await jfPost(
       `/Sessions/Playing/${data.kind}`,
       {
+        UserId: s.userId,
         ItemId: data.itemId,
+        ...(data.mediaSourceId ? { MediaSourceId: data.mediaSourceId } : {}),
         PlaySessionId: data.playSessionId,
-        PositionTicks: Math.floor(data.positionTicks),
+        PositionTicks: ticks,
         CanSeek: true,
         IsPaused: data.isPaused ?? false,
         PlayMethod: data.playMethod ?? "Transcode",
@@ -359,12 +417,23 @@ export const reportPlayingFn = createServerFn({ method: "POST" })
       s.token,
       data.deviceId,
       );
+      // Belt and braces: the session report is transient, this writes the resume
+      // position straight onto the user's item data so Continue Watching sticks.
+      if (data.kind !== "Started" && ticks > 0) {
+        await jfPost(
+          `/Users/${s.userId}/PlayingItems/${data.itemId}/Progress?PositionTicks=${ticks}&IsPaused=${data.isPaused ?? false}&PlaySessionId=${encodeURIComponent(data.playSessionId)}`,
+          null,
+          s.token,
+          data.deviceId,
+        ).catch(() => null);
+      }
     } catch (err) {
       console.warn("Jellyfin progress report failed", err);
       return { ok: false as const };
     }
     return { ok: true as const };
   });
+
 
 /** Toggle favourite ("My List" / heart) on the Jellyfin account itself. */
 export const setFavoriteFn = createServerFn({ method: "POST" })

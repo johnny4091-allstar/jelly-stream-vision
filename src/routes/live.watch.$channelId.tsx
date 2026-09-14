@@ -56,6 +56,7 @@ function LiveWatchPage() {
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadingPercent, setLoadingPercent] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [showControls, setShowControls] = useState(true);
   const retryRef = useRef<(() => void) | null>(null);
@@ -74,12 +75,23 @@ function LiveWatchPage() {
   useEffect(() => {
     let cancelled = false;
     let hls: import("hls.js").default | null = null;
+    // Never leave the loading screen up forever: reveal the player once the
+    // channel has had enough time to negotiate a stream.
+    const safety = setTimeout(() => {
+      if (cancelled) return;
+      setLoadingPercent(100);
+      setLoading(false);
+      void videoRef.current?.play().catch(() => {});
+    }, 25_000);
+
 
     async function setup() {
       setError(null);
       setLoading(true);
+      setLoadingPercent(0);
       const deviceId = deviceIdRef.current;
       let info: Awaited<ReturnType<typeof getPlaybackInfo>>;
+      setLoadingPercent(20);
       try {
         info = await getPlaybackInfo({ data: { itemId: channelId, deviceId } });
       } catch {
@@ -87,6 +99,7 @@ function LiveWatchPage() {
         return;
       }
       if (cancelled || !videoRef.current) return;
+      setLoadingPercent(35);
       playSessionRef.current = info.playSessionId;
       const video = videoRef.current;
 
@@ -147,12 +160,17 @@ function LiveWatchPage() {
           setError(t("streamInterrupted"));
         });
         hls.on(Hls.Events.MEDIA_ATTACHED, () => hls?.loadSource(hlsUrl));
+        hls.on(Hls.Events.LEVEL_LOADED, () => setLoadingPercent((p) => Math.max(p, 50)));
+        hls.on(Hls.Events.FRAG_BUFFERED, () => setLoadingPercent((p) => Math.min(95, p + 10)));
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          setLoading(false);
+          setLoadingPercent((p) => Math.max(p, 50));
           void video.play().catch(() => {
             video.muted = true;
             void video.play().catch(() => {});
           });
+        });
+        video.addEventListener("canplay", () => setLoadingPercent((p) => Math.max(p, 90)), {
+          once: true,
         });
         hls.attachMedia(video);
       } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
@@ -163,6 +181,10 @@ function LiveWatchPage() {
           video.load();
           void video.play().catch(() => {});
         };
+        video.addEventListener("canplay", () => setLoadingPercent((p) => Math.max(p, 90)), {
+          once: true,
+        });
+        setLoadingPercent(60);
         video.load();
         void video.play().catch(() => {});
       } else {
@@ -173,6 +195,7 @@ function LiveWatchPage() {
     void setup();
     return () => {
       cancelled = true;
+      clearTimeout(safety);
       retryRef.current = null;
       const sid = playSessionRef.current;
       try {
@@ -232,8 +255,21 @@ function LiveWatchPage() {
         playsInline
         autoPlay
         onClick={togglePlay}
+        onCanPlay={(e) => {
+          setLoadingPercent(100);
+          setLoading(false);
+          pokeControls();
+          const v = e.currentTarget;
+          if (v.paused) {
+            v.play().catch(() => {
+              v.muted = true;
+              void v.play().catch(() => {});
+            });
+          }
+        }}
         onPlay={() => {
           setPlaying(true);
+          setLoadingPercent(100);
           setLoading(false);
           pokeControls();
         }}
@@ -242,8 +278,29 @@ function LiveWatchPage() {
       />
 
       {loading && !error && (
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-black">
-          <p className="text-sm text-muted-foreground">{t("loadingStream")}</p>
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black">
+          {channel.data?.hasImage ? (
+            <div
+              className="absolute inset-0 bg-contain bg-center bg-no-repeat opacity-30"
+              style={{
+                backgroundImage: `url('/api/proxy/Items/${channelId}/Images/Primary?fillHeight=720&fillWidth=1280&quality=80')`,
+              }}
+            />
+          ) : null}
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/30" />
+          <div className="relative z-10 flex w-full max-w-xs flex-col items-center px-6 text-center">
+            <h2 className="mb-1 text-lg font-semibold text-foreground line-clamp-2">
+              {channel.data?.name ?? t("liveTv")}
+            </h2>
+            <p className="mb-8 text-sm text-muted-foreground">{t("loadingStream")}</p>
+            <div className="text-5xl font-bold tabular-nums text-foreground">{loadingPercent}%</div>
+            <div className="mt-8 h-1 w-full overflow-hidden rounded-full bg-white/20">
+              <div
+                className="h-full bg-primary transition-[width] duration-300 ease-out"
+                style={{ width: `${loadingPercent}%` }}
+              />
+            </div>
+          </div>
         </div>
       )}
 

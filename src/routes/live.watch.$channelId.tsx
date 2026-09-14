@@ -151,12 +151,17 @@ function LiveWatchPage() {
           setError(t("streamInterrupted"));
         });
         hls.on(Hls.Events.MEDIA_ATTACHED, () => hls?.loadSource(hlsUrl));
+        hls.on(Hls.Events.LEVEL_LOADED, () => setLoadingPercent((p) => Math.max(p, 50)));
+        hls.on(Hls.Events.FRAG_BUFFERED, () => setLoadingPercent((p) => Math.min(95, p + 10)));
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          setLoading(false);
+          setLoadingPercent((p) => Math.max(p, 50));
           void video.play().catch(() => {
             video.muted = true;
             void video.play().catch(() => {});
           });
+        });
+        video.addEventListener("canplay", () => setLoadingPercent((p) => Math.max(p, 90)), {
+          once: true,
         });
         hls.attachMedia(video);
       } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
@@ -167,6 +172,10 @@ function LiveWatchPage() {
           video.load();
           void video.play().catch(() => {});
         };
+        video.addEventListener("canplay", () => setLoadingPercent((p) => Math.max(p, 90)), {
+          once: true,
+        });
+        setLoadingPercent(60);
         video.load();
         void video.play().catch(() => {});
       } else {

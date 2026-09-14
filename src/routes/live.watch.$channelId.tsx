@@ -33,6 +33,8 @@ function LiveWatchPage() {
   const { channelId } = Route.useParams();
   const getPlaybackInfo = useServerFn(getPlaybackInfoFn);
   const stopTranscode = useServerFn(stopTranscodeFn);
+  const reportPlaying = useServerFn(reportPlayingFn);
+  const logWatch = useServerFn(logWatchFn);
 
   const channel = useQuery({
     queryKey: ["live-channel", channelId],

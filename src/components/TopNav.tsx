@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Bookmark, History, Home, LogOut, Play, Radio, RefreshCw, Search, Users } from "lucide-react";
+import { Bookmark, CalendarClock, History, Home, LogOut, Play, PlayCircle, Radio, RefreshCw, Search, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useState } from "react";
 
@@ -31,7 +31,9 @@ export function TopNav({ userName }: { userName: string }) {
 
   const items: NavItem[] = [
     { to: "/", label: "Home", icon: Home },
+    { to: "/continue-watching", label: t("continueWatching"), icon: PlayCircle },
     { to: "/live", label: t("liveTv"), icon: Radio },
+    { to: "/live/recordings", label: t("recordings"), icon: CalendarClock, hideOnPhone: true },
     { to: "/watchlist", label: t("watchlist"), icon: Bookmark },
     { to: "/history", label: t("history"), icon: History, hideOnPhone: true },
     { to: "/search", label: t("search"), icon: Search },

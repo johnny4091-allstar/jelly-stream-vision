@@ -56,6 +56,15 @@ export const Route = createFileRoute("/")({
       throw err;
     }
   },
+  errorComponent: ({ error }) => {
+    // Signed-in home failed to load (e.g. expired session) — send to login.
+    if (typeof window !== "undefined") window.location.href = "/login";
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background text-muted-foreground">
+        Redirecting to sign in… {error instanceof Error ? error.message : ""}
+      </div>
+    );
+  },
   head: () => ({
     meta: [
       { title: "Aurora — Home" },

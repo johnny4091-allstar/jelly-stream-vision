@@ -114,6 +114,7 @@ function WatchPage() {
   >([]);
   const [subtitleIndex, setSubtitleIndex] = useState<number | null>(null);
   const [showSubtitleMenu, setShowSubtitleMenu] = useState(false);
+  const [mediaSourceId, setMediaSourceId] = useState("");
   const [playMode, setPlayMode] = useState<"DirectPlay" | "DirectStream" | "Transcode" | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingPercent, setLoadingPercent] = useState(0);
@@ -204,6 +205,7 @@ function WatchPage() {
       if (cancelled || !videoRef.current) return;
       setLoadingPercent(20);
       playSessionRef.current = info.playSessionId;
+      setMediaSourceId(info.mediaSourceId);
       setAudioTracks(info.audioTracks ?? []);
       setSubtitleTracks(info.subtitleTracks ?? []);
       playMethodRef.current = info.playMethod;
@@ -804,11 +806,11 @@ function WatchPage() {
           localStorage.setItem("aurora-volume", String(e.currentTarget.volume));
         }}
       >
-        {subtitleTracks.map((track) => (
+        {mediaSourceId && subtitleTracks.map((track) => (
           <track
             key={track.index}
             kind="subtitles"
-            src={`/api/proxy/Videos/${playbackId}/${encodeURIComponent(playSessionRef.current || playbackId)}/Subtitles/${track.index}/Stream.vtt`}
+            src={`/api/proxy/Videos/${playbackId}/${encodeURIComponent(mediaSourceId)}/Subtitles/${track.index}/Stream.vtt`}
             srcLang={track.language ?? "und"}
             label={track.label}
           />

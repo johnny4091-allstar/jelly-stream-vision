@@ -65,7 +65,7 @@ export function FeaturedSlideshow({ items }: { items: JfItem[] }) {
       aria-roledescription="carousel"
       aria-label={t("featured")}
       onPointerDown={pauseBriefly}
-      className="group relative h-[78svh] min-h-[500px] max-h-[820px] w-full overflow-hidden bg-muted sm:h-[72vh] sm:min-h-[560px]"
+      className="group relative h-[74svh] min-h-[500px] max-h-[820px] w-full overflow-hidden bg-muted sm:h-[72vh] sm:min-h-[560px] 2xl:h-[78vh] 2xl:min-h-[680px] 2xl:max-h-[900px]"
     >
       {slides.map((slide, index) => (
         <img
@@ -74,7 +74,7 @@ export function FeaturedSlideshow({ items }: { items: JfItem[] }) {
           alt={index === activeIndex ? slide.Name : ""}
           aria-hidden={index !== activeIndex}
           loading={index === 0 ? "eager" : "lazy"}
-          className={`absolute inset-0 h-full w-full object-cover object-center transition-[opacity,transform] duration-1000 motion-reduce:transition-none ${
+          className={`absolute inset-0 h-full w-full object-cover object-center transition-[opacity,transform] duration-1000 motion-reduce:transition-none max-sm:object-[60%_center] ${
             index === activeIndex ? "scale-100 opacity-100" : "scale-[1.02] opacity-0"
           }`}
         />
@@ -83,12 +83,12 @@ export function FeaturedSlideshow({ items }: { items: JfItem[] }) {
       <div className="absolute inset-0 bg-gradient-to-r from-background via-background/45 to-transparent" />
       <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-background/20" />
 
-      <div key={active.Id} className="hero-copy absolute inset-x-0 bottom-0 px-4 pb-16 sm:px-8 sm:pb-24">
-        <div className="max-w-3xl space-y-3 sm:space-y-5">
-          <h1 className="max-w-[90vw] text-4xl font-black leading-none tracking-normal text-foreground drop-shadow-lg sm:text-6xl lg:text-7xl">
+      <div key={active.Id} className="hero-copy absolute inset-x-0 bottom-0 px-4 pb-14 sm:px-8 sm:pb-24 2xl:px-16 2xl:pb-28">
+        <div className="max-w-[min(44rem,calc(100vw-2rem))] space-y-2.5 sm:max-w-3xl sm:space-y-5 2xl:max-w-4xl">
+          <h1 className="line-clamp-2 text-3xl font-black leading-none tracking-normal text-foreground drop-shadow-lg min-[430px]:text-4xl sm:text-6xl lg:text-7xl 2xl:text-8xl">
             {active.SeriesName ?? active.Name}
           </h1>
-          <div className="flex items-center gap-3 text-sm font-medium text-foreground/75">
+          <div className="flex min-w-0 items-center gap-2 text-xs font-medium text-foreground/75 sm:gap-3 sm:text-sm 2xl:text-lg">
             {active.ProductionYear && <span>{active.ProductionYear}</span>}
             {active.OfficialRating && (
               <span className="rounded border border-border px-1.5 py-0.5 text-xs">
@@ -98,19 +98,19 @@ export function FeaturedSlideshow({ items }: { items: JfItem[] }) {
             {active.RunTimeTicks ? <span>{formatRuntime(active.RunTimeTicks)}</span> : null}
           </div>
           {active.Overview && (
-            <p className="line-clamp-3 max-w-2xl text-sm leading-relaxed text-foreground/85 drop-shadow-md sm:text-lg">
+            <p className="line-clamp-2 max-w-2xl text-sm leading-relaxed text-foreground/85 drop-shadow-md sm:line-clamp-3 sm:text-lg 2xl:max-w-3xl 2xl:text-xl">
               {active.Overview}
             </p>
           )}
-          <div className="flex items-center gap-2 pt-1 sm:gap-3">
-            <Button asChild size="lg" className="bg-foreground font-bold text-background hover:bg-foreground/85">
+          <div className="grid max-w-md grid-cols-2 gap-2 pt-1 sm:flex sm:items-center sm:gap-3">
+            <Button asChild size="lg" className="min-w-0 px-3 font-bold bg-foreground text-background hover:bg-foreground/85 sm:px-8 2xl:h-14 2xl:text-lg">
               <Link to="/watch/$id" params={{ id: active.Id }}>
                 <Play className="fill-current" /> {t("play")}
               </Link>
             </Button>
-            <Button asChild size="lg" variant="secondary" className="bg-accent/85 font-bold backdrop-blur-sm hover:bg-accent">
-              <Link to="/title/$id" params={{ id: active.Id }}>
-                <Info /> {t("moreInfo")}
+            <Button asChild size="lg" variant="secondary" className="min-w-0 px-3 font-bold bg-accent/85 backdrop-blur-sm hover:bg-accent sm:px-8 2xl:h-14 2xl:text-lg">
+              <Link to="/title/$id" params={{ id: active.Id }} className="min-w-0">
+                <Info className="shrink-0" /> <span className="truncate">{t("moreInfo")}</span>
               </Link>
             </Button>
           </div>
@@ -119,7 +119,7 @@ export function FeaturedSlideshow({ items }: { items: JfItem[] }) {
 
       {slides.length > 1 && (
         <>
-          <div className="absolute bottom-5 left-4 flex items-center gap-2 sm:bottom-8 sm:left-8">
+          <div className="absolute bottom-4 left-4 flex items-center gap-1.5 sm:bottom-8 sm:left-8 sm:gap-2 2xl:left-16">
             {slides.map((slide, index) => (
               <Button
                 key={slide.Id}
@@ -137,7 +137,7 @@ export function FeaturedSlideshow({ items }: { items: JfItem[] }) {
               />
             ))}
           </div>
-          <div className="absolute bottom-4 right-4 flex gap-2 opacity-100 transition-opacity sm:bottom-7 sm:right-8 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+          <div className="absolute bottom-2.5 right-4 flex gap-1.5 opacity-100 transition-opacity sm:bottom-7 sm:right-8 sm:gap-2 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 2xl:right-16">
             <Button
               type="button"
               size="icon"

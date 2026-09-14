@@ -31,7 +31,9 @@ export function MediaCard({ item, playDirect = false }: { item: JfItem; playDire
   const candidates = posterCandidates(item);
   const src = candidates[Math.min(imgStep, candidates.length - 1)];
 
-  const linkProps = playDirect
+  const linkProps = item.Type === "TvChannel"
+    ? ({ to: "/live/watch/$channelId", params: { channelId: item.Id } } as const)
+    : playDirect
     ? ({ to: "/watch/$id", params: { id: item.Id } } as const)
     : ({
         to: "/title/$id",

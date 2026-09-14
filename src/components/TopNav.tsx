@@ -219,9 +219,9 @@ export function TopNav({ userName }: { userName: string }) {
                   </button>
                 </div>
               </div>
-            </SheetContent>
-          </Sheet>
-        </div>
+            </div>
+          </div>
+        ) : null}
       </header>
     </>
   );

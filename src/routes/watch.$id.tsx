@@ -595,12 +595,13 @@ function WatchPage() {
     pokeControls();
   }
 
-  // Fullscreen-first on touch devices: enter fullscreen + landscape when playback starts
+  // Fullscreen-first: enter fullscreen (and landscape on phones) when playback starts
   function enterImmersiveMode() {
-    if (!isTouch || document.fullscreenElement) return;
+    if (document.fullscreenElement) return;
     void containerRef.current
       ?.requestFullscreen()
       .then(() => {
+        if (!isTouch) return;
         const orientation = screen.orientation as ScreenOrientation & {
           lock?: (o: string) => Promise<void>;
         };

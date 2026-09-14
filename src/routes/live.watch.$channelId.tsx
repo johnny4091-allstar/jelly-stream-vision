@@ -237,16 +237,67 @@ function LiveWatchPage() {
     else void el.requestFullscreen?.().catch(() => {});
   };
 
+  // Go fullscreen as soon as the channel starts playing (TV + phone apps).
+  const enterImmersiveMode = () => {
+    if (document.fullscreenElement) return;
+    void containerRef.current
+      ?.requestFullscreen?.()
+      .then(() => {
+        const orientation = screen.orientation as ScreenOrientation & {
+          lock?: (o: string) => Promise<void>;
+        };
+        if (matchMedia("(pointer: coarse)").matches) void orientation.lock?.("landscape").catch(() => {});
+      })
+      .catch(() => {});
+  };
+
+  // TV remote / keyboard control: OK plays-pauses, back exits fullscreen then the page.
+  useEffect(() => {
+    containerRef.current?.focus();
+    function onKey(e: KeyboardEvent) {
+      switch (e.key) {
+        case "Enter":
+        case " ":
+        case "MediaPlayPause":
+          e.preventDefault();
+          togglePlay();
+          break;
+        case "MediaPlay":
+          e.preventDefault();
+          void videoRef.current?.play().catch(() => {});
+          pokeControls();
+          break;
+        case "MediaPause":
+          e.preventDefault();
+          videoRef.current?.pause();
+          pokeControls();
+          break;
+        case "Escape":
+        case "Backspace":
+        case "GoBack":
+          if (document.fullscreenElement) {
+            e.preventDefault();
+            void document.exitFullscreen();
+          } else {
+            window.history.back();
+          }
+          break;
+        default:
+          pokeControls();
+          break;
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div
       ref={containerRef}
-      className="relative h-screen w-screen bg-black"
+      className="relative h-screen w-screen bg-black outline-none"
       onMouseMove={pokeControls}
       onTouchStart={pokeControls}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " " || e.key === "MediaPlayPause") togglePlay();
-        else pokeControls();
-      }}
       tabIndex={0}
     >
       <video
@@ -271,6 +322,7 @@ function LiveWatchPage() {
           setPlaying(true);
           setLoadingPercent(100);
           setLoading(false);
+          enterImmersiveMode();
           pokeControls();
         }}
         onPause={() => setPlaying(false)}

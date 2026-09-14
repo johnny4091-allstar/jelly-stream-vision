@@ -6,6 +6,7 @@ const STORAGE_KEY = "aurora-language";
 
 const messages = {
   en: {
+    recommended: "Recommended for you", becauseYouWatched: "Because you watched", searchPlaceholder: "Search movies and shows…",
     play: "Play", moreInfo: "More Info", continueWatching: "Continue Watching",
     nextUp: "Next Up", browseAll: "Browse all", audio: "Audio", retryPlayback: "Retry playback",
     loadingStream: "Loading your stream…", converted: "Converted", direct: "Direct",
@@ -30,6 +31,7 @@ const messages = {
     streamInterrupted: "The channel was interrupted. Tap retry.",
   },
   es: {
+    recommended: "Recomendado para ti", becauseYouWatched: "Porque viste", searchPlaceholder: "Buscar películas y series…",
     play: "Reproducir", moreInfo: "Más información", continueWatching: "Seguir viendo",
     nextUp: "A continuación", browseAll: "Ver todo", audio: "Audio", retryPlayback: "Reintentar",
     loadingStream: "Cargando…", converted: "Convertido", direct: "Directo",
@@ -54,6 +56,7 @@ const messages = {
     streamInterrupted: "El canal se interrumpió. Toca reintentar.",
   },
   fr: {
+    recommended: "Recommandé pour vous", becauseYouWatched: "Parce que vous avez regardé", searchPlaceholder: "Rechercher films et séries…",
     play: "Lire", moreInfo: "Plus d’infos", continueWatching: "Continuer à regarder",
     nextUp: "À suivre", browseAll: "Tout parcourir", audio: "Audio", retryPlayback: "Réessayer",
     loadingStream: "Chargement…", converted: "Converti", direct: "Direct",

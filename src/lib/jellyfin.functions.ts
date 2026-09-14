@@ -704,3 +704,59 @@ export const setBitrateCapFn = createServerFn({ method: "POST" })
     const capBps = await setBitrateCap(Math.round(data.mbps * 1_000_000));
     return { capBps };
   });
+
+/** Suggestions for the search bar: fast, name-only, small result set. */
+export const searchSuggestFn = createServerFn({ method: "GET" })
+  .inputValidator((data: { term: string }) => data)
+  .handler(async ({ data }) => {
+    const s = await requireSession();
+    const term = data.term.trim();
+    if (!term) return [] as JfItem[];
+    const res = await jfGet<{ Items: JfItem[] }>(
+      `/Users/${s.userId}/Items?searchTerm=${encodeURIComponent(term)}&IncludeItemTypes=Movie,Series&Recursive=true&Limit=8`,
+      s.token,
+    ).catch(() => ({ Items: [] as JfItem[] }));
+    return res.Items ?? [];
+  });
+
+/** Recommendations seeded from what the user has been watching. */
+export const getRecommendationsFn = createServerFn({ method: "GET" }).handler(
+  async (): Promise<{ seedTitle: string | null; items: JfItem[] }> => {
+    const s = await requireSession();
+    const t = s.token;
+    const resume = await jfGet<{ Items: JfItem[] }>(
+      `/Users/${s.userId}/Items/Resume?Limit=4&MediaTypes=Video`,
+      t,
+    ).catch(() => ({ Items: [] as JfItem[] }));
+    const seeds = (resume.Items ?? []).slice(0, 3);
+    const seen = new Set(seeds.map((i) => i.Id));
+    const out: JfItem[] = [];
+    for (const seed of seeds) {
+      const seedId = seed.SeriesId ?? seed.Id;
+      const sim = await jfGet<{ Items: JfItem[] }>(
+        `/Items/${seedId}/Similar?UserId=${s.userId}&Limit=12&Fields=Overview`,
+        t,
+      ).catch(() => ({ Items: [] as JfItem[] }));
+      for (const item of sim.Items ?? []) {
+        if (seen.has(item.Id)) continue;
+        seen.add(item.Id);
+        out.push(item);
+      }
+    }
+    if (out.length < 8) {
+      const fallback = await jfGet<{ Items: JfItem[] }>(
+        `/Users/${s.userId}/Items?IncludeItemTypes=Movie,Series&Recursive=true&SortBy=Random&Limit=20&Fields=Overview`,
+        t,
+      ).catch(() => ({ Items: [] as JfItem[] }));
+      for (const item of fallback.Items ?? []) {
+        if (seen.has(item.Id)) continue;
+        seen.add(item.Id);
+        out.push(item);
+      }
+    }
+    return {
+      seedTitle: seeds[0]?.SeriesName ?? seeds[0]?.Name ?? null,
+      items: out.slice(0, 20),
+    };
+  },
+);

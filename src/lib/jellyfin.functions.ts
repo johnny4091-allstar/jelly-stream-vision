@@ -300,13 +300,8 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
         codec: m.Codec ?? null,
         channels: m.Channels ?? null,
       }));
-    const subtitleTracks = (src?.MediaStreams ?? [])
-      .filter((m) => m.Type === "Subtitle" && m.IsExternal)
-      .map((m) => ({
-        index: m.Index,
-        language: m.Language ?? null,
-        label: m.DisplayTitle ?? m.Title ?? m.Language ?? `Subtitle ${m.Index}`,
-      }));
+    // Subtitles are disabled app-wide: never surface any tracks.
+    const subtitleTracks: { index: number; language: string | null; label: string }[] = [];
     const canDirect = Boolean(src?.SupportsDirectPlay || src?.SupportsDirectStream);
     return {
       playSessionId: res?.PlaySessionId ?? crypto.randomUUID().replaceAll("-", ""),

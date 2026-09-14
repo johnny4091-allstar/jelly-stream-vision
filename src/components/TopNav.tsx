@@ -30,7 +30,7 @@ export function TopNav({ userName }: { userName: string }) {
   }
 
   const items: NavItem[] = [
-    { to: "/", label: t("home") ?? "Home", icon: Home },
+    { to: "/", label: "Home", icon: Home },
     { to: "/live", label: t("liveTv"), icon: Radio },
     { to: "/watchlist", label: t("watchlist"), icon: Bookmark },
     { to: "/history", label: t("history"), icon: History, hideOnPhone: true },

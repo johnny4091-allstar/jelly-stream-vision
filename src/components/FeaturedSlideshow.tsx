@@ -132,7 +132,7 @@ export function FeaturedSlideshow({ items }: { items: JfItem[] }) {
                   pauseBriefly();
                 }}
                 className={`h-6 min-w-0 rounded-full p-0 transition-[width,background-color] duration-300 ${
-                  index === activeIndex ? "w-8 bg-foreground" : "w-3 bg-foreground/40 hover:bg-foreground/70"
+                  index === activeIndex ? "w-8 bg-primary" : "w-3 bg-foreground/40 hover:bg-foreground/70"
                 }`}
               />
             ))}

@@ -1043,49 +1043,121 @@ function WatchPage() {
           </button>
         </div>
 
-        <div className="pointer-events-auto space-y-3 bg-gradient-to-t from-black/80 to-transparent p-4 sm:p-6">
-          <input
-            type="range"
-            min={0}
-            max={duration || 0}
-            step={0.1}
-            value={time}
-            onChange={(e) => {
-              const v = videoRef.current;
-              if (v) v.currentTime = Number(e.target.value);
-            }}
-            aria-label="Seek"
-            className="w-full accent-[var(--color-primary)]"
-          />
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={togglePlay}
-                aria-label={playing ? "Pause" : "Play"}
-                className="rounded-full p-2 text-foreground transition-colors hover:bg-accent"
-              >
-                {playing ? <Pause className="h-6 w-6 fill-current" /> : <Play className="h-6 w-6 fill-current" />}
-              </button>
+        <div className="pointer-events-auto space-y-3 bg-gradient-to-t from-black via-black/70 to-transparent px-4 pt-10 pb-4 sm:px-8 sm:pb-6">
+          {/* Timeline */}
+          <div className="group relative flex h-6 items-center">
+            <div className="relative h-1 w-full rounded-full bg-white/25 transition-all group-hover:h-1.5">
+              <div
+                className="absolute inset-y-0 left-0 rounded-full bg-white/40"
+                style={{ width: `${duration ? (buffered / duration) * 100 : 0}%` }}
+              />
+              <div
+                className="absolute inset-y-0 left-0 rounded-full bg-primary"
+                style={{ width: `${duration ? (time / duration) * 100 : 0}%` }}
+              />
+              <div
+                className="absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary opacity-0 shadow transition-opacity group-hover:opacity-100"
+                style={{ left: `${duration ? (time / duration) * 100 : 0}%` }}
+              />
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={duration || 0}
+              step={0.1}
+              value={time}
+              onChange={(e) => {
+                const v = videoRef.current;
+                const next = Number(e.target.value);
+                setTime(next);
+                if (v) v.currentTime = next;
+                pokeControls();
+              }}
+              aria-label="Seek"
+              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+            />
+          </div>
+
+          <div className="flex items-center gap-1 sm:gap-2">
+            <button
+              onClick={togglePlay}
+              aria-label={playing ? "Pause" : "Play"}
+              className="rounded-full p-2 text-foreground transition-transform hover:scale-110 active:scale-95"
+            >
+              {playing ? (
+                <Pause className="h-7 w-7 fill-current" />
+              ) : (
+                <Play className="h-7 w-7 fill-current" />
+              )}
+            </button>
+            <button
+              onClick={() => seekBy(-10)}
+              aria-label="Rewind 10 seconds"
+              className="relative rounded-full p-2 text-foreground transition-transform hover:scale-110 active:scale-95"
+            >
+              <RotateCcw className="h-6 w-6" />
+              <span className="absolute inset-0 flex items-center justify-center pt-0.5 text-[9px] font-bold">
+                10
+              </span>
+            </button>
+            <button
+              onClick={() => seekBy(10)}
+              aria-label="Fast forward 10 seconds"
+              className="relative rounded-full p-2 text-foreground transition-transform hover:scale-110 active:scale-95"
+            >
+              <RotateCw className="h-6 w-6" />
+              <span className="absolute inset-0 flex items-center justify-center pt-0.5 text-[9px] font-bold">
+                10
+              </span>
+            </button>
+
+            <div className="group/vol flex items-center">
               <button
                 onClick={() => {
                   const v = videoRef.current;
                   if (v) v.muted = !v.muted;
+                  pokeControls();
                 }}
                 aria-label={muted ? "Unmute" : "Mute"}
-                className="rounded-full p-2 text-foreground transition-colors hover:bg-accent"
+                className="rounded-full p-2 text-foreground transition-transform hover:scale-110 active:scale-95"
               >
-                {muted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+                {muted || volume === 0 ? (
+                  <VolumeX className="h-6 w-6" />
+                ) : (
+                  <Volume2 className="h-6 w-6" />
+                )}
               </button>
-              <span className="ml-2 text-xs text-foreground/80">
-                {formatTime(time)} / {formatTime(duration)}
-              </span>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.01}
+                value={muted ? 0 : volume}
+                onChange={(e) => {
+                  const v = videoRef.current;
+                  const next = Number(e.target.value);
+                  setVolume(next);
+                  if (v) {
+                    v.volume = next;
+                    v.muted = next === 0;
+                  }
+                  pokeControls();
+                }}
+                aria-label="Volume"
+                className="h-1 w-0 cursor-pointer accent-[var(--color-primary)] opacity-0 transition-all duration-200 group-hover/vol:w-24 group-hover/vol:opacity-100 focus:w-24 focus:opacity-100"
+              />
             </div>
+
+            <span className="ml-2 text-xs tabular-nums text-foreground/80">
+              {formatTime(time)} <span className="text-foreground/50">/ {formatTime(duration)}</span>
+            </span>
+
             <button
               onClick={toggleFullscreen}
               aria-label="Fullscreen"
-              className="rounded-full p-2 text-foreground transition-colors hover:bg-accent"
+              className="ml-auto rounded-full p-2 text-foreground transition-transform hover:scale-110 active:scale-95"
             >
-              <Maximize className="h-5 w-5" />
+              <Maximize className="h-6 w-6" />
             </button>
           </div>
         </div>

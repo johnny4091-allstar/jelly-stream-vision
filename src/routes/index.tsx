@@ -44,8 +44,7 @@ export const Route = createFileRoute("/")({
     return { signedIn: Boolean(session) };
   },
   loader: async ({ context }) => {
-    const session = await getSessionFn();
-    if (!session) return; // public landing for visitors
+    if (!context.signedIn) return; // public landing for visitors
     try {
       await Promise.all([
         context.queryClient.ensureQueryData(homeQuery),

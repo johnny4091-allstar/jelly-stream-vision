@@ -1,5 +1,6 @@
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { useEffect } from "react";
 
 import { FeaturedSlideshow } from "@/components/FeaturedSlideshow";
 import { buildPosterIndex, FilterBar, filterItems, useMediaFilter } from "@/components/FilterBar";
@@ -13,6 +14,10 @@ import { useLanguage } from "@/lib/i18n";
 const homeQuery = queryOptions({
   queryKey: ["home"],
   queryFn: () => getHomeFn(),
+  // Progress can change on another device (phone -> TV), so never serve stale rows.
+  staleTime: 0,
+  refetchOnMount: "always" as const,
+  refetchOnWindowFocus: true,
 });
 
 const postersQuery = queryOptions({
@@ -59,7 +64,21 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   const { t } = useLanguage();
-  const { data } = useSuspenseQuery(homeQuery);
+  const { data, refetch } = useSuspenseQuery(homeQuery);
+
+  // TV/phone apps resume from background without a window focus event.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void refetch();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("pageshow", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("pageshow", onVisible);
+    };
+  }, [refetch]);
+
   const { data: posters = [] } = useSuspenseQuery(postersQuery);
   const [filter, setFilter] = useMediaFilter();
   const posterIndex = buildPosterIndex(posters);

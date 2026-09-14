@@ -41,9 +41,11 @@ const postersQuery = queryOptions({
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
     const session = await getSessionFn();
-    if (!session) throw redirect({ to: "/login" });
+    return { signedIn: Boolean(session) };
   },
   loader: async ({ context }) => {
+    const session = await getSessionFn();
+    if (!session) return; // public landing for visitors
     try {
       await Promise.all([
         context.queryClient.ensureQueryData(homeQuery),
@@ -51,7 +53,7 @@ export const Route = createFileRoute("/")({
       ]);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      if (msg.includes("Unauthorized")) throw redirect({ to: "/login" });
+      if (msg.includes("Unauthorized")) return;
       throw err;
     }
   },

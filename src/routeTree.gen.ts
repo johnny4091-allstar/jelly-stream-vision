@@ -14,6 +14,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as GetAppRouteImport } from './routes/get-app'
 import { Route as GetTvAppRouteImport } from './routes/get-tv-app'
 import { Route as HistoryRouteImport } from './routes/history'
+import { Route as LiveRouteImport } from './routes/live'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ProfilesRouteImport } from './routes/profiles'
 import { Route as SearchRouteImport } from './routes/search'
@@ -21,9 +22,13 @@ import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as WatchlistRouteImport } from './routes/watchlist'
 import { Route as LibraryIdRouteImport } from './routes/library.$id'
+import { Route as LiveIndexRouteImport } from './routes/live.index'
+import { Route as LiveGuideRouteImport } from './routes/live.guide'
+import { Route as LiveRecordingsRouteImport } from './routes/live.recordings'
 import { Route as TitleIdRouteImport } from './routes/title.$id'
 import { Route as WatchIdRouteImport } from './routes/watch.$id'
 import { Route as ApiProxySplatRouteImport } from './routes/api/proxy/$'
+import { Route as LiveWatchChannelIdRouteImport } from './routes/live.watch.$channelId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -48,6 +53,11 @@ const GetTvAppRoute = GetTvAppRouteImport.update({
 const HistoryRoute = HistoryRouteImport.update({
   id: '/history',
   path: '/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LiveRoute = LiveRouteImport.update({
+  id: '/live',
+  path: '/live',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -85,6 +95,21 @@ const LibraryIdRoute = LibraryIdRouteImport.update({
   path: '/library/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LiveIndexRoute = LiveIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LiveRoute,
+} as any)
+const LiveGuideRoute = LiveGuideRouteImport.update({
+  id: '/guide',
+  path: '/guide',
+  getParentRoute: () => LiveRoute,
+} as any)
+const LiveRecordingsRoute = LiveRecordingsRouteImport.update({
+  id: '/recordings',
+  path: '/recordings',
+  getParentRoute: () => LiveRoute,
+} as any)
 const TitleIdRoute = TitleIdRouteImport.update({
   id: '/title/$id',
   path: '/title/$id',
@@ -100,6 +125,11 @@ const ApiProxySplatRoute = ApiProxySplatRouteImport.update({
   path: '/api/proxy/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LiveWatchChannelIdRoute = LiveWatchChannelIdRouteImport.update({
+  id: '/watch/$channelId',
+  path: '/watch/$channelId',
+  getParentRoute: () => LiveRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -107,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/get-app': typeof GetAppRoute
   '/get-tv-app': typeof GetTvAppRoute
   '/history': typeof HistoryRoute
+  '/live': typeof LiveRouteWithChildren
   '/login': typeof LoginRoute
   '/profiles': typeof ProfilesRoute
   '/search': typeof SearchRoute
@@ -114,9 +145,13 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/watchlist': typeof WatchlistRoute
   '/library/$id': typeof LibraryIdRoute
+  '/live/guide': typeof LiveGuideRoute
+  '/live/recordings': typeof LiveRecordingsRoute
   '/title/$id': typeof TitleIdRoute
   '/watch/$id': typeof WatchIdRoute
+  '/live/': typeof LiveIndexRoute
   '/api/proxy/$': typeof ApiProxySplatRoute
+  '/live/watch/$channelId': typeof LiveWatchChannelIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -131,9 +166,13 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/watchlist': typeof WatchlistRoute
   '/library/$id': typeof LibraryIdRoute
+  '/live/guide': typeof LiveGuideRoute
+  '/live/recordings': typeof LiveRecordingsRoute
   '/title/$id': typeof TitleIdRoute
   '/watch/$id': typeof WatchIdRoute
+  '/live': typeof LiveIndexRoute
   '/api/proxy/$': typeof ApiProxySplatRoute
+  '/live/watch/$channelId': typeof LiveWatchChannelIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -142,6 +181,7 @@ export interface FileRoutesById {
   '/get-app': typeof GetAppRoute
   '/get-tv-app': typeof GetTvAppRoute
   '/history': typeof HistoryRoute
+  '/live': typeof LiveRouteWithChildren
   '/login': typeof LoginRoute
   '/profiles': typeof ProfilesRoute
   '/search': typeof SearchRoute
@@ -149,9 +189,13 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/watchlist': typeof WatchlistRoute
   '/library/$id': typeof LibraryIdRoute
+  '/live/guide': typeof LiveGuideRoute
+  '/live/recordings': typeof LiveRecordingsRoute
   '/title/$id': typeof TitleIdRoute
   '/watch/$id': typeof WatchIdRoute
+  '/live/': typeof LiveIndexRoute
   '/api/proxy/$': typeof ApiProxySplatRoute
+  '/live/watch/$channelId': typeof LiveWatchChannelIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -161,6 +205,7 @@ export interface FileRouteTypes {
     | '/get-app'
     | '/get-tv-app'
     | '/history'
+    | '/live'
     | '/login'
     | '/profiles'
     | '/search'
@@ -168,9 +213,13 @@ export interface FileRouteTypes {
     | '/signup'
     | '/watchlist'
     | '/library/$id'
+    | '/live/guide'
+    | '/live/recordings'
     | '/title/$id'
     | '/watch/$id'
+    | '/live/'
     | '/api/proxy/$'
+    | '/live/watch/$channelId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -185,9 +234,13 @@ export interface FileRouteTypes {
     | '/signup'
     | '/watchlist'
     | '/library/$id'
+    | '/live/guide'
+    | '/live/recordings'
     | '/title/$id'
     | '/watch/$id'
+    | '/live'
     | '/api/proxy/$'
+    | '/live/watch/$channelId'
   id:
     | '__root__'
     | '/'
@@ -195,6 +248,7 @@ export interface FileRouteTypes {
     | '/get-app'
     | '/get-tv-app'
     | '/history'
+    | '/live'
     | '/login'
     | '/profiles'
     | '/search'
@@ -202,9 +256,13 @@ export interface FileRouteTypes {
     | '/signup'
     | '/watchlist'
     | '/library/$id'
+    | '/live/guide'
+    | '/live/recordings'
     | '/title/$id'
     | '/watch/$id'
+    | '/live/'
     | '/api/proxy/$'
+    | '/live/watch/$channelId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -213,6 +271,7 @@ export interface RootRouteChildren {
   GetAppRoute: typeof GetAppRoute
   GetTvAppRoute: typeof GetTvAppRoute
   HistoryRoute: typeof HistoryRoute
+  LiveRoute: typeof LiveRouteWithChildren
   LoginRoute: typeof LoginRoute
   ProfilesRoute: typeof ProfilesRoute
   SearchRoute: typeof SearchRoute
@@ -260,6 +319,13 @@ declare module '@tanstack/react-router' {
       path: '/history'
       fullPath: '/history'
       preLoaderRoute: typeof HistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/live': {
+      id: '/live'
+      path: '/live'
+      fullPath: '/live'
+      preLoaderRoute: typeof LiveRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -311,6 +377,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LibraryIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/live/': {
+      id: '/live/'
+      path: '/'
+      fullPath: '/live/'
+      preLoaderRoute: typeof LiveIndexRouteImport
+      parentRoute: typeof LiveRoute
+    }
+    '/live/guide': {
+      id: '/live/guide'
+      path: '/guide'
+      fullPath: '/live/guide'
+      preLoaderRoute: typeof LiveGuideRouteImport
+      parentRoute: typeof LiveRoute
+    }
+    '/live/recordings': {
+      id: '/live/recordings'
+      path: '/recordings'
+      fullPath: '/live/recordings'
+      preLoaderRoute: typeof LiveRecordingsRouteImport
+      parentRoute: typeof LiveRoute
+    }
     '/title/$id': {
       id: '/title/$id'
       path: '/title/$id'
@@ -332,8 +419,31 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiProxySplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/live/watch/$channelId': {
+      id: '/live/watch/$channelId'
+      path: '/watch/$channelId'
+      fullPath: '/live/watch/$channelId'
+      preLoaderRoute: typeof LiveWatchChannelIdRouteImport
+      parentRoute: typeof LiveRoute
+    }
   }
 }
+
+interface LiveRouteChildren {
+  LiveGuideRoute: typeof LiveGuideRoute
+  LiveRecordingsRoute: typeof LiveRecordingsRoute
+  LiveIndexRoute: typeof LiveIndexRoute
+  LiveWatchChannelIdRoute: typeof LiveWatchChannelIdRoute
+}
+
+const LiveRouteChildren: LiveRouteChildren = {
+  LiveGuideRoute: LiveGuideRoute,
+  LiveRecordingsRoute: LiveRecordingsRoute,
+  LiveIndexRoute: LiveIndexRoute,
+  LiveWatchChannelIdRoute: LiveWatchChannelIdRoute,
+}
+
+const LiveRouteWithChildren = LiveRoute._addFileChildren(LiveRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -341,6 +451,7 @@ const rootRouteChildren: RootRouteChildren = {
   GetAppRoute: GetAppRoute,
   GetTvAppRoute: GetTvAppRoute,
   HistoryRoute: HistoryRoute,
+  LiveRoute: LiveRouteWithChildren,
   LoginRoute: LoginRoute,
   ProfilesRoute: ProfilesRoute,
   SearchRoute: SearchRoute,

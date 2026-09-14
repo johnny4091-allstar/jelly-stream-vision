@@ -102,7 +102,7 @@ function HomePage() {
 
       <FeaturedSlideshow items={featured} />
 
-      <div className="relative z-10 -mt-10 space-y-10">
+      <div className="relative z-10 mt-4 space-y-10 sm:-mt-10">
         <div className="px-4 sm:px-8">
           <FilterBar posters={posters} value={filter} onChange={setFilter} />
         </div>

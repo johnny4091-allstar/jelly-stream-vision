@@ -120,7 +120,7 @@ export const getHomeFn = createServerFn({ method: "GET" }).handler(async (): Pro
         Id: h.jf_item_id,
         Name: h.title,
         Type: "TvChannel",
-        Overview: h.subtitle ?? undefined,
+        ...(h.subtitle ? { Overview: h.subtitle } : {}),
       });
       if (liveItems.length >= 4) break;
     }

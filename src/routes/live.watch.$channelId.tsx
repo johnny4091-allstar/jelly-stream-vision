@@ -56,6 +56,7 @@ function LiveWatchPage() {
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadingPercent, setLoadingPercent] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [showControls, setShowControls] = useState(true);
   const retryRef = useRef<(() => void) | null>(null);

@@ -75,6 +75,15 @@ function LiveWatchPage() {
   useEffect(() => {
     let cancelled = false;
     let hls: import("hls.js").default | null = null;
+    // Never leave the loading screen up forever: reveal the player once the
+    // channel has had enough time to negotiate a stream.
+    const safety = setTimeout(() => {
+      if (cancelled) return;
+      setLoadingPercent(100);
+      setLoading(false);
+      void videoRef.current?.play().catch(() => {});
+    }, 25_000);
+
 
     async function setup() {
       setError(null);

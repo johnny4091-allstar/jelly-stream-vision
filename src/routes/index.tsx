@@ -10,6 +10,7 @@ import { getSessionFn } from "@/lib/auth.functions";
 import { getHomeFn } from "@/lib/jellyfin.functions";
 import { listPostersFn, syncPostersFn } from "@/lib/posters.functions";
 import { backdropUrl, formatRuntime } from "@/lib/jellyfin.types";
+import { useLanguage } from "@/lib/i18n";
 
 const homeQuery = queryOptions({
   queryKey: ["home"],
@@ -59,6 +60,7 @@ export const Route = createFileRoute("/")({
 });
 
 function HomePage() {
+  const { t } = useLanguage();
   const { data } = useSuspenseQuery(homeQuery);
   const { data: posters = [] } = useSuspenseQuery(postersQuery);
   const hero = data.hero;
@@ -106,14 +108,14 @@ function HomePage() {
                 params={{ id: hero.Id }}
                 className="inline-flex items-center gap-2 rounded-md bg-foreground px-5 py-2 text-xs font-bold text-background transition-colors hover:bg-foreground/80 sm:px-6 sm:py-2.5 sm:text-sm"
               >
-                <Play className="h-5 w-5 fill-current" /> Play
+                <Play className="h-5 w-5 fill-current" /> {t("play")}
               </Link>
               <Link
                 to="/title/$id"
                 params={{ id: hero.Type === "Episode" && hero.SeriesId ? hero.SeriesId : hero.Id }}
                 className="inline-flex items-center gap-2 rounded-md bg-accent/80 px-5 py-2 text-xs font-bold text-accent-foreground transition-colors hover:bg-accent sm:px-6 sm:py-2.5 sm:text-sm"
               >
-                <Info className="h-5 w-5" /> More Info
+                <Info className="h-5 w-5" /> {t("moreInfo")}
               </Link>
             </div>
           </div>
@@ -124,8 +126,8 @@ function HomePage() {
         <div className="px-4 sm:px-8">
           <FilterBar posters={posters} value={filter} onChange={setFilter} />
         </div>
-        <Row title="Continue Watching" items={filterItems(data.resume, filter, posterIndex)} />
-        <Row title="Next Up" items={filterItems(data.nextUp, filter, posterIndex)} />
+        <Row title={t("continueWatching")} items={filterItems(data.resume, filter, posterIndex)} />
+        <Row title={t("nextUp")} items={filterItems(data.nextUp, filter, posterIndex)} />
         {data.rows.map((row) => (
           <div key={row.viewId}>
             <Row title={row.title} items={filterItems(row.items, filter, posterIndex)} />
@@ -136,7 +138,7 @@ function HomePage() {
                 params={{ id: row.viewId }}
                 className="text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
               >
-                Browse all →
+                {t("browseAll")} →
               </Link>
             </div>
           </div>

@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 
 import { getSessionFn, loginFn, needsSetupFn } from "@/lib/auth.functions";
+import { LanguageSelect, useLanguage } from "@/lib/i18n";
 
 export const Route = createFileRoute("/login")({
   beforeLoad: async () => {
@@ -24,6 +25,7 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
+  const { t } = useLanguage();
   const login = useServerFn(loginFn);
   const getSession = useServerFn(getSessionFn);
   const [username, setUsername] = useState("");
@@ -61,13 +63,13 @@ function LoginPage() {
         <div className="text-center">
           <h1 className="text-3xl font-black tracking-tight text-primary">AURORA</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Sign in to your Aurora account
+            {t("signInSubtitle")}
           </p>
         </div>
         <form onSubmit={onSubmit} className="space-y-4 rounded-lg bg-card p-6 shadow-xl">
           <div className="space-y-2">
             <label htmlFor="username" className="text-sm font-medium text-foreground">
-              Username
+              {t("username")}
             </label>
             <input
               id="username"
@@ -81,7 +83,7 @@ function LoginPage() {
           </div>
           <div className="space-y-2">
             <label htmlFor="password" className="text-sm font-medium text-foreground">
-              Password
+              {t("password")}
             </label>
             <input
               id="password"
@@ -99,14 +101,15 @@ function LoginPage() {
             disabled={busy}
             className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
           >
-            {busy ? "Signing in…" : "Sign In"}
+            {busy ? t("signingIn") : t("signIn")}
           </button>
           <p className="text-center text-sm text-muted-foreground">
-            New here?{" "}
+            {t("newHere")}{" "}
             <Link to="/signup" className="font-medium text-primary hover:underline">
-              Create an account
+              {t("createAccount")}
             </Link>
           </p>
+          <div className="flex justify-center"><LanguageSelect /></div>
 
         </form>
       </div>

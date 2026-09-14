@@ -456,6 +456,7 @@ function WatchPage() {
         deviceId: deviceIdRef.current,
         positionTicks: Math.floor(time * 10_000_000),
         kind: "Started",
+        mediaSourceId: mediaSourceIdRef.current,
         playMethod: playMethodRef.current,
       },
     });
@@ -469,6 +470,7 @@ function WatchPage() {
           deviceId: deviceIdRef.current,
           positionTicks: Math.floor(v.currentTime * 10_000_000),
           kind: "Progress",
+          mediaSourceId: mediaSourceIdRef.current,
           playMethod: playMethodRef.current,
           isPaused: v.paused,
         },
@@ -516,6 +518,7 @@ function WatchPage() {
           deviceId: deviceIdRef.current,
           positionTicks: Math.floor((v?.currentTime ?? time) * 10_000_000),
           kind: "Stopped",
+          mediaSourceId: mediaSourceIdRef.current,
           playMethod: playMethodRef.current,
         },
       });
@@ -535,6 +538,7 @@ function WatchPage() {
           deviceId: deviceIdRef.current,
           positionTicks: Math.floor((v?.currentTime ?? 0) * 10_000_000),
           kind: "Stopped",
+          mediaSourceId: mediaSourceIdRef.current,
           playMethod: playMethodRef.current,
         },
       });
@@ -750,6 +754,7 @@ function WatchPage() {
           deviceId: deviceIdRef.current,
               positionTicks: Math.floor(e.currentTarget.currentTime * 10_000_000),
               kind: "Progress",
+              mediaSourceId: mediaSourceIdRef.current,
               playMethod: playMethodRef.current,
               isPaused: true,
             },
@@ -764,6 +769,7 @@ function WatchPage() {
           deviceId: deviceIdRef.current,
               positionTicks: Math.floor(e.currentTarget.currentTime * 10_000_000),
               kind: "Progress",
+              mediaSourceId: mediaSourceIdRef.current,
               playMethod: playMethodRef.current,
               isPaused: e.currentTarget.paused,
             },
@@ -778,6 +784,7 @@ function WatchPage() {
           deviceId: deviceIdRef.current,
               positionTicks: Math.floor(e.currentTarget.currentTime * 10_000_000),
               kind: "Stopped",
+              mediaSourceId: mediaSourceIdRef.current,
               playMethod: playMethodRef.current,
             },
           });
@@ -793,7 +800,7 @@ function WatchPage() {
           if (
             !markedPlayedRef.current &&
             v.duration > 0 &&
-            v.currentTime / v.duration >= 0.95
+            v.currentTime / v.duration >= 0.92
           ) {
             markedPlayedRef.current = true;
             localStorage.removeItem(posKey(playbackId));

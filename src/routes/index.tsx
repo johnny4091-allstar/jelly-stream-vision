@@ -11,7 +11,7 @@ import { getHomeFn } from "@/lib/jellyfin.functions";
 import { listPostersFn, syncPostersFn } from "@/lib/posters.functions";
 import { useLanguage } from "@/lib/i18n";
 
-const homeQuery = queryOptions({
+export const homeQuery = queryOptions({
   queryKey: ["home"],
   queryFn: () => getHomeFn(),
   // Progress can change on another device (phone -> TV), so never serve stale rows.

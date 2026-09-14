@@ -159,6 +159,20 @@
     border-radius: var(--radius);
   }
 
+  /* TV remotes move focus without a pointer: always show the highlight there. */
+  @media (min-width: 1280px) and (pointer: coarse), (min-width: 1600px) {
+    a:focus,
+    button:focus,
+    [tabindex]:focus,
+    input:focus,
+    select:focus,
+    [role="button"]:focus {
+      outline: 3px solid var(--ring);
+      outline-offset: 3px;
+      border-radius: var(--radius);
+    }
+  }
+
   /* Hulu-style left rail: reserve room for the fixed nav on big screens. */
   @media (min-width: 1280px) {
     body {

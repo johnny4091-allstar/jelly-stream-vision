@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { LanguageProvider } from "../lib/i18n";
+import { useTvNavigation } from "../hooks/use-tv-navigation";
 
 function NotFoundComponent() {
   return (
@@ -130,6 +131,7 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useTvNavigation();
 
   return (
     <QueryClientProvider client={queryClient}>

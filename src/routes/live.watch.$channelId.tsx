@@ -85,7 +85,7 @@ function LiveWatchPage() {
       setLoadingPercent(100);
       setLoading(false);
       void videoRef.current?.play().catch(() => {});
-    }, 25_000);
+    }, 12_000);
 
 
     async function setup() {
@@ -93,6 +93,9 @@ function LiveWatchPage() {
       setLoading(true);
       setLoadingPercent(0);
       const deviceId = deviceIdRef.current;
+      // Load the player engine while the server negotiates the stream, instead
+      // of waiting for one before starting the other.
+      const hlsModule = import("hls.js");
       let info: Awaited<ReturnType<typeof getPlaybackInfo>>;
       setLoadingPercent(20);
       try {
@@ -122,20 +125,25 @@ function LiveWatchPage() {
         ? `/api/proxy${info.transcodingUrl}`
         : `/api/proxy/Videos/${channelId}/master.m3u8?${params.toString()}`;
 
-      const { default: Hls } = await import("hls.js");
+      const { default: Hls } = await hlsModule;
       if (cancelled) return;
 
       if (Hls.isSupported()) {
         hls = new Hls({
           enableWorker: true,
           lowLatencyMode: false,
-          liveSyncDurationCount: 4,
-          maxBufferLength: 30,
-          manifestLoadingTimeOut: 30_000,
+          // Start from the freshest few segments and keep the startup buffer
+          // small so the first picture appears quickly on TV hardware.
+          liveSyncDurationCount: 2,
+          maxBufferLength: 10,
+          maxMaxBufferLength: 30,
+          backBufferLength: 10,
+          startFragPrefetch: true,
+          manifestLoadingTimeOut: 20_000,
           manifestLoadingMaxRetry: 6,
-          levelLoadingTimeOut: 30_000,
+          levelLoadingTimeOut: 20_000,
           levelLoadingMaxRetry: 8,
-          fragLoadingTimeOut: 90_000,
+          fragLoadingTimeOut: 60_000,
           fragLoadingMaxRetry: 10,
         });
         let networkRecoveries = 0;

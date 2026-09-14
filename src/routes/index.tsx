@@ -79,6 +79,89 @@ export const Route = createFileRoute("/")({
 });
 
 function HomePage() {
+  const { signedIn } = Route.useRouteContext();
+  if (!signedIn) return <LandingPage />;
+  return <SignedInHome />;
+}
+
+function LandingPage() {
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="flex items-center justify-between px-6 py-5 sm:px-10">
+        <span className="text-2xl font-black tracking-tight text-primary">AURORA</span>
+        <div className="flex items-center gap-3">
+          <Link
+            to="/login"
+            className="rounded-md px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:text-primary"
+          >
+            Sign in
+          </Link>
+          <Link
+            to="/signup"
+            className="rounded-md bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition-transform hover:scale-105"
+          >
+            Sign up free
+          </Link>
+        </div>
+      </header>
+
+      <section className="flex flex-col items-center px-6 pb-20 pt-16 text-center sm:pt-24">
+        <h1 className="max-w-3xl text-4xl font-black leading-tight sm:text-6xl">
+          Your movies, shows and <span className="text-primary">live TV</span> — all in one place
+        </h1>
+        <p className="mt-6 max-w-xl text-base text-muted-foreground sm:text-lg">
+          Stream in HD with synced progress across your phone, TV and browser. Browse thousands of
+          live channels with a full TV guide, recordings and watchlist.
+        </p>
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+          <Link
+            to="/signup"
+            className="rounded-md bg-primary px-8 py-3 text-lg font-bold text-primary-foreground transition-transform hover:scale-105"
+          >
+            Get started
+          </Link>
+          <Link
+            to="/live/guide"
+            className="rounded-md border border-border px-8 py-3 text-lg font-semibold transition-colors hover:border-primary hover:text-primary"
+          >
+            See the TV guide
+          </Link>
+        </div>
+      </section>
+
+      <section className="mx-auto grid max-w-5xl gap-8 px-6 pb-24 sm:grid-cols-3">
+        {[
+          {
+            title: "Movies & shows",
+            body: "A Netflix-style library with Continue Watching, recommendations and instant search.",
+          },
+          {
+            title: "Live TV & guide",
+            body: "Thousands of live channels with a full schedule grid, now-and-next and one-tap recording.",
+          },
+          {
+            title: "Everywhere you watch",
+            body: "Phone, Android TV and web — your progress, watchlist and recordings sync instantly.",
+          },
+        ].map((f) => (
+          <div
+            key={f.title}
+            className="rounded-xl border border-border bg-card p-6 text-left shadow-[0_0_30px_-12px_var(--glow-primary)]"
+          >
+            <h2 className="text-lg font-bold">{f.title}</h2>
+            <p className="mt-2 text-sm text-muted-foreground">{f.body}</p>
+          </div>
+        ))}
+      </section>
+
+      <footer className="border-t border-border px-6 py-8 text-center text-xs text-muted-foreground">
+        Aurora — sign up and start watching in minutes.
+      </footer>
+    </div>
+  );
+}
+
+function SignedInHome() {
   const { t } = useLanguage();
   const { data, refetch } = useSuspenseQuery(homeQuery);
 

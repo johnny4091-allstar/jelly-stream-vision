@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { ChevronLeft, ChevronRight, LayoutGrid, List, Play, Radio } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -14,6 +14,10 @@ import {
 } from "@/lib/livetv.functions";
 
 export const Route = createFileRoute("/live/guide")({
+  beforeLoad: async () => {
+    const { getSessionFn } = await import("@/lib/auth.functions");
+    if (!(await getSessionFn())) throw redirect({ to: "/login" });
+  },
   head: () => ({
     meta: [
       { title: "TV Guide — Aurora" },

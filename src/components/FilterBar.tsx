@@ -57,7 +57,7 @@ function options(posters: PosterRecord[], pick: (p: PosterRecord) => (string | n
 }
 
 const selectCls =
-  "rounded-md border border-border bg-card px-2.5 py-1.5 text-xs text-foreground outline-none focus:border-primary sm:text-sm";
+  "min-w-0 max-w-[10rem] flex-1 rounded-md border border-border bg-card px-2.5 py-1.5 sm:flex-none text-xs text-foreground outline-none focus:border-primary sm:text-sm";
 
 export function FilterBar({ posters, value, onChange }: {
   posters: PosterRecord[];

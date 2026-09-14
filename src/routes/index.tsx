@@ -1,5 +1,6 @@
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { useEffect } from "react";
 
 import { FeaturedSlideshow } from "@/components/FeaturedSlideshow";
 import { buildPosterIndex, FilterBar, filterItems, useMediaFilter } from "@/components/FilterBar";

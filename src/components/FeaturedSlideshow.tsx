@@ -137,7 +137,7 @@ export function FeaturedSlideshow({ items }: { items: JfItem[] }) {
               />
             ))}
           </div>
-          <div className="absolute bottom-2.5 right-4 flex gap-1.5 opacity-100 transition-opacity sm:bottom-7 sm:right-8 sm:gap-2 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 2xl:right-16">
+          <div className="absolute bottom-7 right-8 hidden gap-2 opacity-0 transition-opacity sm:flex sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 2xl:right-16">
             <Button
               type="button"
               size="icon"

@@ -30,11 +30,18 @@ export const Route = createFileRoute("/api/proxy/$")({
         let upstream: Response;
         try {
           upstream = await fetch(target, { headers });
-          // Emby occasionally 5xxs the first segment while the encoder is still
-          // spinning up; one retry turns that into a normal start instead of a
-          // dead player.
-          if (upstream.status >= 500 && /\.(ts|m4s|mp4)$/i.test(params._splat ?? "")) {
-            await new Promise((r) => setTimeout(r, 1500));
+          // Emby produces HLS segments just in time. It can briefly return 404
+          // when the player reaches the next segment before the encoder has
+          // finished writing it (commonly around the one-minute mark). Wait for
+          // that segment instead of passing the temporary miss to the player.
+          const isMediaSegment = /\/(?:\d+|segment\d*)\.(?:ts|m4s)$/i.test(params._splat ?? "");
+          for (
+            let attempt = 0;
+            isMediaSegment && (upstream.status === 404 || upstream.status >= 500) && attempt < 5;
+            attempt += 1
+          ) {
+            await upstream.body?.cancel().catch(() => {});
+            await new Promise((resolve) => setTimeout(resolve, 1000 + attempt * 500));
             upstream = await fetch(target, { headers });
           }
         } catch {

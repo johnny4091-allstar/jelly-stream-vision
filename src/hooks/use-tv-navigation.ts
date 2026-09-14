@@ -63,7 +63,7 @@ function focus(el: HTMLElement) {
   el.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
 }
 
-function isTextEntry(el: Element | null): el is HTMLElement {
+function isTextEntry(el: Element | null): boolean {
   if (!el) return false;
   const tag = el.tagName;
   if (tag === "TEXTAREA" || tag === "SELECT") return true;

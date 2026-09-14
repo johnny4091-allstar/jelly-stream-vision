@@ -14,6 +14,10 @@ import {
 } from "@/lib/livetv.functions";
 
 export const Route = createFileRoute("/live/guide")({
+  beforeLoad: async () => {
+    const { getSessionFn } = await import("@/lib/auth.functions");
+    if (!(await getSessionFn())) throw redirect({ to: "/login" });
+  },
   head: () => ({
     meta: [
       { title: "TV Guide — Aurora" },

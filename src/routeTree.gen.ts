@@ -24,6 +24,7 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as WatchlistRouteImport } from './routes/watchlist'
 import { Route as LibraryIdRouteImport } from './routes/library.$id'
 import { Route as LiveIndexRouteImport } from './routes/live.index'
+import { Route as LiveChannelGuideRouteImport } from './routes/live.channel-guide'
 import { Route as LiveGuideRouteImport } from './routes/live.guide'
 import { Route as LiveRecordingsRouteImport } from './routes/live.recordings'
 import { Route as TitleIdRouteImport } from './routes/title.$id'
@@ -106,6 +107,11 @@ const LiveIndexRoute = LiveIndexRouteImport.update({
   path: '/',
   getParentRoute: () => LiveRoute,
 } as any)
+const LiveChannelGuideRoute = LiveChannelGuideRouteImport.update({
+  id: '/channel-guide',
+  path: '/channel-guide',
+  getParentRoute: () => LiveRoute,
+} as any)
 const LiveGuideRoute = LiveGuideRouteImport.update({
   id: '/guide',
   path: '/guide',
@@ -152,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/watchlist': typeof WatchlistRoute
   '/library/$id': typeof LibraryIdRoute
+  '/live/channel-guide': typeof LiveChannelGuideRoute
   '/live/guide': typeof LiveGuideRoute
   '/live/recordings': typeof LiveRecordingsRoute
   '/title/$id': typeof TitleIdRoute
@@ -174,6 +181,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/watchlist': typeof WatchlistRoute
   '/library/$id': typeof LibraryIdRoute
+  '/live/channel-guide': typeof LiveChannelGuideRoute
   '/live/guide': typeof LiveGuideRoute
   '/live/recordings': typeof LiveRecordingsRoute
   '/title/$id': typeof TitleIdRoute
@@ -198,6 +206,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/watchlist': typeof WatchlistRoute
   '/library/$id': typeof LibraryIdRoute
+  '/live/channel-guide': typeof LiveChannelGuideRoute
   '/live/guide': typeof LiveGuideRoute
   '/live/recordings': typeof LiveRecordingsRoute
   '/title/$id': typeof TitleIdRoute
@@ -223,6 +232,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/watchlist'
     | '/library/$id'
+    | '/live/channel-guide'
     | '/live/guide'
     | '/live/recordings'
     | '/title/$id'
@@ -245,6 +255,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/watchlist'
     | '/library/$id'
+    | '/live/channel-guide'
     | '/live/guide'
     | '/live/recordings'
     | '/title/$id'
@@ -268,6 +279,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/watchlist'
     | '/library/$id'
+    | '/live/channel-guide'
     | '/live/guide'
     | '/live/recordings'
     | '/title/$id'
@@ -404,6 +416,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LiveIndexRouteImport
       parentRoute: typeof LiveRoute
     }
+    '/live/channel-guide': {
+      id: '/live/channel-guide'
+      path: '/channel-guide'
+      fullPath: '/live/channel-guide'
+      preLoaderRoute: typeof LiveChannelGuideRouteImport
+      parentRoute: typeof LiveRoute
+    }
     '/live/guide': {
       id: '/live/guide'
       path: '/guide'
@@ -450,6 +469,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface LiveRouteChildren {
+  LiveChannelGuideRoute: typeof LiveChannelGuideRoute
   LiveGuideRoute: typeof LiveGuideRoute
   LiveRecordingsRoute: typeof LiveRecordingsRoute
   LiveIndexRoute: typeof LiveIndexRoute
@@ -457,6 +477,7 @@ interface LiveRouteChildren {
 }
 
 const LiveRouteChildren: LiveRouteChildren = {
+  LiveChannelGuideRoute: LiveChannelGuideRoute,
   LiveGuideRoute: LiveGuideRoute,
   LiveRecordingsRoute: LiveRecordingsRoute,
   LiveIndexRoute: LiveIndexRoute,

@@ -64,12 +64,6 @@ export function FeaturedSlideshow({ items }: { items: JfItem[] }) {
     <section
       aria-roledescription="carousel"
       aria-label={t("featured")}
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-      onFocusCapture={() => setPaused(true)}
-      onBlurCapture={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) setPaused(false);
-      }}
       onPointerDown={pauseBriefly}
       className="group relative h-[78svh] min-h-[500px] max-h-[820px] w-full overflow-hidden bg-muted sm:h-[72vh] sm:min-h-[560px]"
     >
@@ -127,13 +121,17 @@ export function FeaturedSlideshow({ items }: { items: JfItem[] }) {
         <>
           <div className="absolute bottom-5 left-4 flex items-center gap-2 sm:bottom-8 sm:left-8">
             {slides.map((slide, index) => (
-              <button
+              <Button
                 key={slide.Id}
                 type="button"
+                variant="ghost"
                 aria-label={`${t("showSlide")} ${index + 1}: ${slide.Name}`}
                 aria-current={index === activeIndex}
-                onClick={() => show(index)}
-                className={`h-1.5 rounded-full transition-[width,background-color] duration-300 ${
+                onClick={() => {
+                  show(index);
+                  pauseBriefly();
+                }}
+                className={`h-6 min-w-0 rounded-full p-0 transition-[width,background-color] duration-300 ${
                   index === activeIndex ? "w-8 bg-foreground" : "w-3 bg-foreground/40 hover:bg-foreground/70"
                 }`}
               />
@@ -145,7 +143,10 @@ export function FeaturedSlideshow({ items }: { items: JfItem[] }) {
               size="icon"
               variant="secondary"
               aria-label={t("previous")}
-              onClick={() => show(activeIndex - 1)}
+              onClick={() => {
+                show(activeIndex - 1);
+                pauseBriefly();
+              }}
               className="rounded-full bg-background/65 backdrop-blur-md hover:bg-background/90"
             >
               <ChevronLeft />
@@ -155,7 +156,10 @@ export function FeaturedSlideshow({ items }: { items: JfItem[] }) {
               size="icon"
               variant="secondary"
               aria-label={t("next")}
-              onClick={() => show(activeIndex + 1)}
+              onClick={() => {
+                show(activeIndex + 1);
+                pauseBriefly();
+              }}
               className="rounded-full bg-background/65 backdrop-blur-md hover:bg-background/90"
             >
               <ChevronRight />

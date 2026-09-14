@@ -19,7 +19,6 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { useState } from "react";
 
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { getSessionFn, logoutFn } from "@/lib/auth.functions";
 import { LanguageSelect, useLanguage } from "@/lib/i18n";
 

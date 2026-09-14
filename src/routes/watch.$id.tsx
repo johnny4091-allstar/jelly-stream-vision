@@ -238,15 +238,12 @@ function WatchPage() {
       const hlsUrl = info.transcodingUrl
         ? (() => {
             const negotiated = new URL(info.transcodingUrl, window.location.origin);
-            negotiated.searchParams.set("MaxStreamingBitrate", "8000000");
-            negotiated.searchParams.set("VideoBitrate", "6500000");
-            negotiated.searchParams.set("AudioBitrate", "192000");
             negotiated.searchParams.set("MaxWidth", "1920");
             negotiated.searchParams.set("MaxHeight", "1080");
-            // A default ASS/PGS subtitle made Jellyfin burn every frame for many
-            // episodes, producing a 120 Mbps stream that never started in time.
+            // A default ASS/PGS subtitle made the server burn every frame, which
+            // fails the encoder outright. External keeps subtitles out of ffmpeg.
             negotiated.searchParams.set("SubtitleStreamIndex", "-1");
-            negotiated.searchParams.delete("SubtitleMethod");
+            negotiated.searchParams.set("SubtitleMethod", "External");
             // Force browser-playable stereo AAC: Jellyfin often negotiates a
             // copy of EAC3/DTS/TrueHD, which plays video but produces no sound.
             negotiated.searchParams.set("AudioCodec", "aac");

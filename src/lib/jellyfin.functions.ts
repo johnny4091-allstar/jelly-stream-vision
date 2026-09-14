@@ -317,8 +317,8 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
             url.searchParams.delete("ApiKey");
             url.searchParams.delete("api_key");
             // Burning subtitles into the picture makes the server's encoder fail
-            // outright ("Error starting ffmpeg"), so strip it in every case.
-            url.searchParams.delete("SubtitleMethod");
+            // outright ("Error starting ffmpeg"), so force external handling.
+            url.searchParams.set("SubtitleMethod", "External");
             url.searchParams.set("SubtitleStreamIndex", "-1");
             return `${url.pathname}${url.search}`;
           })()

@@ -119,6 +119,7 @@ function WatchPage() {
   const [loading, setLoading] = useState(true);
   const [loadingPercent, setLoadingPercent] = useState(0);
   const playMethodRef = useRef<"DirectPlay" | "DirectStream" | "Transcode">("Transcode");
+  const mediaSourceIdRef = useRef("");
 
   const retryPlaybackRef = useRef<(() => void) | null>(null);
   const [seekFlash, setSeekFlash] = useState<{ dir: -1 | 1; key: number } | null>(null);
@@ -206,6 +207,7 @@ function WatchPage() {
       setLoadingPercent(20);
       playSessionRef.current = info.playSessionId;
       setMediaSourceId(info.mediaSourceId);
+      mediaSourceIdRef.current = info.mediaSourceId;
       setAudioTracks(info.audioTracks ?? []);
       setSubtitleTracks(info.subtitleTracks ?? []);
       playMethodRef.current = info.playMethod;

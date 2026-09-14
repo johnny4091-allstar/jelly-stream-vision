@@ -14,29 +14,29 @@ export function TopNav({ userName }: { userName: string }) {
 
   return (
     <header className="fixed inset-x-0 top-0 z-40 bg-gradient-to-b from-background via-background/80 to-transparent">
-      <div className="flex items-center justify-between px-4 py-3 sm:px-8 sm:py-4">
-        <Link to="/" className="text-lg font-black tracking-tight text-primary sm:text-2xl">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-4 py-3 sm:flex sm:justify-between sm:px-8 sm:py-4">
+        <Link to="/" className="min-w-0 truncate text-lg font-black tracking-tight text-primary sm:text-2xl">
           AURORA
         </Link>
-        <div className="flex items-center gap-1.5 sm:gap-3">
+        <div className="flex shrink-0 items-center gap-0.5 sm:gap-3">
           <Link
             to="/watchlist"
             aria-label={t("watchlist")}
-            className="rounded-full p-2 text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
+             className="shrink-0 rounded-full p-1.5 text-foreground/80 transition-colors hover:bg-accent hover:text-foreground sm:p-2"
           >
             <Bookmark className="h-5 w-5" />
           </Link>
           <Link
             to="/history"
             aria-label={t("history")}
-            className="rounded-full p-2 text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
+            className="hidden shrink-0 rounded-full p-2 text-foreground/80 transition-colors hover:bg-accent hover:text-foreground min-[480px]:block"
           >
             <History className="h-5 w-5" />
           </Link>
           <Link
             to="/search"
             aria-label={t("search")}
-            className="rounded-full p-2 text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
+            className="shrink-0 rounded-full p-1.5 text-foreground/80 transition-colors hover:bg-accent hover:text-foreground sm:p-2"
           >
             <Search className="h-5 w-5" />
           </Link>
@@ -44,13 +44,13 @@ export function TopNav({ userName }: { userName: string }) {
             <Link
               to="/admin"
               aria-label={t("people")}
-              className="rounded-full p-2 text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
+              className="hidden shrink-0 rounded-full p-2 text-foreground/80 transition-colors hover:bg-accent hover:text-foreground min-[480px]:block"
             >
               <Users className="h-5 w-5" />
             </Link>
           )}
           <LanguageSelect compact />
-          <div className="flex h-8 w-8 items-center justify-center rounded bg-primary text-sm font-bold text-primary-foreground">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-primary text-sm font-bold text-primary-foreground">
             {userName.charAt(0).toUpperCase()}
           </div>
           <button
@@ -60,7 +60,7 @@ export function TopNav({ userName }: { userName: string }) {
               })
             }
             aria-label={t("signOut")}
-            className="rounded-full p-2 text-foreground/80 transition-colors hover:bg-accent hover:text-foreground"
+            className="shrink-0 rounded-full p-1.5 text-foreground/80 transition-colors hover:bg-accent hover:text-foreground sm:p-2"
           >
             <LogOut className="h-5 w-5" />
           </button>

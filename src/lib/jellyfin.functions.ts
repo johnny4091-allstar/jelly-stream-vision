@@ -63,7 +63,7 @@ export const getHomeFn = createServerFn({ method: "GET" }).handler(async (): Pro
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: hist } = await supabaseAdmin
       .from("watch_history")
-      .select("jf_item_id, last_position_seconds, runtime_seconds, last_played_at")
+      .select("jf_item_id, title, subtitle, item_type, last_position_seconds, runtime_seconds, last_played_at")
       .eq("jf_user_id", s.userId)
       .order("last_played_at", { ascending: false })
       .limit(60);

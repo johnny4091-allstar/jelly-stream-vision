@@ -10,6 +10,7 @@ import { getWatchlistFn } from "@/lib/jellyfin.functions";
 const watchlistQueryOptions = queryOptions({
   queryKey: ["watchlist"],
   queryFn: () => getWatchlistFn(),
+  staleTime: 0, // always fresh — items change when you add/remove
 });
 
 export const Route = createFileRoute("/watchlist")({

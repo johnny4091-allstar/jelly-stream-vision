@@ -213,7 +213,7 @@ export const getGuideFn = createServerFn({ method: "GET" })
       MaxStartDate: end.toISOString(),
       SortBy: "StartDate",
       Fields: "Overview",
-      Limit: "600",
+      Limit: "2000",
     });
     const res = await jfGet<{ Items?: Raw[] }>(`/LiveTv/Programs?${query.toString()}`, s.token).catch(
       () => ({ Items: [] as Raw[] }),

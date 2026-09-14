@@ -1,8 +1,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { CircleDot, Play } from "lucide-react";
-import { useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight, Play } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n";
@@ -17,11 +17,11 @@ export const Route = createFileRoute("/live/guide")({
   head: () => ({
     meta: [
       { title: "TV Guide — Aurora" },
-      { name: "description", content: "See what's on now and next across your live channels." },
+      { name: "description", content: "A full schedule grid of what's on across your live channels." },
       { property: "og:title", content: "TV Guide — Aurora" },
       {
         property: "og:description",
-        content: "See what's on now and next across your live channels.",
+        content: "A full schedule grid of what's on across your live channels.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -30,19 +30,48 @@ export const Route = createFileRoute("/live/guide")({
   component: GuidePage,
 });
 
-function clock(iso: string | null) {
-  if (!iso) return "";
-  return new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+const PX_PER_MIN = 6;
+const SLOT_MIN = 30;
+const WINDOW_HOURS = 6;
+
+function clock(d: Date | string | null) {
+  if (!d) return "";
+  const date = typeof d === "string" ? new Date(d) : d;
+  return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
+function floorToSlot(d: Date) {
+  const out = new Date(d);
+  out.setSeconds(0, 0);
+  out.setMinutes(Math.floor(out.getMinutes() / SLOT_MIN) * SLOT_MIN);
+  return out;
 }
 
 function GuidePage() {
   const { t } = useLanguage();
   const qc = useQueryClient();
   const record = useServerFn(recordProgramFn);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [page, setPage] = useState(0);
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [selected, setSelected] = useState<GuideProgram | null>(null);
+  const [start, setStart] = useState(() => floorToSlot(new Date()));
+  const [now, setNow] = useState(() => Date.now());
   const pageSize = 20;
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const end = useMemo(() => new Date(start.getTime() + WINDOW_HOURS * 3_600_000), [start]);
+  const slots = useMemo(() => {
+    const out: Date[] = [];
+    for (let i = 0; i < (WINDOW_HOURS * 60) / SLOT_MIN; i++)
+      out.push(new Date(start.getTime() + i * SLOT_MIN * 60_000));
+    return out;
+  }, [start]);
+  const gridWidth = WINDOW_HOURS * 60 * PX_PER_MIN;
 
   const channelsQuery = useQuery({
     queryKey: ["live-channels", { guide: true, page, favoritesOnly, pageSize }],
@@ -54,8 +83,9 @@ function GuidePage() {
   const ids = useMemo(() => channels.map((c) => c.id), [channels]);
 
   const guideQuery = useQuery({
-    queryKey: ["live-guide", ids],
-    queryFn: () => getGuideFn({ data: { channelIds: ids, hours: 4 } }),
+    queryKey: ["live-guide", ids, start.toISOString()],
+    queryFn: () =>
+      getGuideFn({ data: { channelIds: ids, startIso: start.toISOString(), hours: WINDOW_HOURS } }),
     enabled: ids.length > 0,
     staleTime: 5 * 60_000,
   });
@@ -67,13 +97,27 @@ function GuidePage() {
       list.push(p);
       map.set(p.channelId, list);
     }
+    for (const list of map.values())
+      list.sort((a, b) => new Date(a.start ?? 0).getTime() - new Date(b.start ?? 0).getTime());
     return map;
   }, [guideQuery.data]);
 
   const pages = Math.ceil((channelsQuery.data?.total ?? 0) / pageSize);
+  const nowOffset = (now - start.getTime()) / 60_000;
+  const showNowLine = nowOffset >= 0 && nowOffset <= WINDOW_HOURS * 60;
+
+  // Keep "now" in view when the window jumps back to the current time.
+  useEffect(() => {
+    if (!showNowLine || !scrollRef.current) return;
+    scrollRef.current.scrollLeft = Math.max(0, nowOffset * PX_PER_MIN - 120);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [start]);
+
+  const shift = (hours: number) =>
+    setStart((s) => floorToSlot(new Date(s.getTime() + hours * 3_600_000)));
 
   return (
-    <div className="space-y-5 px-4 pt-6 sm:px-8">
+    <div className="space-y-4 px-4 pt-6 sm:px-8">
       <div className="flex flex-wrap items-center gap-2">
         <Button
           variant={favoritesOnly ? "default" : "secondary"}
@@ -86,54 +130,129 @@ function GuidePage() {
         >
           ♥ {t("favorites")}
         </Button>
-        <span className="text-xs text-muted-foreground">{t("nowAndNext")}</span>
+        <div className="ml-auto flex items-center gap-2">
+          <Button variant="secondary" size="sm" className="rounded-full" onClick={() => shift(-2)}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="rounded-full"
+            onClick={() => setStart(floorToSlot(new Date()))}
+          >
+            {t("nowAndNext")}
+          </Button>
+          <Button variant="secondary" size="sm" className="rounded-full" onClick={() => shift(2)}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
-      <div className="space-y-3">
-        {channels.map((channel) => {
-          const programs = (byChannel.get(channel.id) ?? []).slice(0, 4);
-          return (
-            <div key={channel.id} className="rounded-xl border border-border bg-card p-3">
-              <div className="mb-2 flex items-center gap-3">
-                <p className="truncate text-sm font-bold text-foreground">
-                  {channel.number ? (
-                    <span className="text-muted-foreground">{channel.number} · </span>
-                  ) : null}
-                  {channel.name}
-                </p>
-                <Button asChild size="sm" variant="secondary" className="ml-auto rounded-full">
-                  <Link to="/live/watch/$channelId" params={{ channelId: channel.id }}>
-                    <Play className="h-4 w-4 fill-current" />
-                  </Link>
-                </Button>
+      <div className="overflow-hidden rounded-xl border border-border bg-card">
+        <div ref={scrollRef} className="overflow-x-auto">
+          <div style={{ width: gridWidth + 176 }}>
+            {/* Time header */}
+            <div className="sticky top-0 z-20 flex border-b border-border bg-card/95 backdrop-blur">
+              <div className="sticky left-0 z-30 w-44 shrink-0 border-r border-border bg-card px-3 py-2 text-xs font-semibold text-muted-foreground">
+                {start.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" })}
               </div>
-              <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                {programs.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">{t("noProgramInfo")}</p>
-                ) : (
-                  programs.map((p, i) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => setSelected(p)}
-                      className="min-w-52 shrink-0 rounded-lg bg-secondary p-2 text-left transition-colors hover:bg-accent"
-                    >
-                      <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                        {i === 0 ? <CircleDot className="h-3 w-3 text-primary" /> : null}
-                        {clock(p.start)} – {clock(p.end)}
-                      </p>
-                      <p className="truncate text-sm text-foreground">{p.name}</p>
-                    </button>
-                  ))
-                )}
+              <div className="relative h-9" style={{ width: gridWidth }}>
+                {slots.map((s) => (
+                  <div
+                    key={s.toISOString()}
+                    className="absolute top-0 flex h-9 items-center border-l border-border/60 pl-2 text-xs text-muted-foreground"
+                    style={{
+                      left: ((s.getTime() - start.getTime()) / 60_000) * PX_PER_MIN,
+                      width: SLOT_MIN * PX_PER_MIN,
+                    }}
+                  >
+                    {clock(s)}
+                  </div>
+                ))}
               </div>
             </div>
-          );
-        })}
+
+            {/* Channel rows */}
+            <div className="relative">
+              {showNowLine && (
+                <div
+                  className="pointer-events-none absolute top-0 bottom-0 z-10 w-px bg-primary"
+                  style={{ left: 176 + nowOffset * PX_PER_MIN }}
+                />
+              )}
+              {channels.map((channel) => {
+                const programs = byChannel.get(channel.id) ?? [];
+                return (
+                  <div key={channel.id} className="flex border-b border-border/60 last:border-0">
+                    <div className="sticky left-0 z-10 flex w-44 shrink-0 items-center gap-2 border-r border-border bg-card px-3 py-2">
+                      <div className="min-w-0">
+                        {channel.number ? (
+                          <p className="text-[11px] text-muted-foreground">{channel.number}</p>
+                        ) : null}
+                        <p className="truncate text-xs font-semibold text-foreground">
+                          {channel.name}
+                        </p>
+                      </div>
+                      <Button
+                        asChild
+                        size="icon"
+                        variant="secondary"
+                        className="ml-auto h-7 w-7 rounded-full"
+                      >
+                        <Link to="/live/watch/$channelId" params={{ channelId: channel.id }}>
+                          <Play className="h-3.5 w-3.5 fill-current" />
+                        </Link>
+                      </Button>
+                    </div>
+                    <div className="relative h-14" style={{ width: gridWidth }}>
+                      {programs.length === 0 ? (
+                        <div className="flex h-full items-center px-3 text-xs text-muted-foreground">
+                          {t("noProgramInfo")}
+                        </div>
+                      ) : (
+                        programs.map((p) => {
+                          const ps = p.start ? new Date(p.start).getTime() : start.getTime();
+                          const pe = p.end ? new Date(p.end).getTime() : ps + 30 * 60_000;
+                          const left = Math.max(0, (ps - start.getTime()) / 60_000) * PX_PER_MIN;
+                          const right =
+                            Math.min(end.getTime(), pe) - start.getTime() >= 0
+                              ? (Math.min(end.getTime(), pe) - start.getTime()) / 60_000
+                              : 0;
+                          const width = Math.max(right * PX_PER_MIN - left, 24);
+                          const live = now >= ps && now < pe;
+                          return (
+                            <button
+                              key={p.id}
+                              type="button"
+                              onClick={() => setSelected(p)}
+                              style={{ left, width: width - 4 }}
+                              className={`absolute top-1.5 bottom-1.5 overflow-hidden rounded-md px-2 text-left transition-colors ${
+                                live
+                                  ? "bg-primary/20 ring-1 ring-primary hover:bg-primary/30"
+                                  : "bg-secondary hover:bg-accent"
+                              }`}
+                            >
+                              <p className="truncate text-xs font-medium text-foreground">
+                                {p.name}
+                              </p>
+                              <p className="truncate text-[11px] text-muted-foreground">
+                                {clock(p.start)} – {clock(p.end)}
+                              </p>
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
       </div>
 
       {pages > 1 && (
-        <div className="flex items-center justify-center gap-3 pt-2">
+        <div className="flex items-center justify-center gap-3 pt-1">
           <Button
             variant="secondary"
             size="sm"

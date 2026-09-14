@@ -7,7 +7,8 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { getSessionFn } from "@/lib/auth.functions";
 import { useLanguage } from "@/lib/i18n";
-import { getPlaybackInfoFn, stopTranscodeFn } from "@/lib/jellyfin.functions";
+import { logWatchFn } from "@/lib/history.functions";
+import { getPlaybackInfoFn, reportPlayingFn, stopTranscodeFn } from "@/lib/jellyfin.functions";
 import { getLiveChannelFn } from "@/lib/livetv.functions";
 
 export const Route = createFileRoute("/live/watch/$channelId")({

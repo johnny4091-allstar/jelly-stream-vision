@@ -172,7 +172,12 @@ function LiveWatchPage() {
         });
         hls.on(Hls.Events.MEDIA_ATTACHED, () => hls?.loadSource(hlsUrl));
         hls.on(Hls.Events.LEVEL_LOADED, () => setLoadingPercent((p) => Math.max(p, 50)));
-        hls.on(Hls.Events.FRAG_BUFFERED, () => setLoadingPercent((p) => Math.min(95, p + 10)));
+        hls.on(Hls.Events.FRAG_BUFFERED, () => {
+          setLoadingPercent((p) => Math.min(95, p + 20));
+          // First segment is in the buffer: show the picture immediately.
+          setLoading(false);
+          void video.play().catch(() => {});
+        });
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
           setLoadingPercent((p) => Math.max(p, 50));
           void video.play().catch(() => {

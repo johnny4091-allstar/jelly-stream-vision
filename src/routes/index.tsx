@@ -80,7 +80,11 @@ function HomePage() {
         <div className="px-4 sm:px-8">
           <FilterBar posters={posters} value={filter} onChange={setFilter} />
         </div>
-        <Row title={t("continueWatching")} items={filterItems(data.resume, filter, posterIndex)} />
+        <Row
+          title={t("continueWatching")}
+          items={filterItems(data.resume, filter, posterIndex)}
+          playDirect
+        />
         <Row title={t("nextUp")} items={filterItems(data.nextUp, filter, posterIndex)} />
         {data.rows.map((row) => (
           <div key={row.viewId}>

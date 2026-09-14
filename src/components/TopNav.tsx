@@ -19,7 +19,6 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { useState } from "react";
 
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { getSessionFn, logoutFn } from "@/lib/auth.functions";
 import { LanguageSelect, useLanguage } from "@/lib/i18n";
 
@@ -144,18 +143,23 @@ export function TopNav({ userName }: { userName: string }) {
             AURORA
           </Link>
 
-          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-            <SheetTrigger asChild>
-              <button
-                aria-label="Open menu"
-                className="flex h-10 w-10 items-center justify-center rounded-full text-foreground/90 transition-colors hover:bg-accent hover:text-foreground"
-              >
-                <Menu className="h-6 w-6" />
-              </button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[min(20rem,85vw)] border-border bg-background p-0">
-              <SheetTitle className="sr-only">Navigation menu</SheetTitle>
+          <button
+            aria-label="Open menu"
+            onClick={() => setMenuOpen(true)}
+            className="flex h-10 w-10 items-center justify-center rounded-full text-foreground/90 transition-colors hover:bg-accent hover:text-foreground"
+          >
+            <Menu className="h-6 w-6" />
+          </button>
+        </div>
 
+        {menuOpen ? (
+          <div className="fixed inset-0 z-50">
+            <button
+              aria-label="Close menu"
+              onClick={() => setMenuOpen(false)}
+              className="absolute inset-0 bg-black/60"
+            />
+            <div className="absolute inset-y-0 right-0 w-[min(20rem,85vw)] border-l border-border bg-background shadow-xl">
               <div className="flex h-full flex-col">
                 <div className="flex items-center gap-3 border-b border-border px-5 py-4">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-base font-bold text-primary-foreground">
@@ -214,9 +218,9 @@ export function TopNav({ userName }: { userName: string }) {
                   </button>
                 </div>
               </div>
-            </SheetContent>
-          </Sheet>
-        </div>
+            </div>
+          </div>
+        ) : null}
       </header>
     </>
   );

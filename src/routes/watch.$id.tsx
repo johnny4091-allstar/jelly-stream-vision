@@ -479,6 +479,7 @@ function WatchPage() {
     const histSubtitle = item.SeriesName ? (item.Name ?? null) : null;
     let lastLogged = videoRef.current?.currentTime ?? time;
     let firstLog = true;
+    const runtimeFallback = item.RunTimeTicks ? item.RunTimeTicks / 10_000_000 : null;
     const logDelta = () => {
       const v = videoRef.current;
       const now = v?.currentTime ?? time;
@@ -493,10 +494,12 @@ function WatchPage() {
           imageItemId: item.SeriesId ?? item.Id,
           secondsDelta: delta,
           positionSeconds: now,
-          runtimeSeconds: v?.duration && Number.isFinite(v.duration) ? v.duration : null,
+          runtimeSeconds:
+            v?.duration && Number.isFinite(v.duration) ? v.duration : runtimeFallback,
           isNewPlay: firstLog,
         },
       });
+
       firstLog = false;
     };
     logDelta();

@@ -153,13 +153,30 @@ export function TopNav({ userName }: { userName: string }) {
         </div>
 
         {menuOpen ? (
-          <div className="fixed inset-0 z-50">
-            <button
-              aria-label="Close menu"
+          <div
+            className="fixed inset-0 z-50"
+            onKeyDown={(e) => {
+              if (e.key === "Escape" || e.key === "Backspace" || e.key === "GoBack") {
+                e.preventDefault();
+                e.stopPropagation();
+                setMenuOpen(false);
+              }
+            }}
+          >
+            <div
+              aria-hidden
               onClick={() => setMenuOpen(false)}
               className="absolute inset-0 bg-black/60"
             />
-            <div className="absolute inset-y-0 right-0 w-[min(20rem,85vw)] border-l border-border bg-background shadow-xl">
+            <div
+              data-tv-scope
+              ref={(el) => {
+                if (!el) return;
+                const first = el.querySelector<HTMLElement>('a[href], button:not([disabled])');
+                first?.focus({ preventScroll: true });
+              }}
+              className="absolute inset-y-0 right-0 w-[min(20rem,85vw)] border-l border-border bg-background shadow-xl"
+            >
               <div className="flex h-full flex-col">
                 <div className="flex items-center gap-3 border-b border-border px-5 py-4">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-base font-bold text-primary-foreground">

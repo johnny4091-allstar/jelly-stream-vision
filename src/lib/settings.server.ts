@@ -1,5 +1,5 @@
 const KEY = "stream_bitrate_cap";
-export const DEFAULT_BITRATE_CAP = 6_000_000;
+export const DEFAULT_BITRATE_CAP = 4_000_000;
 export const MIN_BITRATE_CAP = 1_000_000;
 export const MAX_BITRATE_CAP = 120_000_000;
 

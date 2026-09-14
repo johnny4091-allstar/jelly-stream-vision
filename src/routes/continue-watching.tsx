@@ -46,7 +46,7 @@ function ContinueWatchingPage() {
           {t("continueWatching")}
         </h1>
         {data.resume.length === 0 ? (
-          <p className="text-muted-foreground">{t("nothingHere")}</p>
+          <p className="text-muted-foreground">{t("noResults")}</p>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
             {data.resume.map((item) => (

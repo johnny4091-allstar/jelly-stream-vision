@@ -545,8 +545,14 @@ function WatchPage() {
   function pokeControls() {
     setShowControls(true);
     if (hideTimer.current) clearTimeout(hideTimer.current);
-    hideTimer.current = setTimeout(() => setShowControls(false), 3000);
+    hideTimer.current = setTimeout(() => setShowControls(false), 5000);
   }
+
+  useEffect(() => {
+    return () => {
+      if (hideTimer.current) clearTimeout(hideTimer.current);
+    };
+  }, []);
 
   function togglePlay() {
     const v = videoRef.current;
@@ -625,10 +631,12 @@ function WatchPage() {
         case "MediaPlay":
           e.preventDefault();
           void videoRef.current?.play();
+          pokeControls();
           break;
         case "MediaPause":
           e.preventDefault();
           videoRef.current?.pause();
+          pokeControls();
           break;
         case "ArrowRight":
         case "MediaFastForward":
@@ -686,7 +694,7 @@ function WatchPage() {
           // Loading hit 100% — drop the loading screen and try to autoplay.
           setLoadingPercent(100);
           setLoading(false);
-          setShowControls(true);
+          pokeControls();
           const v = e.currentTarget;
           if (v.paused) {
             v.play().catch(() => {
@@ -711,6 +719,7 @@ function WatchPage() {
           setLoading(false);
           setLoadingPercent(100);
           enterImmersiveMode();
+          pokeControls();
         }}
         onPause={(e) => {
           setPlaying(false);

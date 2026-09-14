@@ -811,9 +811,21 @@ function WatchPage() {
             void setPlayed({ data: { itemId: playbackId, played: true } });
           }
         }}
-        onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+        onLoadedMetadata={(e) => {
+          setDuration(e.currentTarget.duration);
+          const saved = Number(localStorage.getItem("aurora-volume") ?? 1);
+          if (!Number.isNaN(saved)) {
+            e.currentTarget.volume = saved;
+            setVolume(saved);
+          }
+        }}
+        onProgress={(e) => {
+          const v = e.currentTarget;
+          if (v.buffered.length) setBuffered(v.buffered.end(v.buffered.length - 1));
+        }}
         onVolumeChange={(e) => {
           setMuted(e.currentTarget.muted);
+          setVolume(e.currentTarget.volume);
           localStorage.setItem("aurora-muted", e.currentTarget.muted ? "1" : "0");
           localStorage.setItem("aurora-volume", String(e.currentTarget.volume));
         }}

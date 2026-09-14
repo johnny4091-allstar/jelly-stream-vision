@@ -14,6 +14,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as GetAppRouteImport } from './routes/get-app'
 import { Route as GetTvAppRouteImport } from './routes/get-tv-app'
 import { Route as HistoryRouteImport } from './routes/history'
+import { Route as LiveRouteImport } from './routes/live'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ProfilesRouteImport } from './routes/profiles'
 import { Route as SearchRouteImport } from './routes/search'
@@ -21,6 +22,7 @@ import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as WatchlistRouteImport } from './routes/watchlist'
 import { Route as LibraryIdRouteImport } from './routes/library.$id'
+import { Route as LiveIndexRouteImport } from './routes/live.index'
 import { Route as TitleIdRouteImport } from './routes/title.$id'
 import { Route as WatchIdRouteImport } from './routes/watch.$id'
 import { Route as ApiProxySplatRouteImport } from './routes/api/proxy/$'
@@ -48,6 +50,11 @@ const GetTvAppRoute = GetTvAppRouteImport.update({
 const HistoryRoute = HistoryRouteImport.update({
   id: '/history',
   path: '/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LiveRoute = LiveRouteImport.update({
+  id: '/live',
+  path: '/live',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -85,6 +92,11 @@ const LibraryIdRoute = LibraryIdRouteImport.update({
   path: '/library/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LiveIndexRoute = LiveIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LiveRoute,
+} as any)
 const TitleIdRoute = TitleIdRouteImport.update({
   id: '/title/$id',
   path: '/title/$id',
@@ -107,6 +119,7 @@ export interface FileRoutesByFullPath {
   '/get-app': typeof GetAppRoute
   '/get-tv-app': typeof GetTvAppRoute
   '/history': typeof HistoryRoute
+  '/live': typeof LiveRouteWithChildren
   '/login': typeof LoginRoute
   '/profiles': typeof ProfilesRoute
   '/search': typeof SearchRoute
@@ -116,6 +129,7 @@ export interface FileRoutesByFullPath {
   '/library/$id': typeof LibraryIdRoute
   '/title/$id': typeof TitleIdRoute
   '/watch/$id': typeof WatchIdRoute
+  '/live/': typeof LiveIndexRoute
   '/api/proxy/$': typeof ApiProxySplatRoute
 }
 export interface FileRoutesByTo {
@@ -133,6 +147,7 @@ export interface FileRoutesByTo {
   '/library/$id': typeof LibraryIdRoute
   '/title/$id': typeof TitleIdRoute
   '/watch/$id': typeof WatchIdRoute
+  '/live': typeof LiveIndexRoute
   '/api/proxy/$': typeof ApiProxySplatRoute
 }
 export interface FileRoutesById {
@@ -142,6 +157,7 @@ export interface FileRoutesById {
   '/get-app': typeof GetAppRoute
   '/get-tv-app': typeof GetTvAppRoute
   '/history': typeof HistoryRoute
+  '/live': typeof LiveRouteWithChildren
   '/login': typeof LoginRoute
   '/profiles': typeof ProfilesRoute
   '/search': typeof SearchRoute
@@ -151,6 +167,7 @@ export interface FileRoutesById {
   '/library/$id': typeof LibraryIdRoute
   '/title/$id': typeof TitleIdRoute
   '/watch/$id': typeof WatchIdRoute
+  '/live/': typeof LiveIndexRoute
   '/api/proxy/$': typeof ApiProxySplatRoute
 }
 export interface FileRouteTypes {
@@ -161,6 +178,7 @@ export interface FileRouteTypes {
     | '/get-app'
     | '/get-tv-app'
     | '/history'
+    | '/live'
     | '/login'
     | '/profiles'
     | '/search'
@@ -170,6 +188,7 @@ export interface FileRouteTypes {
     | '/library/$id'
     | '/title/$id'
     | '/watch/$id'
+    | '/live/'
     | '/api/proxy/$'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -187,6 +206,7 @@ export interface FileRouteTypes {
     | '/library/$id'
     | '/title/$id'
     | '/watch/$id'
+    | '/live'
     | '/api/proxy/$'
   id:
     | '__root__'
@@ -195,6 +215,7 @@ export interface FileRouteTypes {
     | '/get-app'
     | '/get-tv-app'
     | '/history'
+    | '/live'
     | '/login'
     | '/profiles'
     | '/search'
@@ -204,6 +225,7 @@ export interface FileRouteTypes {
     | '/library/$id'
     | '/title/$id'
     | '/watch/$id'
+    | '/live/'
     | '/api/proxy/$'
   fileRoutesById: FileRoutesById
 }
@@ -213,6 +235,7 @@ export interface RootRouteChildren {
   GetAppRoute: typeof GetAppRoute
   GetTvAppRoute: typeof GetTvAppRoute
   HistoryRoute: typeof HistoryRoute
+  LiveRoute: typeof LiveRouteWithChildren
   LoginRoute: typeof LoginRoute
   ProfilesRoute: typeof ProfilesRoute
   SearchRoute: typeof SearchRoute
@@ -260,6 +283,13 @@ declare module '@tanstack/react-router' {
       path: '/history'
       fullPath: '/history'
       preLoaderRoute: typeof HistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/live': {
+      id: '/live'
+      path: '/live'
+      fullPath: '/live'
+      preLoaderRoute: typeof LiveRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -311,6 +341,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LibraryIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/live/': {
+      id: '/live/'
+      path: '/'
+      fullPath: '/live/'
+      preLoaderRoute: typeof LiveIndexRouteImport
+      parentRoute: typeof LiveRoute
+    }
     '/title/$id': {
       id: '/title/$id'
       path: '/title/$id'
@@ -335,12 +372,23 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface LiveRouteChildren {
+  LiveIndexRoute: typeof LiveIndexRoute
+}
+
+const LiveRouteChildren: LiveRouteChildren = {
+  LiveIndexRoute: LiveIndexRoute,
+}
+
+const LiveRouteWithChildren = LiveRoute._addFileChildren(LiveRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   GetAppRoute: GetAppRoute,
   GetTvAppRoute: GetTvAppRoute,
   HistoryRoute: HistoryRoute,
+  LiveRoute: LiveRouteWithChildren,
   LoginRoute: LoginRoute,
   ProfilesRoute: ProfilesRoute,
   SearchRoute: SearchRoute,

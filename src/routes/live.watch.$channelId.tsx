@@ -195,6 +195,7 @@ function LiveWatchPage() {
     void setup();
     return () => {
       cancelled = true;
+      clearTimeout(safety);
       retryRef.current = null;
       const sid = playSessionRef.current;
       try {

@@ -121,7 +121,7 @@ function LandingPage() {
             Get started
           </Link>
           <Link
-            to="/live/guide"
+            to="/guide"
             className="rounded-md border border-border px-8 py-3 text-lg font-semibold transition-colors hover:border-primary hover:text-primary"
           >
             See the TV guide

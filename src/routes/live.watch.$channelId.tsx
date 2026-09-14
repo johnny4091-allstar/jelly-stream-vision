@@ -79,8 +79,10 @@ function LiveWatchPage() {
     async function setup() {
       setError(null);
       setLoading(true);
+      setLoadingPercent(0);
       const deviceId = deviceIdRef.current;
       let info: Awaited<ReturnType<typeof getPlaybackInfo>>;
+      setLoadingPercent(20);
       try {
         info = await getPlaybackInfo({ data: { itemId: channelId, deviceId } });
       } catch {
@@ -88,6 +90,7 @@ function LiveWatchPage() {
         return;
       }
       if (cancelled || !videoRef.current) return;
+      setLoadingPercent(35);
       playSessionRef.current = info.playSessionId;
       const video = videoRef.current;
 

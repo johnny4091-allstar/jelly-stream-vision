@@ -11,6 +11,7 @@ import {
   Volume2,
   VolumeX,
   Languages,
+  Captions,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -108,6 +109,11 @@ function WatchPage() {
   >([]);
   const [audioIndex, setAudioIndex] = useState<number | null>(null);
   const [showAudioMenu, setShowAudioMenu] = useState(false);
+  const [subtitleTracks, setSubtitleTracks] = useState<
+    { index: number; language: string | null; label: string }[]
+  >([]);
+  const [subtitleIndex, setSubtitleIndex] = useState<number | null>(null);
+  const [showSubtitleMenu, setShowSubtitleMenu] = useState(false);
   const [playMode, setPlayMode] = useState<"DirectPlay" | "DirectStream" | "Transcode" | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingPercent, setLoadingPercent] = useState(0);
@@ -136,6 +142,15 @@ function WatchPage() {
     );
     if (preferred) setAudioIndex(preferred.index);
   }, [audioIndex, audioTracks, language]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    for (let index = 0; index < video.textTracks.length; index += 1) {
+      const track = video.textTracks[index];
+      if (track) track.mode = subtitleIndex === subtitleTracks[index]?.index ? "showing" : "disabled";
+    }
+  }, [subtitleIndex, subtitleTracks]);
 
   const title = item.SeriesName ? `${item.SeriesName} — ${episodeLabel(item)}` : item.Name;
   // Old links can contain a truncated Jellyfin ID. getItemFn resolves those,
@@ -190,6 +205,7 @@ function WatchPage() {
       setLoadingPercent(20);
       playSessionRef.current = info.playSessionId;
       setAudioTracks(info.audioTracks ?? []);
+      setSubtitleTracks(info.subtitleTracks ?? []);
       playMethodRef.current = info.playMethod;
       setPlayMode(info.playMethod);
 
@@ -787,7 +803,17 @@ function WatchPage() {
           localStorage.setItem("aurora-muted", e.currentTarget.muted ? "1" : "0");
           localStorage.setItem("aurora-volume", String(e.currentTarget.volume));
         }}
-      />
+      >
+        {subtitleTracks.map((track) => (
+          <track
+            key={track.index}
+            kind="subtitles"
+            src={`/api/proxy/Videos/${playbackId}/${encodeURIComponent(playSessionRef.current || playbackId)}/Subtitles/${track.index}/Stream.vtt`}
+            srcLang={track.language ?? "und"}
+            label={track.label}
+          />
+        ))}
+      </video>
 
       {loading && !playbackError && (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black">
@@ -876,11 +902,64 @@ function WatchPage() {
 
           <div className="relative ml-auto flex items-center gap-2">
             <LanguageSelect compact />
+            {subtitleTracks.length > 0 && (
+              <div className="relative">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setShowSubtitleMenu((value) => !value);
+                    setShowAudioMenu(false);
+                    pokeControls();
+                  }}
+                  aria-label={t("subtitles")}
+                  className="rounded-full bg-black/50"
+                >
+                  <Captions className="h-5 w-5" />
+                  <span className="hidden sm:inline">{t("subtitles")}</span>
+                </Button>
+                {showSubtitleMenu && (
+                  <div className="absolute right-0 z-30 mt-2 w-56 overflow-hidden rounded-lg border border-border bg-popover py-1 shadow-xl">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSubtitleIndex(null);
+                        setShowSubtitleMenu(false);
+                        pokeControls();
+                      }}
+                      className={`block w-full px-3 py-2 text-left text-sm transition-colors hover:bg-accent ${subtitleIndex == null ? "text-primary" : "text-foreground"}`}
+                    >
+                      {t("off")}
+                    </button>
+                    {subtitleTracks.map((track) => (
+                      <button
+                        key={track.index}
+                        type="button"
+                        onClick={() => {
+                          setSubtitleIndex(track.index);
+                          setShowSubtitleMenu(false);
+                          pokeControls();
+                        }}
+                        className={`block w-full px-3 py-2 text-left text-sm transition-colors hover:bg-accent ${subtitleIndex === track.index ? "text-primary" : "text-foreground"}`}
+                      >
+                        {languageName(track.language) ?? track.label}
+                        <span className="block text-xs text-muted-foreground">{track.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             {audioTracks.length > 1 && (
               <div className="relative">
               <button
                 type="button"
-                onClick={() => setShowAudioMenu((v) => !v)}
+                onClick={() => {
+                  setShowAudioMenu((v) => !v);
+                  setShowSubtitleMenu(false);
+                  pokeControls();
+                }}
                 aria-label={t("audio")}
                 className="flex items-center gap-2 rounded-full bg-black/50 px-3 py-2 text-sm text-foreground transition-colors hover:bg-accent"
               >

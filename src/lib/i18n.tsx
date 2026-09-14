@@ -16,7 +16,7 @@ const messages = {
     allGenres: "All genres", allYears: "All years", allRatings: "All ratings", clear: "Clear",
     watchlist: "My watchlist", history: "Watch history", search: "Search", people: "Manage people",
     signOut: "Sign out", language: "Language", back: "Back", episodes: "Episodes", starring: "Starring",
-    resume: "Resume",
+    resume: "Resume", subtitles: "Subtitles", off: "Off",
   },
   es: {
     play: "Reproducir", moreInfo: "Más información", continueWatching: "Seguir viendo",
@@ -29,7 +29,7 @@ const messages = {
     allGenres: "Todos los géneros", allYears: "Todos los años", allRatings: "Todas las clasificaciones", clear: "Borrar",
     watchlist: "Mi lista", history: "Historial", search: "Buscar", people: "Administrar personas",
     signOut: "Cerrar sesión", language: "Idioma", back: "Volver", episodes: "Episodios", starring: "Reparto",
-    resume: "Continuar",
+    resume: "Continuar", subtitles: "Subtítulos", off: "Desactivados",
   },
   fr: {
     play: "Lire", moreInfo: "Plus d’infos", continueWatching: "Continuer à regarder",
@@ -42,7 +42,7 @@ const messages = {
     allGenres: "Tous les genres", allYears: "Toutes les années", allRatings: "Toutes les classifications", clear: "Effacer",
     watchlist: "Ma liste", history: "Historique", search: "Rechercher", people: "Gérer les utilisateurs",
     signOut: "Se déconnecter", language: "Langue", back: "Retour", episodes: "Épisodes", starring: "Avec",
-    resume: "Reprendre",
+    resume: "Reprendre", subtitles: "Sous-titres", off: "Désactivés",
   },
 } as const;
 

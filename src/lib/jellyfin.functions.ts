@@ -202,6 +202,7 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
           Title?: string;
           Codec?: string;
           Channels?: number;
+           IsExternal?: boolean;
         }[];
       }[];
     };
@@ -299,12 +300,20 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
         codec: m.Codec ?? null,
         channels: m.Channels ?? null,
       }));
+    const subtitleTracks = (src?.MediaStreams ?? [])
+      .filter((m) => m.Type === "Subtitle" && m.IsExternal)
+      .map((m) => ({
+        index: m.Index,
+        language: m.Language ?? null,
+        label: m.DisplayTitle ?? m.Title ?? m.Language ?? `Subtitle ${m.Index}`,
+      }));
     const canDirect = Boolean(src?.SupportsDirectPlay || src?.SupportsDirectStream);
     return {
       playSessionId: res?.PlaySessionId ?? crypto.randomUUID().replaceAll("-", ""),
       mediaSourceId: src?.Id ?? data.itemId,
       audioStreamIndex: audioIndex ?? null,
       audioTracks,
+       subtitleTracks,
       // Jellyfin's own transcode URL already carries the correct, working parameters.
       transcodingUrl: src?.TranscodingUrl
         ? (() => {

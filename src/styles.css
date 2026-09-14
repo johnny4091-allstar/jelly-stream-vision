@@ -154,9 +154,10 @@
   input:focus-visible,
   select:focus-visible,
   [role="button"]:focus-visible {
-    outline: 3px solid var(--ring);
+    outline: 3px solid var(--primary);
     outline-offset: 3px;
     border-radius: var(--radius);
+    box-shadow: 0 0 0 6px color-mix(in oklch, var(--primary) 25%, transparent);
   }
 
   /* TV remotes move focus without a pointer: always show the highlight there. */
@@ -167,11 +168,13 @@
     input:focus,
     select:focus,
     [role="button"]:focus {
-      outline: 3px solid var(--ring);
+      outline: 3px solid var(--primary);
       outline-offset: 3px;
       border-radius: var(--radius);
+      box-shadow: 0 0 0 6px color-mix(in oklch, var(--primary) 25%, transparent);
     }
   }
+
 
   /* Hulu-style left rail: reserve room for the fixed nav on big screens. */
   @media (min-width: 1280px) {

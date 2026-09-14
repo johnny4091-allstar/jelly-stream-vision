@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { ChevronLeft, ChevronRight, Play } from "lucide-react";
+import { ChevronLeft, ChevronRight, LayoutGrid, List, Play, Radio } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -55,6 +55,7 @@ function GuidePage() {
   const [page, setPage] = useState(0);
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [selected, setSelected] = useState<GuideProgram | null>(null);
+  const [view, setView] = useState<"grid" | "list">("grid");
   const [start, setStart] = useState(() => floorToSlot(new Date()));
   const [now, setNow] = useState(() => Date.now());
   const pageSize = 20;
@@ -130,6 +131,22 @@ function GuidePage() {
         >
           ♥ {t("favorites")}
         </Button>
+        <Button
+          variant={view === "grid" ? "default" : "secondary"}
+          size="sm"
+          className="rounded-full"
+          onClick={() => setView("grid")}
+        >
+          <LayoutGrid className="mr-1 h-4 w-4" /> {t("gridView")}
+        </Button>
+        <Button
+          variant={view === "list" ? "default" : "secondary"}
+          size="sm"
+          className="rounded-full"
+          onClick={() => setView("list")}
+        >
+          <List className="mr-1 h-4 w-4" /> {t("channelGuide")}
+        </Button>
         <div className="ml-auto flex items-center gap-2">
           <Button variant="secondary" size="sm" className="rounded-full" onClick={() => shift(-2)}>
             <ChevronLeft className="h-4 w-4" />
@@ -148,6 +165,7 @@ function GuidePage() {
         </div>
       </div>
 
+      {view === "grid" ? (
       <div className="overflow-hidden rounded-xl border border-border bg-card">
         <div ref={scrollRef} className="overflow-x-auto">
           <div style={{ width: gridWidth + 176 }}>
@@ -250,6 +268,95 @@ function GuidePage() {
           </div>
         </div>
       </div>
+      ) : (
+        <div className="space-y-4">
+          {channels.map((channel) => {
+            const programs = byChannel.get(channel.id) ?? [];
+            return (
+              <section
+                key={channel.id}
+                className="overflow-hidden rounded-xl border border-border bg-card"
+              >
+                <header className="flex items-center gap-3 border-b border-border px-3 py-2">
+                  <div className="flex h-10 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md bg-secondary">
+                    {channel.hasImage ? (
+                      <img
+                        src={`/api/proxy/Items/${channel.id}/Images/Primary?maxWidth=160&quality=85`}
+                        alt={channel.name}
+                        loading="lazy"
+                        className="h-full w-full object-contain"
+                      />
+                    ) : (
+                      <Radio className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    {channel.number ? (
+                      <p className="text-[11px] text-muted-foreground">{channel.number}</p>
+                    ) : null}
+                    <p className="truncate text-sm font-semibold text-foreground">{channel.name}</p>
+                  </div>
+                  <Button asChild size="sm" className="ml-auto rounded-full">
+                    <Link to="/live/watch/$channelId" params={{ channelId: channel.id }}>
+                      <Play className="mr-1 h-4 w-4 fill-current" />
+                      {t("play")}
+                    </Link>
+                  </Button>
+                </header>
+                {programs.length === 0 ? (
+                  <p className="px-3 py-3 text-xs text-muted-foreground">{t("noProgramInfo")}</p>
+                ) : (
+                  <ul className="divide-y divide-border/60">
+                    {programs.map((p) => {
+                      const ps = p.start ? new Date(p.start).getTime() : 0;
+                      const pe = p.end ? new Date(p.end).getTime() : ps;
+                      const live = now >= ps && now < pe;
+                      return (
+                        <li key={p.id} className="flex items-center gap-3 px-3 py-2">
+                          <span className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">
+                            {clock(p.start)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setSelected(p)}
+                            className="min-w-0 flex-1 text-left"
+                          >
+                            <p className="truncate text-sm font-medium text-foreground">
+                              {p.name}
+                              {live ? (
+                                <span className="ml-2 rounded bg-primary px-1.5 py-0.5 text-[10px] font-bold uppercase text-primary-foreground">
+                                  live
+                                </span>
+                              ) : null}
+                            </p>
+                            {p.overview ? (
+                              <p className="truncate text-xs text-muted-foreground">{p.overview}</p>
+                            ) : null}
+                          </button>
+                          <Button
+                            asChild
+                            size="icon"
+                            variant="secondary"
+                            className="h-8 w-8 shrink-0 rounded-full"
+                          >
+                            <Link
+                              to="/live/watch/$channelId"
+                              params={{ channelId: channel.id }}
+                              aria-label={t("play")}
+                            >
+                              <Play className="h-4 w-4 fill-current" />
+                            </Link>
+                          </Button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </section>
+            );
+          })}
+        </div>
+      )}
 
       {pages > 1 && (
         <div className="flex items-center justify-center gap-3 pt-1">

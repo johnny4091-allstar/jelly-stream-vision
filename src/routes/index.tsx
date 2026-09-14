@@ -1,4 +1,4 @@
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useEffect } from "react";
 
@@ -7,7 +7,7 @@ import { buildPosterIndex, FilterBar, filterItems, useMediaFilter } from "@/comp
 import { Row } from "@/components/Row";
 import { TopNav } from "@/components/TopNav";
 import { getSessionFn } from "@/lib/auth.functions";
-import { getHomeFn } from "@/lib/jellyfin.functions";
+import { getHomeFn, getRecommendationsFn } from "@/lib/jellyfin.functions";
 import { listPostersFn, syncPostersFn } from "@/lib/posters.functions";
 import { useLanguage } from "@/lib/i18n";
 
@@ -18,6 +18,12 @@ export const homeQuery = queryOptions({
   staleTime: 0,
   refetchOnMount: "always" as const,
   refetchOnWindowFocus: true,
+});
+
+const recommendationsQuery = queryOptions({
+  queryKey: ["recommendations"],
+  queryFn: () => getRecommendationsFn(),
+  staleTime: 10 * 60 * 1000,
 });
 
 const postersQuery = queryOptions({
@@ -80,6 +86,7 @@ function HomePage() {
   }, [refetch]);
 
   const { data: posters = [] } = useSuspenseQuery(postersQuery);
+  const { data: recommended } = useQuery(recommendationsQuery);
   const [filter, setFilter] = useMediaFilter();
   const posterIndex = buildPosterIndex(posters);
   const featured = [
@@ -104,6 +111,16 @@ function HomePage() {
           items={filterItems(data.resume, filter, posterIndex)}
           playDirect
         />
+        {(recommended?.items.length ?? 0) > 0 && (
+          <Row
+            title={
+              recommended?.seedTitle
+                ? `${t("becauseYouWatched")} ${recommended.seedTitle}`
+                : t("recommended")
+            }
+            items={filterItems(recommended?.items ?? [], filter, posterIndex)}
+          />
+        )}
         <Row title={t("nextUp")} items={filterItems(data.nextUp, filter, posterIndex)} />
         {data.rows.map((row) => (
           <div key={row.viewId}>

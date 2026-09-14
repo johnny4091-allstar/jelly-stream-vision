@@ -10,6 +10,7 @@ import { clearHistoryFn, getHistoryFn } from "@/lib/history.functions";
 const historyQueryOptions = queryOptions({
   queryKey: ["history"],
   queryFn: () => getHistoryFn(),
+  staleTime: 0, // always fresh — updates as you watch
 });
 
 export const Route = createFileRoute("/history")({

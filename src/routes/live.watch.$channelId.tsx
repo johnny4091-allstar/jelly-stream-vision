@@ -237,6 +237,82 @@ function LiveWatchPage() {
     else void el.requestFullscreen?.().catch(() => {});
   };
 
+  // Save live viewing to the media server and to the app's own watch record,
+  // so Continue Watching knows which channel you were last on.
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    let lastTick = Date.now();
+    let started = false;
+
+    const report = (kind: "Started" | "Progress" | "Stopped", isPaused = false) => {
+      if (!playSessionRef.current) return;
+      void reportPlaying({
+        data: {
+          itemId: channelId,
+          positionTicks: Math.floor((v.currentTime || 0) * 10_000_000),
+          playSessionId: playSessionRef.current,
+          kind,
+          isPaused,
+          deviceId: deviceIdRef.current,
+        },
+      }).catch(() => {});
+    };
+
+    const logDelta = (isNewPlay = false) => {
+      const now = Date.now();
+      const delta = Math.max(0, Math.round((now - lastTick) / 1000));
+      lastTick = now;
+      if (!delta && !isNewPlay) return;
+      void logWatch({
+        data: {
+          itemId: channelId,
+          title: channel.data?.name ?? "Live TV",
+          subtitle: channel.data?.now?.name ?? null,
+          itemType: "TvChannel",
+          imageItemId: channelId,
+          secondsDelta: delta,
+          positionSeconds: 0,
+          runtimeSeconds: null,
+          isNewPlay,
+        },
+      }).catch(() => {});
+    };
+
+    const onPlaying = () => {
+      lastTick = Date.now();
+      if (!started) {
+        started = true;
+        report("Started");
+        logDelta(true);
+      }
+    };
+    const onPause = () => {
+      report("Progress", true);
+      logDelta();
+    };
+
+    v.addEventListener("playing", onPlaying);
+    v.addEventListener("pause", onPause);
+    const interval = setInterval(() => {
+      if (!v.paused) {
+        report("Progress");
+        logDelta();
+      }
+    }, 10_000);
+
+    return () => {
+      clearInterval(interval);
+      v.removeEventListener("playing", onPlaying);
+      v.removeEventListener("pause", onPause);
+      if (started) {
+        report("Stopped");
+        logDelta();
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [channelId, channel.data?.name]);
+
   // Go fullscreen as soon as the channel starts playing (TV + phone apps).
   const enterImmersiveMode = () => {
     if (document.fullscreenElement) return;

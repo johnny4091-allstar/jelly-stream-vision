@@ -26,12 +26,12 @@ function GetTvApp() {
     <main className="mx-auto flex min-h-screen w-full max-w-xl flex-col justify-center gap-6 px-6 py-16">
       <h1 className="text-3xl font-semibold tracking-tight">Aurora for Android TV</h1>
       <p className="text-muted-foreground text-sm">
-        Version 1.0.0 — a separate TV app that shows up in your Android TV or
+        Version 1.1.0 — refreshed with the new Aurora launcher artwork. It shows up in your Android TV or
         Google TV launcher and works with the remote.
       </p>
 
       <a
-        href="/download/aurora-tv.apk"
+        href="/download/aurora-tv.apk?v=1.1.0"
         download="aurora-tv.apk"
         className="bg-primary text-primary-foreground rounded-lg px-5 py-4 text-center text-base font-medium"
       >

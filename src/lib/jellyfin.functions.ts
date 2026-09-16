@@ -588,7 +588,11 @@ export const getActiveSessionsFn = createServerFn({ method: "GET" }).handler(
     }
     const nameOf = await buildUserNameResolver();
     return (raw ?? []).map((r) => {
-      ...
+      const np = r.NowPlayingItem;
+      const ep =
+        np?.Type === "Episode" && np.ParentIndexNumber != null && np.IndexNumber != null
+          ? `S${np.ParentIndexNumber} E${np.IndexNumber} · ${np.Name ?? ""}`
+          : null;
       return {
         id: r.Id,
         userName: nameOf(r.UserId, r.UserName),

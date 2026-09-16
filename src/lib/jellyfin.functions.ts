@@ -520,6 +520,42 @@ export interface ActiveSession {
   lastActivity: string | null;
 }
 
+/**
+ * Resolve who's watching: Emby sessions sometimes omit UserName, so map the
+ * session's UserId/UserName through the media server's user list and Aurora's
+ * own accounts (jf_user_id / jf_username) to show the Aurora sign-in name.
+ */
+async function buildUserNameResolver(): Promise<
+  (userId?: string, userName?: string) => string
+> {
+  const jfUsers = await jfGet<{ Id: string; Name?: string }[]>("/Users").catch(
+    () => [] as { Id: string; Name?: string }[],
+  );
+  const mediaName = new Map((jfUsers ?? []).map((u) => [u.Id, (u.Name ?? "").trim()]));
+  type Row = { username: string; jf_username: string; jf_user_id: string | null };
+  let rows: Row[] = [];
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin
+      .from("app_users")
+      .select("username, jf_username, jf_user_id");
+    rows = (data ?? []) as Row[];
+  } catch {
+    /* name resolution is best-effort */
+  }
+  const byJfId = new Map(rows.filter((r) => r.jf_user_id).map((r) => [r.jf_user_id!, r.username]));
+  const byJfName = new Map(rows.map((r) => [r.jf_username.toLowerCase(), r.username]));
+  return (userId, userName) => {
+    if (userId && byJfId.has(userId)) return byJfId.get(userId)!;
+    const media = (userName?.trim() || (userId ? (mediaName.get(userId) ?? "") : "")).trim();
+    if (media) {
+      const aurora = byJfName.get(media.toLowerCase());
+      return aurora ?? media;
+    }
+    return "Unknown";
+  };
+}
+
 /** Live Jellyfin sessions (admin only) — who is playing what right now. */
 export const getActiveSessionsFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<ActiveSession[]> => {

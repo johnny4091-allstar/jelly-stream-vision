@@ -563,6 +563,7 @@ export const getActiveSessionsFn = createServerFn({ method: "GET" }).handler(
     if (!s.isAdmin) throw new Error("Forbidden");
     type Raw = {
       Id: string;
+      UserId?: string;
       UserName?: string;
       DeviceName?: string;
       Client?: string;
@@ -585,15 +586,12 @@ export const getActiveSessionsFn = createServerFn({ method: "GET" }).handler(
       console.warn("Jellyfin sessions fetch failed", err);
       return [];
     }
+    const nameOf = await buildUserNameResolver();
     return (raw ?? []).map((r) => {
-      const np = r.NowPlayingItem;
-      const ep =
-        np?.Type === "Episode" && np.ParentIndexNumber != null && np.IndexNumber != null
-          ? `S${np.ParentIndexNumber} E${np.IndexNumber} · ${np.Name ?? ""}`
-          : null;
+      ...
       return {
         id: r.Id,
-        userName: r.UserName ?? "Unknown",
+        userName: nameOf(r.UserId, r.UserName),
         device: r.DeviceName ?? "Unknown device",
         client: r.Client ?? "",
         title: np ? (np.SeriesName ?? np.Name ?? null) : null,
@@ -672,21 +670,10 @@ export const getServerUsageFn = createServerFn({ method: "GET" }).handler(
     type Info = { ServerName?: string; Version?: string; OperatingSystemDisplayName?: string };
     type Raw = {
       Id: string;
+      UserId?: string;
       UserName?: string;
       NowPlayingItem?: { Name?: string; SeriesName?: string };
-      PlayState?: { PlayMethod?: string };
-      TranscodingInfo?: {
-        Bitrate?: number;
-        Framerate?: number;
-        VideoCodec?: string;
-        AudioCodec?: string;
-        IsVideoDirect?: boolean;
-        IsAudioDirect?: boolean;
-        HardwareAccelerationType?: string;
-        TranscodeReasons?: string[];
-      };
-    };
-
+      ...
     let info: Info = {};
     let raw: Raw[] = [];
     try {
@@ -698,13 +685,14 @@ export const getServerUsageFn = createServerFn({ method: "GET" }).handler(
       console.warn("Server usage fetch failed", err);
     }
 
+    const nameOf = await buildUserNameResolver();
     const playing = (raw ?? []).filter((r) => r.NowPlayingItem);
     const streams = playing.map((r) => {
       const t = r.TranscodingInfo;
       const method = r.PlayState?.PlayMethod ?? "Unknown";
       return {
         id: r.Id,
-        userName: r.UserName ?? "Unknown",
+        userName: nameOf(r.UserId, r.UserName),
         title: r.NowPlayingItem?.SeriesName ?? r.NowPlayingItem?.Name ?? "Unknown",
         method,
         bitrate: t?.Bitrate ?? null,

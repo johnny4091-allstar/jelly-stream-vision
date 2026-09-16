@@ -677,7 +677,18 @@ export const getServerUsageFn = createServerFn({ method: "GET" }).handler(
       UserId?: string;
       UserName?: string;
       NowPlayingItem?: { Name?: string; SeriesName?: string };
-      ...
+      PlayState?: { PlayMethod?: string };
+      TranscodingInfo?: {
+        Bitrate?: number;
+        Framerate?: number;
+        VideoCodec?: string;
+        AudioCodec?: string;
+        IsVideoDirect?: boolean;
+        IsAudioDirect?: boolean;
+        HardwareAccelerationType?: string;
+        TranscodeReasons?: string[];
+      };
+    };
     let info: Info = {};
     let raw: Raw[] = [];
     try {

@@ -28,7 +28,7 @@ export const Route = createFileRoute("/live/channel-guide")({
   component: ChannelGuidePage,
   errorComponent: ({ error }: ErrorComponentProps) => (
     <p role="alert" className="px-6 py-10 text-sm text-muted-foreground">
-      {error.message}
+      {(error as Error).message}
     </p>
   ),
   notFoundComponent: () => <p className="px-6 py-10 text-sm text-muted-foreground">No channels.</p>,

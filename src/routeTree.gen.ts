@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as ContinueWatchingRouteImport } from './routes/continue-watching'
 import { Route as GetAppRouteImport } from './routes/get-app'
+import { Route as GetRokuAppRouteImport } from './routes/get-roku-app'
 import { Route as GetTvAppRouteImport } from './routes/get-tv-app'
 import { Route as GuideRouteImport } from './routes/guide'
 import { Route as HistoryRouteImport } from './routes/history'
@@ -32,6 +33,7 @@ import { Route as TitleIdRouteImport } from './routes/title.$id'
 import { Route as WatchIdRouteImport } from './routes/watch.$id'
 import { Route as ApiProxySplatRouteImport } from './routes/api/proxy/$'
 import { Route as LiveWatchChannelIdRouteImport } from './routes/live.watch.$channelId'
+import { Route as ApiPublicRokuSplatRouteImport } from './routes/api/public/roku.$'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -51,6 +53,11 @@ const ContinueWatchingRoute = ContinueWatchingRouteImport.update({
 const GetAppRoute = GetAppRouteImport.update({
   id: '/get-app',
   path: '/get-app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GetRokuAppRoute = GetRokuAppRouteImport.update({
+  id: '/get-roku-app',
+  path: '/get-roku-app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GetTvAppRoute = GetTvAppRouteImport.update({
@@ -148,12 +155,18 @@ const LiveWatchChannelIdRoute = LiveWatchChannelIdRouteImport.update({
   path: '/watch/$channelId',
   getParentRoute: () => LiveRoute,
 } as any)
+const ApiPublicRokuSplatRoute = ApiPublicRokuSplatRouteImport.update({
+  id: '/api/public/roku/$',
+  path: '/api/public/roku/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/continue-watching': typeof ContinueWatchingRoute
   '/get-app': typeof GetAppRoute
+  '/get-roku-app': typeof GetRokuAppRoute
   '/get-tv-app': typeof GetTvAppRoute
   '/guide': typeof GuideRoute
   '/history': typeof HistoryRoute
@@ -173,12 +186,14 @@ export interface FileRoutesByFullPath {
   '/live/': typeof LiveIndexRoute
   '/api/proxy/$': typeof ApiProxySplatRoute
   '/live/watch/$channelId': typeof LiveWatchChannelIdRoute
+  '/api/public/roku/$': typeof ApiPublicRokuSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/continue-watching': typeof ContinueWatchingRoute
   '/get-app': typeof GetAppRoute
+  '/get-roku-app': typeof GetRokuAppRoute
   '/get-tv-app': typeof GetTvAppRoute
   '/guide': typeof GuideRoute
   '/history': typeof HistoryRoute
@@ -197,6 +212,7 @@ export interface FileRoutesByTo {
   '/live': typeof LiveIndexRoute
   '/api/proxy/$': typeof ApiProxySplatRoute
   '/live/watch/$channelId': typeof LiveWatchChannelIdRoute
+  '/api/public/roku/$': typeof ApiPublicRokuSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -204,6 +220,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/continue-watching': typeof ContinueWatchingRoute
   '/get-app': typeof GetAppRoute
+  '/get-roku-app': typeof GetRokuAppRoute
   '/get-tv-app': typeof GetTvAppRoute
   '/guide': typeof GuideRoute
   '/history': typeof HistoryRoute
@@ -223,6 +240,7 @@ export interface FileRoutesById {
   '/live/': typeof LiveIndexRoute
   '/api/proxy/$': typeof ApiProxySplatRoute
   '/live/watch/$channelId': typeof LiveWatchChannelIdRoute
+  '/api/public/roku/$': typeof ApiPublicRokuSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -231,6 +249,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/continue-watching'
     | '/get-app'
+    | '/get-roku-app'
     | '/get-tv-app'
     | '/guide'
     | '/history'
@@ -250,12 +269,14 @@ export interface FileRouteTypes {
     | '/live/'
     | '/api/proxy/$'
     | '/live/watch/$channelId'
+    | '/api/public/roku/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/admin'
     | '/continue-watching'
     | '/get-app'
+    | '/get-roku-app'
     | '/get-tv-app'
     | '/guide'
     | '/history'
@@ -274,12 +295,14 @@ export interface FileRouteTypes {
     | '/live'
     | '/api/proxy/$'
     | '/live/watch/$channelId'
+    | '/api/public/roku/$'
   id:
     | '__root__'
     | '/'
     | '/admin'
     | '/continue-watching'
     | '/get-app'
+    | '/get-roku-app'
     | '/get-tv-app'
     | '/guide'
     | '/history'
@@ -299,6 +322,7 @@ export interface FileRouteTypes {
     | '/live/'
     | '/api/proxy/$'
     | '/live/watch/$channelId'
+    | '/api/public/roku/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -306,6 +330,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   ContinueWatchingRoute: typeof ContinueWatchingRoute
   GetAppRoute: typeof GetAppRoute
+  GetRokuAppRoute: typeof GetRokuAppRoute
   GetTvAppRoute: typeof GetTvAppRoute
   GuideRoute: typeof GuideRoute
   HistoryRoute: typeof HistoryRoute
@@ -320,6 +345,7 @@ export interface RootRouteChildren {
   TitleIdRoute: typeof TitleIdRoute
   WatchIdRoute: typeof WatchIdRoute
   ApiProxySplatRoute: typeof ApiProxySplatRoute
+  ApiPublicRokuSplatRoute: typeof ApiPublicRokuSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -350,6 +376,13 @@ declare module '@tanstack/react-router' {
       path: '/get-app'
       fullPath: '/get-app'
       preLoaderRoute: typeof GetAppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/get-roku-app': {
+      id: '/get-roku-app'
+      path: '/get-roku-app'
+      fullPath: '/get-roku-app'
+      preLoaderRoute: typeof GetRokuAppRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/get-tv-app': {
@@ -485,6 +518,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LiveWatchChannelIdRouteImport
       parentRoute: typeof LiveRoute
     }
+    '/api/public/roku/$': {
+      id: '/api/public/roku/$'
+      path: '/api/public/roku/$'
+      fullPath: '/api/public/roku/$'
+      preLoaderRoute: typeof ApiPublicRokuSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -511,6 +551,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   ContinueWatchingRoute: ContinueWatchingRoute,
   GetAppRoute: GetAppRoute,
+  GetRokuAppRoute: GetRokuAppRoute,
   GetTvAppRoute: GetTvAppRoute,
   GuideRoute: GuideRoute,
   HistoryRoute: HistoryRoute,
@@ -525,6 +566,7 @@ const rootRouteChildren: RootRouteChildren = {
   TitleIdRoute: TitleIdRoute,
   WatchIdRoute: WatchIdRoute,
   ApiProxySplatRoute: ApiProxySplatRoute,
+  ApiPublicRokuSplatRoute: ApiPublicRokuSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

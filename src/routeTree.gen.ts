@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as ContinueWatchingRouteImport } from './routes/continue-watching'
 import { Route as GetAppRouteImport } from './routes/get-app'
+import { Route as GetRokuAppRouteImport } from './routes/get-roku-app'
 import { Route as GetTvAppRouteImport } from './routes/get-tv-app'
 import { Route as GuideRouteImport } from './routes/guide'
 import { Route as HistoryRouteImport } from './routes/history'
@@ -52,6 +53,11 @@ const ContinueWatchingRoute = ContinueWatchingRouteImport.update({
 const GetAppRoute = GetAppRouteImport.update({
   id: '/get-app',
   path: '/get-app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GetRokuAppRoute = GetRokuAppRouteImport.update({
+  id: '/get-roku-app',
+  path: '/get-roku-app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GetTvAppRoute = GetTvAppRouteImport.update({
@@ -160,6 +166,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/continue-watching': typeof ContinueWatchingRoute
   '/get-app': typeof GetAppRoute
+  '/get-roku-app': typeof GetRokuAppRoute
   '/get-tv-app': typeof GetTvAppRoute
   '/guide': typeof GuideRoute
   '/history': typeof HistoryRoute
@@ -186,6 +193,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/continue-watching': typeof ContinueWatchingRoute
   '/get-app': typeof GetAppRoute
+  '/get-roku-app': typeof GetRokuAppRoute
   '/get-tv-app': typeof GetTvAppRoute
   '/guide': typeof GuideRoute
   '/history': typeof HistoryRoute
@@ -212,6 +220,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/continue-watching': typeof ContinueWatchingRoute
   '/get-app': typeof GetAppRoute
+  '/get-roku-app': typeof GetRokuAppRoute
   '/get-tv-app': typeof GetTvAppRoute
   '/guide': typeof GuideRoute
   '/history': typeof HistoryRoute
@@ -240,6 +249,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/continue-watching'
     | '/get-app'
+    | '/get-roku-app'
     | '/get-tv-app'
     | '/guide'
     | '/history'
@@ -266,6 +276,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/continue-watching'
     | '/get-app'
+    | '/get-roku-app'
     | '/get-tv-app'
     | '/guide'
     | '/history'
@@ -291,6 +302,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/continue-watching'
     | '/get-app'
+    | '/get-roku-app'
     | '/get-tv-app'
     | '/guide'
     | '/history'
@@ -318,6 +330,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   ContinueWatchingRoute: typeof ContinueWatchingRoute
   GetAppRoute: typeof GetAppRoute
+  GetRokuAppRoute: typeof GetRokuAppRoute
   GetTvAppRoute: typeof GetTvAppRoute
   GuideRoute: typeof GuideRoute
   HistoryRoute: typeof HistoryRoute
@@ -363,6 +376,13 @@ declare module '@tanstack/react-router' {
       path: '/get-app'
       fullPath: '/get-app'
       preLoaderRoute: typeof GetAppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/get-roku-app': {
+      id: '/get-roku-app'
+      path: '/get-roku-app'
+      fullPath: '/get-roku-app'
+      preLoaderRoute: typeof GetRokuAppRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/get-tv-app': {
@@ -531,6 +551,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   ContinueWatchingRoute: ContinueWatchingRoute,
   GetAppRoute: GetAppRoute,
+  GetRokuAppRoute: GetRokuAppRoute,
   GetTvAppRoute: GetTvAppRoute,
   GuideRoute: GuideRoute,
   HistoryRoute: HistoryRoute,

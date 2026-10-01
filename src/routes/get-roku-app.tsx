@@ -35,6 +35,23 @@ function GetRokuApp() {
         <li>Upload the downloaded zip and press Install.</li>
         <li>Remote: OK watches, Up/Down changes channel while watching, Left/Right pages channels, * signs out.</li>
       </ol>
+      <section className="mt-10">
+        <h2 className="text-xl font-semibold">Roku Store artwork</h2>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          {[
+            ["icon_540x405.png", "Channel icon (FHD) 540×405"],
+            ["icon_290x218.png", "Channel icon (HD) 290×218"],
+            ["hero_1920x1080.png", "Hero image 1920×1080"],
+            ["splash_1920x1080.png", "Splash (FHD) 1920×1080"],
+            ["splash_1280x720.png", "Splash (HD) 1280×720"],
+          ].map(([f, label]) => (
+            <a key={f} href={`/download/roku-store/${f}`} download={f} className="rounded-lg border border-border bg-card p-3 hover:border-primary">
+              <img src={`/download/roku-store/${f}`} alt={label} className="w-full rounded" loading="lazy" />
+              <div className="mt-2 text-sm">{label} — Download</div>
+            </a>
+          ))}
+        </div>
+      </section>
     </main>
   );
 }

@@ -32,6 +32,7 @@ import { Route as TitleIdRouteImport } from './routes/title.$id'
 import { Route as WatchIdRouteImport } from './routes/watch.$id'
 import { Route as ApiProxySplatRouteImport } from './routes/api/proxy/$'
 import { Route as LiveWatchChannelIdRouteImport } from './routes/live.watch.$channelId'
+import { Route as ApiPublicRokuSplatRouteImport } from './routes/api/public/roku.$'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -148,6 +149,11 @@ const LiveWatchChannelIdRoute = LiveWatchChannelIdRouteImport.update({
   path: '/watch/$channelId',
   getParentRoute: () => LiveRoute,
 } as any)
+const ApiPublicRokuSplatRoute = ApiPublicRokuSplatRouteImport.update({
+  id: '/api/public/roku/$',
+  path: '/api/public/roku/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -173,6 +179,7 @@ export interface FileRoutesByFullPath {
   '/live/': typeof LiveIndexRoute
   '/api/proxy/$': typeof ApiProxySplatRoute
   '/live/watch/$channelId': typeof LiveWatchChannelIdRoute
+  '/api/public/roku/$': typeof ApiPublicRokuSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -197,6 +204,7 @@ export interface FileRoutesByTo {
   '/live': typeof LiveIndexRoute
   '/api/proxy/$': typeof ApiProxySplatRoute
   '/live/watch/$channelId': typeof LiveWatchChannelIdRoute
+  '/api/public/roku/$': typeof ApiPublicRokuSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -223,6 +231,7 @@ export interface FileRoutesById {
   '/live/': typeof LiveIndexRoute
   '/api/proxy/$': typeof ApiProxySplatRoute
   '/live/watch/$channelId': typeof LiveWatchChannelIdRoute
+  '/api/public/roku/$': typeof ApiPublicRokuSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -250,6 +259,7 @@ export interface FileRouteTypes {
     | '/live/'
     | '/api/proxy/$'
     | '/live/watch/$channelId'
+    | '/api/public/roku/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -274,6 +284,7 @@ export interface FileRouteTypes {
     | '/live'
     | '/api/proxy/$'
     | '/live/watch/$channelId'
+    | '/api/public/roku/$'
   id:
     | '__root__'
     | '/'
@@ -299,6 +310,7 @@ export interface FileRouteTypes {
     | '/live/'
     | '/api/proxy/$'
     | '/live/watch/$channelId'
+    | '/api/public/roku/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -320,6 +332,7 @@ export interface RootRouteChildren {
   TitleIdRoute: typeof TitleIdRoute
   WatchIdRoute: typeof WatchIdRoute
   ApiProxySplatRoute: typeof ApiProxySplatRoute
+  ApiPublicRokuSplatRoute: typeof ApiPublicRokuSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -485,6 +498,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LiveWatchChannelIdRouteImport
       parentRoute: typeof LiveRoute
     }
+    '/api/public/roku/$': {
+      id: '/api/public/roku/$'
+      path: '/api/public/roku/$'
+      fullPath: '/api/public/roku/$'
+      preLoaderRoute: typeof ApiPublicRokuSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -525,6 +545,7 @@ const rootRouteChildren: RootRouteChildren = {
   TitleIdRoute: TitleIdRoute,
   WatchIdRoute: WatchIdRoute,
   ApiProxySplatRoute: ApiProxySplatRoute,
+  ApiPublicRokuSplatRoute: ApiPublicRokuSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

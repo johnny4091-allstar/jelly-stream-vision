@@ -1,3 +1,4 @@
+import type { ErrorComponentProps } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, Play, Radio } from "lucide-react";
@@ -25,7 +26,7 @@ export const Route = createFileRoute("/live/channel-guide")({
     ],
   }),
   component: ChannelGuidePage,
-  errorComponent: ({ error }: { error: Error }) => (
+  errorComponent: ({ error }: ErrorComponentProps) => (
     <p role="alert" className="px-6 py-10 text-sm text-muted-foreground">
       {error.message}
     </p>

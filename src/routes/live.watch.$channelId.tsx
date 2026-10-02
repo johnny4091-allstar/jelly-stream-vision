@@ -63,6 +63,46 @@ function LiveWatchPage() {
   const [error, setError] = useState<string | null>(null);
   const [showControls, setShowControls] = useState(true);
   const retryRef = useRef<(() => void) | null>(null);
+  // Fresh-session recovery: bumping the nonce renegotiates the live stream.
+  const [sessionNonce, setSessionNonce] = useState(0);
+  const autoRetriedRef = useRef(false);
+  const startedRef = useRef(false);
+  const liveInfoRef = useRef<{
+    mediaSourceId?: string;
+    playMethod?: "DirectPlay" | "DirectStream" | "Transcode";
+    liveStreamId?: string;
+  }>({});
+  // Latest channel metadata, read by effects without restarting them.
+  const channelMetaRef = useRef(channel.data);
+  channelMetaRef.current = channel.data;
+
+  const report = (kind: "Started" | "Progress" | "Stopped", isPaused = false) => {
+    if (!playSessionRef.current) return;
+    const info = liveInfoRef.current;
+    void reportPlaying({
+      data: {
+        itemId: channelId,
+        positionTicks: Math.floor((videoRef.current?.currentTime || 0) * 10_000_000),
+        playSessionId: playSessionRef.current,
+        kind,
+        isPaused,
+        deviceId: deviceIdRef.current,
+        ...(info.mediaSourceId ? { mediaSourceId: info.mediaSourceId } : {}),
+        ...(info.playMethod ? { playMethod: info.playMethod } : {}),
+        ...(info.liveStreamId ? { liveStreamId: info.liveStreamId } : {}),
+      },
+    }).catch(() => {});
+  };
+  /** Only on real exit, channel change, or session replacement. */
+  const sendStopped = () => {
+    if (!startedRef.current) return;
+    startedRef.current = false;
+    report("Stopped");
+  };
+  const renegotiate = () => {
+    setError(null);
+    setSessionNonce((n) => n + 1);
+  };
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const pokeControls = () => {
@@ -78,6 +118,52 @@ function LiveWatchPage() {
   useEffect(() => {
     let cancelled = false;
     let hls: import("hls.js").default | null = null;
+    let networkRecoveries = 0;
+    let mediaRecoveries = 0;
+    const failOrRetry = (message: string) => {
+      if (cancelled) return;
+      if (!autoRetriedRef.current) {
+        autoRetriedRef.current = true;
+        renegotiate();
+        return;
+      }
+      setError(message);
+    };
+    // Health + stall watchdog: reset recovery counters after ~30s of healthy
+    // playback; if time stops advancing for ~20s while not paused, renegotiate.
+    let everPlayed = false;
+    let lastT = -1;
+    let lastAdvanceAt = Date.now();
+    let healthySeconds = 0;
+    const onPlayingOnce = () => {
+      everPlayed = true;
+      lastAdvanceAt = Date.now();
+    };
+    videoRef.current?.addEventListener("playing", onPlayingOnce);
+    const watchdog = setInterval(() => {
+      const v = videoRef.current;
+      if (!v || cancelled) return;
+      if (v.paused) {
+        lastAdvanceAt = Date.now();
+        return;
+      }
+      if (v.currentTime > lastT + 0.5) {
+        lastAdvanceAt = Date.now();
+        healthySeconds += 5;
+        if (healthySeconds >= 30) {
+          networkRecoveries = 0;
+          mediaRecoveries = 0;
+          autoRetriedRef.current = false;
+        }
+      } else {
+        healthySeconds = 0;
+        if (everPlayed && Date.now() - lastAdvanceAt >= 20_000) {
+          lastAdvanceAt = Date.now();
+          renegotiate();
+        }
+      }
+      lastT = v.currentTime;
+    }, 5_000);
     // Never leave the loading screen up forever: reveal the player once the
     // channel has had enough time to negotiate a stream.
     const safety = setTimeout(() => {
@@ -92,6 +178,7 @@ function LiveWatchPage() {
       setError(null);
       setLoading(true);
       setLoadingPercent(0);
+      retryRef.current = renegotiate;
       const deviceId = deviceIdRef.current;
       // Load the player engine while the server negotiates the stream, instead
       // of waiting for one before starting the other.
@@ -101,10 +188,15 @@ function LiveWatchPage() {
       try {
         info = await getPlaybackInfo({ data: { itemId: channelId, deviceId } });
       } catch {
-        if (!cancelled) setError(t("streamFailed"));
+        failOrRetry(t("streamFailed"));
         return;
       }
       if (cancelled || !videoRef.current) return;
+      liveInfoRef.current = {
+        mediaSourceId: info.mediaSourceId,
+        playMethod: info.playMethod,
+        ...(info.liveStreamId ? { liveStreamId: info.liveStreamId } : {}),
+      };
       setLoadingPercent(35);
       playSessionRef.current = info.playSessionId;
       const video = videoRef.current;
@@ -146,15 +238,6 @@ function LiveWatchPage() {
           fragLoadingTimeOut: 60_000,
           fragLoadingMaxRetry: 10,
         });
-        let networkRecoveries = 0;
-        let mediaRecoveries = 0;
-        retryRef.current = () => {
-          setError(null);
-          hls?.stopLoad();
-          hls?.loadSource(hlsUrl);
-          hls?.startLoad(-1);
-          void video.play().catch(() => {});
-        };
         hls.on(Hls.Events.ERROR, (_e, data) => {
           if (!data.fatal || !hls) return;
           if (data.type === Hls.ErrorTypes.NETWORK_ERROR && networkRecoveries < 6) {
@@ -168,7 +251,7 @@ function LiveWatchPage() {
             return;
           }
           hls.stopLoad();
-          setError(t("streamInterrupted"));
+          failOrRetry(t("streamInterrupted"));
         });
         hls.on(Hls.Events.MEDIA_ATTACHED, () => hls?.loadSource(hlsUrl));
         hls.on(Hls.Events.LEVEL_LOADED, () => setLoadingPercent((p) => Math.max(p, 50)));
@@ -191,12 +274,7 @@ function LiveWatchPage() {
         hls.attachMedia(video);
       } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
         video.src = hlsUrl;
-        retryRef.current = () => {
-          setError(null);
-          video.src = hlsUrl;
-          video.load();
-          void video.play().catch(() => {});
-        };
+        video.addEventListener("error", () => failOrRetry(t("streamInterrupted")), { once: true });
         video.addEventListener("canplay", () => setLoadingPercent((p) => Math.max(p, 90)), {
           once: true,
         });
@@ -212,7 +290,10 @@ function LiveWatchPage() {
     return () => {
       cancelled = true;
       clearTimeout(safety);
+      clearInterval(watchdog);
+      videoRef.current?.removeEventListener("playing", onPlayingOnce);
       retryRef.current = null;
+      sendStopped();
       const sid = playSessionRef.current;
       try {
         hls?.destroy();
@@ -236,7 +317,7 @@ function LiveWatchPage() {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channelId]);
+  }, [channelId, sessionNonce]);
 
   const togglePlay = () => {
     const v = videoRef.current;
@@ -259,21 +340,7 @@ function LiveWatchPage() {
     const v = videoRef.current;
     if (!v) return;
     let lastTick = Date.now();
-    let started = false;
-
-    const report = (kind: "Started" | "Progress" | "Stopped", isPaused = false) => {
-      if (!playSessionRef.current) return;
-      void reportPlaying({
-        data: {
-          itemId: channelId,
-          positionTicks: Math.floor((v.currentTime || 0) * 10_000_000),
-          playSessionId: playSessionRef.current,
-          kind,
-          isPaused,
-          deviceId: deviceIdRef.current,
-        },
-      }).catch(() => {});
-    };
+    let loggedNewPlay = false;
 
     const logDelta = (isNewPlay = false) => {
       const now = Date.now();
@@ -283,8 +350,8 @@ function LiveWatchPage() {
       void logWatch({
         data: {
           itemId: channelId,
-          title: channel.data?.name ?? "Live TV",
-          subtitle: channel.data?.now?.name ?? null,
+          title: channelMetaRef.current?.name ?? "Live TV",
+          subtitle: channelMetaRef.current?.now?.name ?? null,
           itemType: "TvChannel",
           imageItemId: channelId,
           secondsDelta: delta,
@@ -297,10 +364,11 @@ function LiveWatchPage() {
 
     const onPlaying = () => {
       lastTick = Date.now();
-      if (!started) {
-        started = true;
+      if (!startedRef.current) {
+        startedRef.current = true;
         report("Started");
-        logDelta(true);
+        logDelta(!loggedNewPlay);
+        loggedNewPlay = true;
       }
     };
     const onPause = () => {
@@ -321,13 +389,11 @@ function LiveWatchPage() {
       clearInterval(interval);
       v.removeEventListener("playing", onPlaying);
       v.removeEventListener("pause", onPause);
-      if (started) {
-        report("Stopped");
-        logDelta();
-      }
+      if (loggedNewPlay) logDelta();
+      sendStopped();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channelId, channel.data?.name]);
+  }, [channelId]);
 
   // Go fullscreen as soon as the channel starts playing (TV + phone apps).
   const enterImmersiveMode = () => {

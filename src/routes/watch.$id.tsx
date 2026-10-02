@@ -562,19 +562,8 @@ function WatchPage() {
   // Closing the tab or backgrounding the phone must also kill the server-side transcode.
   useEffect(() => {
     const teardown = () => {
-      const v = videoRef.current;
       const sid = playSessionRef.current;
-      void reportPlaying({
-        data: {
-          itemId: playbackId,
-          playSessionId: sid,
-          deviceId: deviceIdRef.current,
-          positionTicks: Math.floor((v?.currentTime ?? 0) * 10_000_000),
-          kind: "Stopped",
-          mediaSourceId: mediaSourceIdRef.current,
-          playMethod: playMethodRef.current,
-        },
-      });
+      sendStopped();
       if (sid) void stopTranscode({ data: { playSessionId: sid, deviceId: deviceIdRef.current } });
     };
     window.addEventListener("pagehide", teardown);

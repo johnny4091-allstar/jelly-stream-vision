@@ -1,3 +1,4 @@
+import { RouteError } from "@/components/RouteError";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { Play, RotateCcw } from "lucide-react";
@@ -41,6 +42,7 @@ export const Route = createFileRoute("/title/$id")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
+  errorComponent: RouteError,
   component: TitlePage,
 });
 

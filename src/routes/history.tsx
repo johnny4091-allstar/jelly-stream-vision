@@ -1,3 +1,4 @@
+import { RouteError } from "@/components/RouteError";
 import { queryOptions, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -32,6 +33,7 @@ export const Route = createFileRoute("/history")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  errorComponent: RouteError,
   component: HistoryPage,
 });
 

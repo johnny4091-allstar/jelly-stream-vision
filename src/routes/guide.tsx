@@ -1,3 +1,4 @@
+import { RouteError } from "@/components/RouteError";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Tv } from "lucide-react";
@@ -30,6 +31,7 @@ export const Route = createFileRoute("/guide")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  errorComponent: RouteError,
   component: PublicGuidePage,
 });
 

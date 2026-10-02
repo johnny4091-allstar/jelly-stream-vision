@@ -1,3 +1,4 @@
+import { RouteError } from "@/components/RouteError";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Bookmark } from "lucide-react";
@@ -29,6 +30,7 @@ export const Route = createFileRoute("/watchlist")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  errorComponent: RouteError,
   component: WatchlistPage,
 });
 

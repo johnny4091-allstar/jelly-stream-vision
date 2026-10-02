@@ -1,3 +1,4 @@
+import { RouteError } from "@/components/RouteError";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -49,6 +50,7 @@ export const Route = createFileRoute("/watch/$id")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  errorComponent: RouteError,
   component: WatchPage,
 });
 

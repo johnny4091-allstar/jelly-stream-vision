@@ -1,3 +1,4 @@
+import { RouteError } from "@/components/RouteError";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
@@ -31,6 +32,7 @@ export const Route = createFileRoute("/continue-watching")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
+  errorComponent: RouteError,
   component: ContinueWatchingPage,
 });
 

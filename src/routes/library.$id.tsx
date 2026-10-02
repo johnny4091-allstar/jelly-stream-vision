@@ -1,3 +1,4 @@
+import { RouteError } from "@/components/RouteError";
 import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
@@ -39,6 +40,7 @@ export const Route = createFileRoute("/library/$id")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  errorComponent: RouteError,
   component: LibraryPage,
 });
 

@@ -55,7 +55,9 @@ export const Route = createFileRoute("/api/proxy/$")({
         // Header timeout only for playlists, segments and images; long streams
         // (e.g. /Videos/{id}/stream direct play) must never be cut off.
         const splat = params._splat ?? "";
+        const isLongStream = /\/stream(?:\.[a-z0-9]+)?$/i.test(splat);
         const isShortResource =
+          !isLongStream &&
           /\.(?:m3u8|ts|m4s|mp4a|aac|vtt)$/i.test(splat) || /\/Images\//i.test(splat);
         const headerTimeout = isShortResource ? HEADER_TIMEOUT_MS : null;
 

@@ -126,6 +126,13 @@ function WatchPage() {
   const mediaSourceIdRef = useRef("");
 
   const retryPlaybackRef = useRef<(() => void) | null>(null);
+  // Fresh-session recovery: bumping the nonce renegotiates playback from scratch.
+  const [sessionNonce, setSessionNonce] = useState(0);
+  const resumeOverrideRef = useRef<number | null>(null);
+  const autoRetriedRef = useRef(false);
+  const playingRef = useRef(false);
+  const startedRef = useRef(false);
+  const historyLogRef = useRef<((isNewPlay?: boolean) => void) | null>(null);
   const [seekFlash, setSeekFlash] = useState<{ dir: -1 | 1; key: number } | null>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tapRef = useRef<{ count: number; x: number; timer: ReturnType<typeof setTimeout> | null }>({
@@ -169,12 +176,75 @@ function WatchPage() {
     Math.floor(savedSeconds * 10_000_000),
   );
 
+  /** Drop the current server session and negotiate a fresh one at the current position. */
+  const renegotiate = () => {
+    const v = videoRef.current;
+    if (v && Number.isFinite(v.currentTime) && v.currentTime > 0) {
+      resumeOverrideRef.current = Math.floor(v.currentTime * 10_000_000);
+    }
+    setPlaybackError(null);
+    setSessionNonce((n) => n + 1);
+  };
+
+  /** Stopped is only sent on exit, end of title, or session replacement — never on pause. */
+  const sendStopped = () => {
+    if (!startedRef.current) return;
+    startedRef.current = false;
+    const v = videoRef.current;
+    void reportPlaying({
+      data: {
+        itemId: playbackId,
+        playSessionId: playSessionRef.current,
+        deviceId: deviceIdRef.current,
+        positionTicks: Math.floor((v?.currentTime ?? 0) * 10_000_000),
+        kind: "Stopped",
+        mediaSourceId: mediaSourceIdRef.current,
+        playMethod: playMethodRef.current,
+      },
+    }).catch(() => {});
+  };
+
   // Play the original file (MKV/MP4/MOV/TS/WebM) when this device can decode it,
   // otherwise fall back to Jellyfin's converted HLS stream. Never fall back to a
   // raw file the browser cannot decode.
   useEffect(() => {
     let cancelled = false;
     let hls: import("hls.js").default | null = null;
+    let networkRecoveries = 0;
+    let mediaRecoveries = 0;
+    const effectiveStartTicks = resumeOverrideRef.current ?? startTicks;
+    resumeOverrideRef.current = null;
+    const failOrRetry = (message: string) => {
+      if (cancelled) return;
+      if (!autoRetriedRef.current) {
+        autoRetriedRef.current = true;
+        renegotiate();
+        return;
+      }
+      setPlaybackError(message);
+    };
+    // After ~30s of healthy playback, forget earlier transient blips.
+    let lastT = -1;
+    let healthySeconds = 0;
+    const healthTimer = setInterval(() => {
+      const v = videoRef.current;
+      if (!v || v.paused) return;
+      if (v.currentTime > lastT + 1) {
+        healthySeconds += 5;
+        if (healthySeconds >= 30) {
+          networkRecoveries = 0;
+          mediaRecoveries = 0;
+          autoRetriedRef.current = false;
+        }
+      } else {
+        healthySeconds = 0;
+      }
+      lastT = v.currentTime;
+    }, 5_000);
+    const onVideoError = () => {
+      if (hls) return; // hls.js reports its own errors
+      failOrRetry("The stream was interrupted. Tap retry to continue.");
+    };
     // Never leave the loading screen up forever: reveal the player and its
     // play button if the stream hasn't announced itself in time.
     const bailout = setTimeout(() => {
@@ -188,6 +258,7 @@ function WatchPage() {
       setPlaybackError(null);
       setLoading(true);
       setLoadingPercent(0);
+      retryPlaybackRef.current = renegotiate;
       const deviceId = deviceIdRef.current;
       const { detectDirectPlayProfiles } = await import("@/lib/media-capabilities");
       const capabilities = detectDirectPlayProfiles();
@@ -197,14 +268,14 @@ function WatchPage() {
         info = await getPlaybackInfo({
           data: {
             itemId: playbackId,
-            startTicks,
+            startTicks: effectiveStartTicks,
             deviceId,
             capabilities,
             ...(audioIndex != null ? { audioStreamIndex: audioIndex } : {}),
           },
         });
       } catch {
-        if (!cancelled) setPlaybackError("The stream could not be started. Tap retry.");
+        failOrRetry("The stream could not be started. Tap retry.");
         return;
       }
       if (cancelled || !videoRef.current) return;
@@ -271,7 +342,8 @@ function WatchPage() {
       });
       const directUrl = `/api/proxy/Videos/${playbackId}/stream?${directParams.toString()}`;
       const video = videoRef.current;
-      const resumeSeconds = startTicks / 10_000_000;
+      const resumeSeconds = effectiveStartTicks / 10_000_000;
+      video.addEventListener("error", onVideoError);
       let resumeApplied = false;
       const applyResumePosition = () => {
         if (resumeApplied || !Number.isFinite(resumeSeconds) || resumeSeconds <= 0) return;
@@ -292,20 +364,6 @@ function WatchPage() {
           setLoadingPercent(70);
         }, { once: true });
         video.addEventListener("canplay", () => setLoadingPercent(90), { once: true });
-        retryPlaybackRef.current = () => {
-          setPlaybackError(null);
-          const at = video.currentTime;
-          video.src = directUrl;
-          video.addEventListener(
-            "loadedmetadata",
-            () => {
-              if (Number.isFinite(at) && at > 0) video.currentTime = at;
-              void video.play().catch(() => {});
-            },
-            { once: true },
-          );
-          video.load();
-        };
         video.load();
       };
 
@@ -345,16 +403,6 @@ function WatchPage() {
           nudgeMaxRetry: 10,
         });
 
-        let networkRecoveries = 0;
-        let mediaRecoveries = 0;
-        retryPlaybackRef.current = () => {
-          setPlaybackError(null);
-          const at = video.currentTime;
-          hls?.stopLoad();
-          hls?.loadSource(hlsUrl);
-          hls?.startLoad(Number.isFinite(at) && at > 0 ? at : -1);
-          void video.play().catch(() => {});
-        };
         hls.on(Hls.Events.ERROR, (_e, data) => {
           if (!data.fatal) return;
           const h = hls;
@@ -370,7 +418,7 @@ function WatchPage() {
             return;
           }
           h.stopLoad();
-          setPlaybackError("The stream was interrupted. Tap retry to continue.");
+          failOrRetry("The stream was interrupted. Tap retry to continue.");
         });
 
         // Keep playback moving if the buffer stalls mid-segment.
@@ -398,16 +446,6 @@ function WatchPage() {
           setLoadingPercent(70);
         }, { once: true });
         video.addEventListener("canplay", () => setLoadingPercent(90), { once: true });
-        retryPlaybackRef.current = () => {
-          setPlaybackError(null);
-          const at = video.currentTime;
-          video.src = hlsUrl;
-          video.addEventListener("loadedmetadata", () => {
-            if (Number.isFinite(at) && at > 0) video.currentTime = at;
-            void video.play().catch(() => {});
-          }, { once: true });
-          video.load();
-        };
       } else if (info.supportsDirectStream) {
         playMethodRef.current = "DirectStream";
         setPlayMode("DirectStream");
@@ -425,9 +463,13 @@ function WatchPage() {
     return () => {
       cancelled = true;
       clearTimeout(bailout);
+      clearInterval(healthTimer);
       retryPlaybackRef.current = null;
+      // Session is being replaced or the viewer left: close it on the server.
+      sendStopped();
       const sid = playSessionRef.current;
       const v = videoRef.current;
+      v?.removeEventListener("error", onVideoError);
       try {
         hls?.destroy();
       } catch {
@@ -449,26 +491,15 @@ function WatchPage() {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playbackId, audioIndex]);
+  }, [playbackId, audioIndex, sessionNonce]);
 
 
-  // Progress reporting
+  // Progress reporting: Progress on an interval only. Started is sent on first
+  // play (onPlay) and Stopped only on exit/end/session replacement (sendStopped).
   useEffect(() => {
-    if (!playing) return;
-    void reportPlaying({
-      data: {
-        itemId: playbackId,
-        playSessionId: playSessionRef.current,
-        deviceId: deviceIdRef.current,
-        positionTicks: Math.floor(time * 10_000_000),
-        kind: "Started",
-        mediaSourceId: mediaSourceIdRef.current,
-        playMethod: playMethodRef.current,
-      },
-    });
     const timer = setInterval(() => {
       const v = videoRef.current;
-      if (!v) return;
+      if (!v || !startedRef.current) return;
       void reportPlaying({
         data: {
           itemId: playbackId,
@@ -480,19 +511,26 @@ function WatchPage() {
           playMethod: playMethodRef.current,
           isPaused: v.paused,
         },
-      });
+      }).catch(() => {});
     }, 10_000);
-    // Watch history: bank the elapsed time every 30s and on exit.
+    // Watch history: only time actually spent playing accumulates.
     const histTitle = item.SeriesName ?? item.Name ?? "Unknown";
     const histSubtitle = item.SeriesName ? (item.Name ?? null) : null;
-    let lastLogged = videoRef.current?.currentTime ?? time;
-    let firstLog = true;
     const runtimeFallback = item.RunTimeTicks ? item.RunTimeTicks / 10_000_000 : null;
-    const logDelta = () => {
+    let playedSeconds = 0;
+    let loggedNewPlay = false;
+    const playTick = setInterval(() => {
       const v = videoRef.current;
-      const now = v?.currentTime ?? time;
-      const delta = Math.max(0, Math.min(now - lastLogged, 120));
-      lastLogged = now;
+      if (v && playingRef.current && !v.paused) playedSeconds += 1;
+    }, 1_000);
+    const logDelta = (isNewPlay = false) => {
+      const newPlay = isNewPlay && !loggedNewPlay;
+      if (!loggedNewPlay && !newPlay) return; // nothing played yet
+      loggedNewPlay = true;
+      const delta = Math.min(playedSeconds, 120);
+      playedSeconds = 0;
+      if (!delta && !newPlay) return;
+      const v = videoRef.current;
       void logWatch({
         data: {
           itemId: playbackId,
@@ -501,53 +539,31 @@ function WatchPage() {
           itemType: item.Type ?? "Movie",
           imageItemId: item.SeriesId ?? item.Id,
           secondsDelta: delta,
-          positionSeconds: now,
+          positionSeconds: v?.currentTime ?? 0,
           runtimeSeconds:
             v?.duration && Number.isFinite(v.duration) ? v.duration : runtimeFallback,
-          isNewPlay: firstLog,
+          isNewPlay: newPlay,
         },
-      });
-
-      firstLog = false;
+      }).catch(() => {});
     };
-    logDelta();
-    const histTimer = setInterval(logDelta, 30_000);
+    historyLogRef.current = logDelta;
+    const histTimer = setInterval(() => logDelta(), 30_000);
     return () => {
       clearInterval(timer);
+      clearInterval(playTick);
       clearInterval(histTimer);
       logDelta();
-      const v = videoRef.current;
-      void reportPlaying({
-        data: {
-          itemId: playbackId,
-          playSessionId: playSessionRef.current,
-          deviceId: deviceIdRef.current,
-          positionTicks: Math.floor((v?.currentTime ?? time) * 10_000_000),
-          kind: "Stopped",
-          mediaSourceId: mediaSourceIdRef.current,
-          playMethod: playMethodRef.current,
-        },
-      });
+      historyLogRef.current = null;
+      sendStopped();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playbackId, playing]);
+  }, [playbackId]);
 
   // Closing the tab or backgrounding the phone must also kill the server-side transcode.
   useEffect(() => {
     const teardown = () => {
-      const v = videoRef.current;
       const sid = playSessionRef.current;
-      void reportPlaying({
-        data: {
-          itemId: playbackId,
-          playSessionId: sid,
-          deviceId: deviceIdRef.current,
-          positionTicks: Math.floor((v?.currentTime ?? 0) * 10_000_000),
-          kind: "Stopped",
-          mediaSourceId: mediaSourceIdRef.current,
-          playMethod: playMethodRef.current,
-        },
-      });
+      sendStopped();
       if (sid) void stopTranscode({ data: { playSessionId: sid, deviceId: deviceIdRef.current } });
     };
     window.addEventListener("pagehide", teardown);
@@ -743,7 +759,23 @@ function WatchPage() {
             });
           }
         }}
-        onPlay={() => {
+        onPlay={(e) => {
+          playingRef.current = true;
+          if (!startedRef.current) {
+            startedRef.current = true;
+            void reportPlaying({
+              data: {
+                itemId: playbackId,
+                playSessionId: playSessionRef.current,
+                deviceId: deviceIdRef.current,
+                positionTicks: Math.floor(e.currentTarget.currentTime * 10_000_000),
+                kind: "Started",
+                mediaSourceId: mediaSourceIdRef.current,
+                playMethod: playMethodRef.current,
+              },
+            }).catch(() => {});
+            historyLogRef.current?.(true);
+          }
           setPlaying(true);
           setLoading(false);
           setLoadingPercent(100);
@@ -751,6 +783,7 @@ function WatchPage() {
           pokeControls();
         }}
         onPause={(e) => {
+          playingRef.current = false;
           setPlaying(false);
           savePosition(e.currentTarget.currentTime);
           void reportPlaying({
@@ -783,17 +816,8 @@ function WatchPage() {
         }}
         onEnded={(e) => {
           localStorage.removeItem(posKey(playbackId));
-          void reportPlaying({
-            data: {
-              itemId: playbackId,
-              playSessionId: playSessionRef.current,
-          deviceId: deviceIdRef.current,
-              positionTicks: Math.floor(e.currentTarget.currentTime * 10_000_000),
-              kind: "Stopped",
-              mediaSourceId: mediaSourceIdRef.current,
-              playMethod: playMethodRef.current,
-            },
-          });
+          playingRef.current = false;
+          sendStopped();
           if (!markedPlayedRef.current) {
             markedPlayedRef.current = true;
             void setPlayed({ data: { itemId: playbackId, played: true } });

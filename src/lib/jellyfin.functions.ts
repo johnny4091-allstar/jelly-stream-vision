@@ -268,6 +268,7 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
         SupportsDirectStream?: boolean;
         SupportsDirectPlay?: boolean;
         Container?: string;
+        LiveStreamId?: string;
         MediaStreams?: {
           Type: string;
           Index: number;
@@ -406,6 +407,7 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
           : "DirectStream"
         : "Transcode") as "DirectPlay" | "DirectStream" | "Transcode",
       container: src?.Container ?? null,
+      liveStreamId: src?.LiveStreamId ?? null,
       usedFallback: !src,
     };
 
@@ -414,7 +416,7 @@ export const getPlaybackInfoFn = createServerFn({ method: "POST" })
 
 export const reportPlayingFn = createServerFn({ method: "POST" })
   .inputValidator(
-    (data: { itemId: string; positionTicks: number; playSessionId: string; kind: "Started" | "Progress" | "Stopped"; isPaused?: boolean; deviceId?: string; mediaSourceId?: string; playMethod?: "DirectPlay" | "DirectStream" | "Transcode" }) => data,
+    (data: { itemId: string; positionTicks: number; playSessionId: string; kind: "Started" | "Progress" | "Stopped"; isPaused?: boolean; deviceId?: string; mediaSourceId?: string; playMethod?: "DirectPlay" | "DirectStream" | "Transcode"; liveStreamId?: string }) => data,
   )
   .handler(async ({ data }) => {
     const s = await requireSession();
@@ -428,6 +430,7 @@ export const reportPlayingFn = createServerFn({ method: "POST" })
         ItemId: data.itemId,
         ...(data.mediaSourceId ? { MediaSourceId: data.mediaSourceId } : {}),
         PlaySessionId: data.playSessionId,
+        ...(data.liveStreamId ? { LiveStreamId: data.liveStreamId } : {}),
         PositionTicks: ticks,
         CanSeek: true,
         IsPaused: data.isPaused ?? false,

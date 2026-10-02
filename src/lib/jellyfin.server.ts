@@ -16,6 +16,8 @@ export function jfBase() {
   );
 }
 
+const JF_TIMEOUT_MS = 20_000;
+
 function jfHeaders(token?: string, deviceId?: string): Record<string, string> {
   return {
     "X-Emby-Token": token ?? jfKey(),
@@ -27,7 +29,7 @@ function jfHeaders(token?: string, deviceId?: string): Record<string, string> {
 }
 
 export async function jfGet<T = unknown>(path: string, token?: string): Promise<T> {
-  const res = await fetch(jfBase() + path, { headers: jfHeaders(token) });
+  const res = await fetch(jfBase() + path, { headers: jfHeaders(token), signal: AbortSignal.timeout(JF_TIMEOUT_MS) });
   if (!res.ok) {
     const snippet = (await res.text().catch(() => "")).slice(0, 200).replace(/\s+/g, " ");
     const server = res.headers.get("server") ?? "";
@@ -46,6 +48,7 @@ export async function jfPost<T = unknown>(
     method: "POST",
     headers: { ...jfHeaders(token, deviceId), "Content-Type": "application/json" },
     body: body == null ? null : JSON.stringify(body),
+    signal: AbortSignal.timeout(JF_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`Jellyfin ${res.status} for ${path}`);
   if (res.status === 204) return null;
@@ -58,7 +61,7 @@ export async function jfDelete<T = unknown>(
   token?: string,
   deviceId?: string,
 ): Promise<T | null> {
-  const res = await fetch(jfBase() + path, { method: "DELETE", headers: jfHeaders(token, deviceId) });
+  const res = await fetch(jfBase() + path, { method: "DELETE", headers: jfHeaders(token, deviceId), signal: AbortSignal.timeout(JF_TIMEOUT_MS) });
   if (!res.ok) throw new Error(`Jellyfin ${res.status} for ${path}`);
   if (res.status === 204) return null;
   const text = await res.text();

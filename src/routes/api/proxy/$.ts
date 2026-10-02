@@ -12,6 +12,31 @@ const PASS_HEADERS = [
   "content-language",
 ];
 
+const HEADER_TIMEOUT_MS = 30_000;
+
+/**
+ * Fetch upstream, aborting if the media server hasn't sent response headers in
+ * time. The timer is cleared once headers arrive so long bodies keep flowing.
+ * The incoming request's signal is linked so abandoned requests stop upstream.
+ */
+async function fetchUpstream(
+  target: string,
+  headers: Headers,
+  clientSignal: AbortSignal,
+  headerTimeout: number | null,
+): Promise<Response> {
+  const ctrl = new AbortController();
+  const onAbort = () => ctrl.abort();
+  if (clientSignal.aborted) ctrl.abort();
+  else clientSignal.addEventListener("abort", onAbort, { once: true });
+  const timer = headerTimeout ? setTimeout(() => ctrl.abort(), headerTimeout) : null;
+  try {
+    return await fetch(target, { headers, signal: ctrl.signal });
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 export const Route = createFileRoute("/api/proxy/$")({
   server: {
     handlers: {
@@ -27,9 +52,18 @@ export const Route = createFileRoute("/api/proxy/$")({
         const range = request.headers.get("range");
         if (range) headers.set("Range", range);
 
+        // Header timeout only for playlists, segments and images; long streams
+        // (e.g. /Videos/{id}/stream direct play) must never be cut off.
+        const splat = params._splat ?? "";
+        const isLongStream = /\/stream(?:\.[a-z0-9]+)?$/i.test(splat);
+        const isShortResource =
+          !isLongStream &&
+          /\.(?:m3u8|ts|m4s|mp4a|aac|vtt)$/i.test(splat) || /\/Images\//i.test(splat);
+        const headerTimeout = isShortResource ? HEADER_TIMEOUT_MS : null;
+
         let upstream: Response;
         try {
-          upstream = await fetch(target, { headers });
+          upstream = await fetchUpstream(target, headers, request.signal, headerTimeout);
           // Emby produces HLS segments just in time. It can briefly return 404
           // when the player reaches the next segment before the encoder has
           // finished writing it (commonly around the one-minute mark). Wait for
@@ -42,7 +76,8 @@ export const Route = createFileRoute("/api/proxy/$")({
           ) {
             await upstream.body?.cancel().catch(() => {});
             await new Promise((resolve) => setTimeout(resolve, 1000 + attempt * 500));
-            upstream = await fetch(target, { headers });
+            if (request.signal.aborted) throw new Error("client aborted");
+            upstream = await fetchUpstream(target, headers, request.signal, headerTimeout);
           }
         } catch {
           return new Response("Jellyfin unreachable", { status: 502 });

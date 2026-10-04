@@ -1,11 +1,11 @@
-name: Android TV
+name: Aurora TV
 
 on:
   pull_request:
-    paths: ["android-tv/**", ".github/workflows/android-tv.yml"]
+    paths: ["android-tv-aurora/**", ".github/workflows/aurora-tv.yml"]
   push:
     branches: [main]
-    paths: ["android-tv/**", ".github/workflows/android-tv.yml"]
+    paths: ["android-tv-aurora/**", ".github/workflows/aurora-tv.yml"]
   workflow_dispatch:
 
 permissions:
@@ -15,12 +15,12 @@ env:
   GRADLE_VERSION: "8.9"
 
 jobs:
-  debug:
+  aurora-debug:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: android-tv
+        working-directory: android-tv-aurora
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-java@v5
@@ -37,14 +37,14 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: aurora-tv-debug
-          path: android-tv/app/build/outputs/apk/debug/*.apk
+          path: android-tv-aurora/app/build/outputs/apk/debug/*.apk
 
-  release:
+  aurora-release:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: android-tv
+        working-directory: android-tv-aurora
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-java@v5
@@ -117,5 +117,5 @@ jobs:
         with:
           name: aurora-tv-release
           path: |
-            android-tv/app/build/outputs/apk/release/aurora-tv-release.apk
-            android-tv/app/build/outputs/apk/release/aurora-tv-release.apk.sha256
+            android-tv-aurora/app/build/outputs/apk/release/aurora-tv-release.apk
+            android-tv-aurora/app/build/outputs/apk/release/aurora-tv-release.apk.sha256

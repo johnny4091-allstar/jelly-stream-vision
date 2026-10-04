@@ -36,6 +36,7 @@ export function useLiveStream({
   const [error, setError] = useState<string | null>(null);
   const [sessionNonce, setSessionNonce] = useState(0);
   const autoRetriedRef = useRef(false);
+  const previousItemRef = useRef<string | null>(null);
 
   if (!deviceIdRef.current) {
     let stored = typeof localStorage !== "undefined" ? localStorage.getItem("aurora-device-id") : null;
@@ -51,6 +52,17 @@ export function useLiveStream({
     setError(null);
     setSessionNonce((value) => value + 1);
   }, []);
+
+  useEffect(() => {
+    if (previousItemRef.current !== itemId) {
+      previousItemRef.current = itemId;
+      autoRetriedRef.current = false;
+    }
+  }, [itemId]);
+
+  useEffect(() => {
+    if (videoRef.current) videoRef.current.muted = muted;
+  }, [muted]);
 
   useEffect(() => {
     if (!enabled || !itemId) {
@@ -102,7 +114,12 @@ export function useLiveStream({
     };
 
     const freshSession = () => {
-      if (cancelled) return;
+       if (cancelled) {
+         if (info.playSessionId) {
+           void stopTranscode({ data: { playSessionId: info.playSessionId, deviceId: deviceIdRef.current } });
+         }
+         return;
+       }
       if (!autoRetriedRef.current) {
         autoRetriedRef.current = true;
         setSessionNonce((value) => value + 1);
@@ -275,7 +292,7 @@ export function useLiveStream({
     };
     // Server functions are stable; changing item/session is the lifecycle boundary.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, itemId, muted, sessionNonce]);
+   }, [enabled, itemId, sessionNonce]);
 
   return {
     videoRef,

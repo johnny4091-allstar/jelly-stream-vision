@@ -7,7 +7,7 @@ export const TV_RELEASE = {
   versionCode: 2,
   versionName: "2.0.0",
   path: "/download/aurora-tv-release.apk",
-  sha256: "",
+  sha256: "3b900154bf05443a15d0b83b7b9caf8e8cb1097fea5fffd1b544eac6cbc1f5d2",
 } as const;
 
 export const TV_SITE = "https://jelly-stream-vision.lovable.app";

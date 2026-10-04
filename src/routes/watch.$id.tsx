@@ -1,5 +1,5 @@
 import { RouteError } from "@/components/RouteError";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -18,7 +18,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { getSessionFn } from "@/lib/auth.functions";
-import { logWatchFn } from "@/lib/history.functions";
+import { getSavedPositionFn, logWatchFn } from "@/lib/history.functions";
 import {
   getPlayableItemFn,
   getPlaybackInfoFn,
@@ -30,7 +30,17 @@ import { episodeLabel } from "@/lib/jellyfin.types";
 import { audioLanguageCodes, LanguageSelect, useLanguage } from "@/lib/i18n";
 
 const itemQuery = (id: string) =>
-  queryOptions({ queryKey: ["playable-item", id], queryFn: () => getPlayableItemFn({ data: { id } }) });
+  queryOptions({
+    queryKey: ["playable-item", id],
+    queryFn: async () => {
+      const item = await getPlayableItemFn({ data: { id } });
+      const appResumeSeconds = await getSavedPositionFn({ data: { itemId: item.Id } }).catch(() => 0);
+      return { ...item, appResumeSeconds };
+    },
+    // Never resume from a cached (stale) position.
+    staleTime: 0,
+    gcTime: 0,
+  });
 
 export const Route = createFileRoute("/watch/$id")({
   beforeLoad: async () => {
@@ -132,7 +142,23 @@ function WatchPage() {
   const autoRetriedRef = useRef(false);
   const playingRef = useRef(false);
   const startedRef = useRef(false);
-  const historyLogRef = useRef<((isNewPlay?: boolean) => void) | null>(null);
+  const historyLogRef = useRef<((isNewPlay?: boolean, force?: boolean) => void) | null>(null);
+  // Last good position/duration: survives the element being reset on teardown.
+  const lastPositionRef = useRef(0);
+  const lastDurationRef = useRef(0);
+  const seekFlushRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const queryClient = useQueryClient();
+  const trackPosition = (v: HTMLVideoElement) => {
+    if (Number.isFinite(v.currentTime) && v.currentTime > 0) lastPositionRef.current = v.currentTime;
+    if (Number.isFinite(v.duration) && v.duration > 0) lastDurationRef.current = v.duration;
+  };
+  const currentPosition = () => {
+    const v = videoRef.current;
+    if (v && Number.isFinite(v.currentTime) && v.currentTime > 0 && v.getAttribute("src") !== null) {
+      lastPositionRef.current = v.currentTime;
+    }
+    return lastPositionRef.current;
+  };
   const [seekFlash, setSeekFlash] = useState<{ dir: -1 | 1; key: number } | null>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tapRef = useRef<{ count: number; x: number; timer: ReturnType<typeof setTimeout> | null }>({
@@ -171,16 +197,21 @@ function WatchPage() {
   const playbackId = item.Id;
   const savedSeconds =
     typeof window !== "undefined" ? Number(localStorage.getItem(posKey(playbackId)) ?? 0) : 0;
-  const startTicks = Math.max(
+  const runtimeTicks = item.RunTimeTicks ?? 0;
+  const startTicks = [
     item.UserData?.PlaybackPositionTicks ?? 0,
     Math.floor(savedSeconds * 10_000_000),
-  );
+    Math.floor((item.appResumeSeconds ?? 0) * 10_000_000),
+  ]
+    .filter((t) => !runtimeTicks || t / runtimeTicks <= 0.92)
+    .reduce((a, b) => Math.max(a, b), 0);
 
   /** Drop the current server session and negotiate a fresh one at the current position. */
   const renegotiate = () => {
     const v = videoRef.current;
-    if (v && Number.isFinite(v.currentTime) && v.currentTime > 0) {
-      resumeOverrideRef.current = Math.floor(v.currentTime * 10_000_000);
+    if (v) trackPosition(v);
+    if (lastPositionRef.current > 0) {
+      resumeOverrideRef.current = Math.floor(currentPosition() * 10_000_000);
     }
     setPlaybackError(null);
     setSessionNonce((n) => n + 1);
@@ -196,7 +227,7 @@ function WatchPage() {
         itemId: playbackId,
         playSessionId: playSessionRef.current,
         deviceId: deviceIdRef.current,
-        positionTicks: Math.floor((v?.currentTime ?? 0) * 10_000_000),
+        positionTicks: Math.floor(currentPosition() * 10_000_000),
         kind: "Stopped",
         mediaSourceId: mediaSourceIdRef.current,
         playMethod: playMethodRef.current,
@@ -505,7 +536,7 @@ function WatchPage() {
           itemId: playbackId,
           playSessionId: playSessionRef.current,
           deviceId: deviceIdRef.current,
-          positionTicks: Math.floor(v.currentTime * 10_000_000),
+          positionTicks: Math.floor(currentPosition() * 10_000_000),
           kind: "Progress",
           mediaSourceId: mediaSourceIdRef.current,
           playMethod: playMethodRef.current,
@@ -523,14 +554,15 @@ function WatchPage() {
       const v = videoRef.current;
       if (v && playingRef.current && !v.paused) playedSeconds += 1;
     }, 1_000);
-    const logDelta = (isNewPlay = false) => {
+    const logDelta = (isNewPlay = false, force = false) => {
       const newPlay = isNewPlay && !loggedNewPlay;
       if (!loggedNewPlay && !newPlay) return; // nothing played yet
       loggedNewPlay = true;
       const delta = Math.min(playedSeconds, 120);
       playedSeconds = 0;
-      if (!delta && !newPlay) return;
+      if (!delta && !newPlay && !force) return;
       const v = videoRef.current;
+      const liveDuration = v?.duration && Number.isFinite(v.duration) ? v.duration : 0;
       void logWatch({
         data: {
           itemId: playbackId,
@@ -539,22 +571,37 @@ function WatchPage() {
           itemType: item.Type ?? "Movie",
           imageItemId: item.SeriesId ?? item.Id,
           secondsDelta: delta,
-          positionSeconds: v?.currentTime ?? 0,
-          runtimeSeconds:
-            v?.duration && Number.isFinite(v.duration) ? v.duration : runtimeFallback,
+          positionSeconds: currentPosition(),
+          runtimeSeconds: liveDuration || lastDurationRef.current || runtimeFallback,
           isNewPlay: newPlay,
         },
       }).catch(() => {});
     };
     historyLogRef.current = logDelta;
-    const histTimer = setInterval(() => logDelta(), 30_000);
+    const histTimer = setInterval(() => logDelta(), 10_000);
+    const onHidden = () => {
+      if (document.visibilityState === "hidden") logDelta(false, true);
+    };
+    const onPageHide = () => logDelta(false, true);
+    document.addEventListener("visibilitychange", onHidden);
+    window.addEventListener("pagehide", onPageHide);
     return () => {
       clearInterval(timer);
       clearInterval(playTick);
       clearInterval(histTimer);
-      logDelta();
+      if (seekFlushRef.current) clearTimeout(seekFlushRef.current);
+      document.removeEventListener("visibilitychange", onHidden);
+      window.removeEventListener("pagehide", onPageHide);
+      logDelta(false, true);
       historyLogRef.current = null;
       sendStopped();
+      // Let Continue Watching, poster bars and the title page pick up the new spot.
+      setTimeout(() => {
+        void queryClient.invalidateQueries({ queryKey: ["home"] });
+        void queryClient.invalidateQueries({ queryKey: ["history"] });
+        void queryClient.invalidateQueries({ queryKey: ["item"] });
+        void queryClient.removeQueries({ queryKey: ["playable-item"] });
+      }, 1500);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playbackId]);
@@ -785,7 +832,9 @@ function WatchPage() {
         onPause={(e) => {
           playingRef.current = false;
           setPlaying(false);
+          trackPosition(e.currentTarget);
           savePosition(e.currentTarget.currentTime);
+          historyLogRef.current?.(false, true);
           void reportPlaying({
             data: {
               itemId: playbackId,
@@ -800,7 +849,10 @@ function WatchPage() {
           });
         }}
         onSeeked={(e) => {
+          trackPosition(e.currentTarget);
           savePosition(e.currentTarget.currentTime);
+          if (seekFlushRef.current) clearTimeout(seekFlushRef.current);
+          seekFlushRef.current = setTimeout(() => historyLogRef.current?.(false, true), 2000);
           void reportPlaying({
             data: {
               itemId: playbackId,
@@ -825,6 +877,7 @@ function WatchPage() {
         }}
         onTimeUpdate={(e) => {
           const v = e.currentTarget;
+          trackPosition(v);
           setTime(v.currentTime);
           if (Math.floor(v.currentTime) % 5 === 0) savePosition(v.currentTime);
           if (
@@ -839,6 +892,7 @@ function WatchPage() {
         }}
         onLoadedMetadata={(e) => {
           setDuration(e.currentTarget.duration);
+          trackPosition(e.currentTarget);
           const saved = Number(localStorage.getItem("aurora-volume") ?? 1);
           if (!Number.isNaN(saved)) {
             e.currentTarget.volume = saved;

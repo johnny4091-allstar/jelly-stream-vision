@@ -96,8 +96,8 @@ function groupId(label: string) {
   return label.trim().toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "");
 }
 
-function groupsOf(channel: Pick<RawChannel, "Name" | "Genres" | "Tags">) {
-  const serverGroups = [...(channel.Genres ?? []), ...(channel.Tags ?? [])]
+function groupsOf(channel: Pick<RawChannel, "Name" | "Genres" | "Tags" | "ChannelGroupNames">) {
+  const serverGroups = [...(channel.ChannelGroupNames ?? []), ...(channel.Tags ?? []), ...(channel.Genres ?? [])]
     .map((label) => label.trim())
     .filter(Boolean);
   const unique = [...new Map(serverGroups.map((label) => [groupId(label), label])).entries()]
@@ -117,6 +117,7 @@ type RawChannel = {
   UserData?: { IsFavorite?: boolean };
   Genres?: string[];
   Tags?: string[];
+  ChannelGroupNames?: string[];
   CurrentProgram?: {
     Id: string;
     Name?: string;
@@ -133,7 +134,7 @@ async function loadChannels(userId: string, token: string): Promise<LiveChannel[
   const cached = channelCache.get(userId);
   if (cached && Date.now() - cached.at < CHANNEL_TTL) return cached.items;
   const res = await jfGet<{ Items?: RawChannel[] }>(
-    `/LiveTv/Channels?UserId=${userId}&AddCurrentProgram=true&EnableUserData=true&EnableImages=true&Fields=Genres,Tags`,
+    `/LiveTv/Channels?UserId=${userId}&AddCurrentProgram=true&EnableUserData=true&EnableImages=true&Fields=ChannelGroupNames,Genres,Tags`,
     token,
   );
   const items: LiveChannel[] = (res.Items ?? []).map((c) => {
@@ -268,7 +269,7 @@ export const getGuideFn = createServerFn({ method: "GET" })
 export const getPublicGuideFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<{ channels: LiveChannel[]; programs: GuideProgram[] }> => {
     const res = await jfGet<{ Items?: RawChannel[] }>(
-      `/LiveTv/Channels?AddCurrentProgram=true&EnableImages=true&Limit=40&SortBy=SortName`,
+      `/LiveTv/Channels?AddCurrentProgram=true&EnableImages=true&Limit=40&SortBy=SortName&Fields=ChannelGroupNames,Genres,Tags`,
     );
     const channels: LiveChannel[] = (res.Items ?? []).map((c) => ({
       id: c.Id,

@@ -1,5 +1,7 @@
 # Aurora Android TV app
 
+<!-- sync-check: 2026-10-04 -->
+
 Kotlin WebView shell for https://jelly-stream-vision.lovable.app. Package id `app.aurora.tv` (permanent).
 
 - Version: `appVersionCode` / `appVersionName` in `app/build.gradle.kts` (only place).

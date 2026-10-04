@@ -155,6 +155,7 @@ export function TopNav({ userName }: { userName: string }) {
         {menuOpen ? (
           <div
             className="fixed inset-0 z-50"
+            data-tv-modal="true"
             onKeyDown={(e) => {
               if (e.key === "Escape" || e.key === "Backspace" || e.key === "GoBack") {
                 e.preventDefault();

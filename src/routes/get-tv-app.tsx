@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { TV_RELEASE, tvReleaseReady } from "@/lib/tv-release";
 
 export const Route = createFileRoute("/get-tv-app")({
   head: () => ({
@@ -22,21 +23,36 @@ export const Route = createFileRoute("/get-tv-app")({
 });
 
 function GetTvApp() {
+  const ready = tvReleaseReady();
+  const apkPath = ready ? TV_RELEASE.path : "/download/aurora-tv.apk";
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-xl flex-col justify-center gap-6 px-6 py-16">
       <h1 className="text-3xl font-semibold tracking-tight">Aurora for Android TV</h1>
       <p className="text-muted-foreground text-sm">
-        Version 1.1.0 — refreshed with the new Aurora launcher artwork. It shows up in your Android TV or
-        Google TV launcher and works with the remote.
+        {ready
+          ? `Version ${TV_RELEASE.versionName} — the new Aurora TV app. It updates itself and works with the remote.`
+          : "Version 1.1.0 — works with the remote. A new self-updating version is coming soon."}
       </p>
 
+      {ready ? (
+        <p className="border-border rounded-lg border p-4 text-sm">
+          Upgrading from the old TV app? Uninstall it first (Settings → Apps → Aurora → Uninstall), then
+          install this one. You only need to do this once.
+        </p>
+      ) : null}
+
       <a
-        href="/download/aurora-tv.apk?v=1.1.0"
-        download="aurora-tv.apk"
+        href={`${apkPath}?v=${ready ? TV_RELEASE.versionCode : "1.1.0"}`}
+        download={ready ? "aurora-tv-release.apk" : "aurora-tv.apk"}
         className="bg-primary text-primary-foreground rounded-lg px-5 py-4 text-center text-base font-medium"
       >
         Download the TV app
       </a>
+      {ready ? (
+        <a href="/download/aurora-tv.apk" className="text-muted-foreground text-center text-xs underline">
+          Old version (1.1.0)
+        </a>
+      ) : null}
 
       <section className="space-y-2">
         <h2 className="text-base font-semibold">Install with the Downloader app</h2>
@@ -49,7 +65,7 @@ function GetTvApp() {
             Open Downloader and enter this address:
             <br />
             <code className="text-foreground break-all">
-              jelly-stream-vision.lovable.app/download/aurora-tv.apk
+              {`jelly-stream-vision.lovable.app${apkPath}`}
             </code>
           </li>
           <li>Choose Install when it finishes, then open Aurora from the home screen.</li>

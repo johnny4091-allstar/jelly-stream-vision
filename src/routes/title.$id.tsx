@@ -18,7 +18,7 @@ import {
 import { useLanguage } from "@/lib/i18n";
 
 const itemQuery = (id: string) =>
-  queryOptions({ queryKey: ["item", id], queryFn: () => getItemFn({ data: { id } }) });
+  queryOptions({ queryKey: ["item", id], queryFn: () => getItemFn({ data: { id } }), staleTime: 0 });
 const seasonsQuery = (seriesId: string) =>
   queryOptions({
     queryKey: ["seasons", seriesId],

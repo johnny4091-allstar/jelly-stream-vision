@@ -110,3 +110,25 @@ export const clearHistoryFn = createServerFn({ method: "POST" }).handler(async (
   if (error) throw error;
   return { ok: true as const };
 });
+
+/** The app's own saved spot for a title (seconds), ignoring finished (>92%) plays. */
+export const getSavedPositionFn = createServerFn({ method: "GET" })
+  .inputValidator((data: { itemId: string }) => data)
+  .handler(async ({ data }): Promise<number> => {
+    try {
+      const s = await requireSession();
+      const db = await admin();
+      const { data: row } = await db
+        .from("watch_history")
+        .select("last_position_seconds, runtime_seconds")
+        .eq("jf_user_id", s.userId)
+        .eq("jf_item_id", data.itemId)
+        .maybeSingle();
+      const pos = row?.last_position_seconds ?? 0;
+      if (pos < 10) return 0;
+      if (row?.runtime_seconds && pos / row.runtime_seconds > 0.92) return 0;
+      return pos;
+    } catch {
+      return 0;
+    }
+  });

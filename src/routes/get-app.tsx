@@ -24,7 +24,7 @@ export const Route = createFileRoute("/get-app")({
   component: GetApp,
 });
 
-type Platform = "android" | "ios" | "other";
+type Platform = "android" | "ios" | "tv" | "other";
 
 /** Chrome's install event; not in the DOM typings yet. */
 interface InstallPromptEvent extends Event {
@@ -33,6 +33,10 @@ interface InstallPromptEvent extends Event {
 
 function detectPlatform(): Platform {
   const ua = navigator.userAgent;
+  // TVs report Android too, so check them first: they need the TV app, not the phone one.
+  if (/\b(TV|AFT[A-Z0-9]*|BRAVIA|Chromecast|GoogleTV|SmartTV)\b|Android ?TV|AuroraTV\//i.test(ua)) {
+    return "tv";
+  }
   if (/android/i.test(ua)) return "android";
   // iPadOS reports itself as a Mac; touch support gives it away.
   if (/iphone|ipad|ipod/i.test(ua) || (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1)) {
@@ -69,7 +73,12 @@ function GetApp() {
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
 
   useEffect(() => {
-    setPlatform(detectPlatform());
+    const detected = detectPlatform();
+    if (detected === "tv") {
+      window.location.replace("/get-tv-app");
+      return;
+    }
+    setPlatform(detected);
     setInstalled(isInstalled());
 
     const onPrompt = (e: Event) => {
@@ -97,7 +106,7 @@ function GetApp() {
     };
   }, [platform, installed]);
 
-  if (platform === null) {
+  if (platform === null || platform === "tv") {
     return <main className="min-h-screen bg-background" />;
   }
 
@@ -128,6 +137,12 @@ function GetApp() {
           </p>
           <AndroidSection installPrompt={installPrompt} heading />
           <IosSection heading />
+          <a
+            href="/get-tv-app"
+            className="border-border text-foreground rounded-lg border px-5 py-4 text-center text-base font-medium"
+          >
+            Installing on Android TV or Google TV?
+          </a>
         </>
       ) : null}
 

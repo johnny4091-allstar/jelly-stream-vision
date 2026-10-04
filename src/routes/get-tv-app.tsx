@@ -36,8 +36,8 @@ function GetTvApp() {
 
       {ready ? (
         <p className="border-border rounded-lg border p-4 text-sm">
-          Upgrading from the old TV app? Uninstall it first (Settings → Apps → Aurora → Uninstall), then
-          install this one. You only need to do this once.
+          Upgrading from the old TV app? Uninstall it first (Settings → Apps → Aurora → Uninstall),
+          then install this one. You only need to do this once.
         </p>
       ) : null}
 
@@ -49,7 +49,10 @@ function GetTvApp() {
         Download the TV app
       </a>
       {ready ? (
-        <a href="/download/aurora-tv.apk" className="text-muted-foreground text-center text-xs underline">
+        <a
+          href="/download/aurora-tv.apk"
+          className="text-muted-foreground text-center text-xs underline"
+        >
           Old version (1.1.0)
         </a>
       ) : null}
@@ -58,9 +61,7 @@ function GetTvApp() {
         <h2 className="text-base font-semibold">Install with the Downloader app</h2>
         <ol className="text-muted-foreground list-decimal space-y-2 pl-5 text-sm">
           <li>On your TV, install “Downloader by AFTVnews” from the app store.</li>
-          <li>
-            In Settings, allow the Downloader app to install unknown apps.
-          </li>
+          <li>In Settings, allow the Downloader app to install unknown apps.</li>
           <li>
             Open Downloader and enter this address:
             <br />
@@ -82,12 +83,18 @@ function GetTvApp() {
       </section>
 
       <p className="text-muted-foreground text-xs">
-        The TV app is signed for personal installs, so your TV will warn about
-        an unknown source. Phones and tablets should use the regular app on the
-        install page instead.
+        The TV app is signed for personal installs, so your TV will warn about an unknown source.
+        Phones and tablets should use the{" "}
+        <a href="/get-app" className="underline">
+          phone and tablet app
+        </a>{" "}
+        instead.
       </p>
 
-      <a href="/" className="border-border rounded-lg border px-5 py-4 text-center text-base font-medium">
+      <a
+        href="/"
+        className="border-border rounded-lg border px-5 py-4 text-center text-base font-medium"
+      >
         Open Aurora in the browser
       </a>
     </main>

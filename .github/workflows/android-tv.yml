@@ -133,7 +133,7 @@ jobs:
 
   # ===================== Aurora TV =====================
   aurora-debug:
-    if: github.event_name == 'pull_request' && hashFiles('android-tv-aurora/settings.gradle.kts') != ''
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     defaults:
       run:

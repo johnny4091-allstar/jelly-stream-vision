@@ -23,11 +23,13 @@ export interface LiveChannel {
   hasImage: boolean;
   favorite: boolean;
   category: string;
+  groups: { id: string; label: string }[];
   now: LiveProgramLite | null;
 }
 
 export interface LiveCategory {
   id: string;
+  label: string;
   count: number;
 }
 
@@ -90,6 +92,22 @@ function categoryOf(name: string) {
   return "other";
 }
 
+function groupId(label: string) {
+  return label.trim().toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "");
+}
+
+function groupsOf(channel: Pick<RawChannel, "Name" | "Genres" | "Tags" | "ChannelGroupNames">) {
+  const serverGroups = [...(channel.ChannelGroupNames ?? []), ...(channel.Tags ?? []), ...(channel.Genres ?? [])]
+    .map((label) => label.trim())
+    .filter(Boolean);
+  const unique = [...new Map(serverGroups.map((label) => [groupId(label), label])).entries()]
+    .filter(([id]) => Boolean(id))
+    .map(([id, label]) => ({ id, label }));
+  if (unique.length) return unique;
+  const fallback = categoryOf(channel.Name ?? "");
+  return [{ id: fallback, label: fallback.charAt(0).toUpperCase() + fallback.slice(1) }];
+}
+
 type RawChannel = {
   Id: string;
   Name?: string;
@@ -97,6 +115,9 @@ type RawChannel = {
   ChannelNumber?: string;
   ImageTags?: Record<string, string>;
   UserData?: { IsFavorite?: boolean };
+  Genres?: string[];
+  Tags?: string[];
+  ChannelGroupNames?: string[];
   CurrentProgram?: {
     Id: string;
     Name?: string;
@@ -113,11 +134,12 @@ async function loadChannels(userId: string, token: string): Promise<LiveChannel[
   const cached = channelCache.get(userId);
   if (cached && Date.now() - cached.at < CHANNEL_TTL) return cached.items;
   const res = await jfGet<{ Items?: RawChannel[] }>(
-    `/LiveTv/Channels?UserId=${userId}&AddCurrentProgram=true&EnableUserData=true&EnableImages=true`,
+    `/LiveTv/Channels?UserId=${userId}&AddCurrentProgram=true&EnableUserData=true&EnableImages=true&Fields=ChannelGroupNames,Genres,Tags`,
     token,
   );
   const items: LiveChannel[] = (res.Items ?? []).map((c) => {
     const name = c.Name ?? "Channel";
+    const groups = groupsOf(c);
     return {
       id: c.Id,
       name,
@@ -125,6 +147,7 @@ async function loadChannels(userId: string, token: string): Promise<LiveChannel[
       hasImage: Boolean(c.ImageTags?.["Primary"]),
       favorite: Boolean(c.UserData?.IsFavorite),
       category: categoryOf(name),
+      groups,
       now: c.CurrentProgram
         ? {
             id: c.CurrentProgram.Id,
@@ -149,15 +172,21 @@ export const getLiveChannelsFn = createServerFn({ method: "GET" })
     const all = await loadChannels(s.userId, s.token);
     const categories: LiveCategory[] = [];
     const counts = new Map<string, number>();
-    for (const c of all) counts.set(c.category, (counts.get(c.category) ?? 0) + 1);
-    for (const [id, count] of counts) categories.push({ id, count });
+    const labels = new Map<string, string>();
+    for (const c of all) {
+      for (const group of c.groups) {
+        counts.set(group.id, (counts.get(group.id) ?? 0) + 1);
+        labels.set(group.id, group.label);
+      }
+    }
+    for (const [id, count] of counts) categories.push({ id, label: labels.get(id) ?? id, count });
     categories.sort((a, b) => b.count - a.count);
 
     const term = (data.search ?? "").trim().toLowerCase();
     let list = all;
     if (data.favoritesOnly) list = list.filter((c) => c.favorite);
     if (data.category && data.category !== "all")
-      list = list.filter((c) => c.category === data.category);
+      list = list.filter((c) => c.groups.some((group) => group.id === data.category));
     if (term)
       list = list.filter(
         (c) => c.name.toLowerCase().includes(term) || c.number.toLowerCase().startsWith(term),
@@ -240,7 +269,7 @@ export const getGuideFn = createServerFn({ method: "GET" })
 export const getPublicGuideFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<{ channels: LiveChannel[]; programs: GuideProgram[] }> => {
     const res = await jfGet<{ Items?: RawChannel[] }>(
-      `/LiveTv/Channels?AddCurrentProgram=true&EnableImages=true&Limit=40&SortBy=SortName`,
+      `/LiveTv/Channels?AddCurrentProgram=true&EnableImages=true&Limit=40&SortBy=SortName&Fields=ChannelGroupNames,Genres,Tags`,
     );
     const channels: LiveChannel[] = (res.Items ?? []).map((c) => ({
       id: c.Id,
@@ -249,6 +278,7 @@ export const getPublicGuideFn = createServerFn({ method: "GET" }).handler(
       hasImage: Boolean(c.ImageTags?.["Primary"]),
       favorite: false,
       category: categoryOf(c.Name ?? ""),
+      groups: groupsOf(c),
       now: c.CurrentProgram
         ? {
             id: c.CurrentProgram.Id,

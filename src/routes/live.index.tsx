@@ -119,7 +119,7 @@ function LiveChannelsPage() {
             }}
             className={chip(category === c.id)}
           >
-            {CATEGORY_LABELS[c.id] ?? c.id} ({c.count})
+            {CATEGORY_LABELS[c.id] ?? c.label} ({c.count})
           </button>
         ))}
       </div>

@@ -65,7 +65,7 @@ function GetTvApp() {
             Open Downloader and enter this address:
             <br />
             <code className="text-foreground break-all">
-              jelly-stream-vision.lovable.app/download/aurora-tv.apk
+              {`jelly-stream-vision.lovable.app${apkPath}`}
             </code>
           </li>
           <li>Choose Install when it finishes, then open Aurora from the home screen.</li>

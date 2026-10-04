@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Live channel playback is centralized in `useLiveStream`; both preview and full-screen playback must use it so recovery and tuner cleanup stay identical.

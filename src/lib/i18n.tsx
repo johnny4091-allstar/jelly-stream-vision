@@ -30,6 +30,8 @@ const messages = {
     nothingHere: "Nothing here yet — start watching something.",
     streamFailed: "The channel could not be started. Tap retry.",
     streamInterrupted: "The channel was interrupted. Tap retry.",
+    previewUnavailable: "Preview unavailable", nowPlaying: "Now playing", upNext: "Up next",
+    channelGroups: "Channel groups", collapsePreview: "Collapse preview", expandPreview: "Expand preview",
   },
   es: {
     listView: "Lista", calendarView: "Calendario", gridView: "Cuadrícula", channelGuide: "Guía de canales",
@@ -56,6 +58,8 @@ const messages = {
     nothingHere: "Todavía no hay nada — empieza a ver algo.",
     streamFailed: "No se pudo iniciar el canal. Toca reintentar.",
     streamInterrupted: "El canal se interrumpió. Toca reintentar.",
+    previewUnavailable: "Vista previa no disponible", nowPlaying: "En emisión", upNext: "A continuación",
+    channelGroups: "Grupos de canales", collapsePreview: "Ocultar vista previa", expandPreview: "Mostrar vista previa",
   },
   fr: {
     listView: "Liste", calendarView: "Calendrier", gridView: "Grille", channelGuide: "Guide des chaînes",
@@ -82,6 +86,8 @@ const messages = {
     nothingHere: "Rien ici pour le moment — commence à regarder quelque chose.",
     streamFailed: "La chaîne n’a pas pu démarrer. Réessayez.",
     streamInterrupted: "La chaîne a été interrompue. Réessayez.",
+    previewUnavailable: "Aperçu indisponible", nowPlaying: "En cours", upNext: "À suivre",
+    channelGroups: "Groupes de chaînes", collapsePreview: "Réduire l’aperçu", expandPreview: "Afficher l’aperçu",
   },
 } as const;
 

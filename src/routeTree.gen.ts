@@ -32,6 +32,7 @@ import { Route as LiveRecordingsRouteImport } from './routes/live.recordings'
 import { Route as TitleIdRouteImport } from './routes/title.$id'
 import { Route as WatchIdRouteImport } from './routes/watch.$id'
 import { Route as ApiProxySplatRouteImport } from './routes/api/proxy/$'
+import { Route as ApiPublicPhoneVersionRouteImport } from './routes/api/public/phone-version'
 import { Route as ApiPublicTvVersionRouteImport } from './routes/api/public/tv-version'
 import { Route as LiveWatchChannelIdRouteImport } from './routes/live.watch.$channelId'
 import { Route as ApiPublicRokuSplatRouteImport } from './routes/api/public/roku.$'
@@ -151,6 +152,11 @@ const ApiProxySplatRoute = ApiProxySplatRouteImport.update({
   path: '/api/proxy/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPhoneVersionRoute = ApiPublicPhoneVersionRouteImport.update({
+  id: '/api/public/phone-version',
+  path: '/api/public/phone-version',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicTvVersionRoute = ApiPublicTvVersionRouteImport.update({
   id: '/api/public/tv-version',
   path: '/api/public/tv-version',
@@ -191,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/watch/$id': typeof WatchIdRoute
   '/live/': typeof LiveIndexRoute
   '/api/proxy/$': typeof ApiProxySplatRoute
+  '/api/public/phone-version': typeof ApiPublicPhoneVersionRoute
   '/api/public/tv-version': typeof ApiPublicTvVersionRoute
   '/live/watch/$channelId': typeof LiveWatchChannelIdRoute
   '/api/public/roku/$': typeof ApiPublicRokuSplatRoute
@@ -218,6 +225,7 @@ export interface FileRoutesByTo {
   '/watch/$id': typeof WatchIdRoute
   '/live': typeof LiveIndexRoute
   '/api/proxy/$': typeof ApiProxySplatRoute
+  '/api/public/phone-version': typeof ApiPublicPhoneVersionRoute
   '/api/public/tv-version': typeof ApiPublicTvVersionRoute
   '/live/watch/$channelId': typeof LiveWatchChannelIdRoute
   '/api/public/roku/$': typeof ApiPublicRokuSplatRoute
@@ -247,6 +255,7 @@ export interface FileRoutesById {
   '/watch/$id': typeof WatchIdRoute
   '/live/': typeof LiveIndexRoute
   '/api/proxy/$': typeof ApiProxySplatRoute
+  '/api/public/phone-version': typeof ApiPublicPhoneVersionRoute
   '/api/public/tv-version': typeof ApiPublicTvVersionRoute
   '/live/watch/$channelId': typeof LiveWatchChannelIdRoute
   '/api/public/roku/$': typeof ApiPublicRokuSplatRoute
@@ -277,6 +286,7 @@ export interface FileRouteTypes {
     | '/watch/$id'
     | '/live/'
     | '/api/proxy/$'
+    | '/api/public/phone-version'
     | '/api/public/tv-version'
     | '/live/watch/$channelId'
     | '/api/public/roku/$'
@@ -304,6 +314,7 @@ export interface FileRouteTypes {
     | '/watch/$id'
     | '/live'
     | '/api/proxy/$'
+    | '/api/public/phone-version'
     | '/api/public/tv-version'
     | '/live/watch/$channelId'
     | '/api/public/roku/$'
@@ -332,6 +343,7 @@ export interface FileRouteTypes {
     | '/watch/$id'
     | '/live/'
     | '/api/proxy/$'
+    | '/api/public/phone-version'
     | '/api/public/tv-version'
     | '/live/watch/$channelId'
     | '/api/public/roku/$'
@@ -357,6 +369,7 @@ export interface RootRouteChildren {
   TitleIdRoute: typeof TitleIdRoute
   WatchIdRoute: typeof WatchIdRoute
   ApiProxySplatRoute: typeof ApiProxySplatRoute
+  ApiPublicPhoneVersionRoute: typeof ApiPublicPhoneVersionRoute
   ApiPublicTvVersionRoute: typeof ApiPublicTvVersionRoute
   ApiPublicRokuSplatRoute: typeof ApiPublicRokuSplatRoute
 }
@@ -524,6 +537,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiProxySplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/phone-version': {
+      id: '/api/public/phone-version'
+      path: '/api/public/phone-version'
+      fullPath: '/api/public/phone-version'
+      preLoaderRoute: typeof ApiPublicPhoneVersionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/tv-version': {
       id: '/api/public/tv-version'
       path: '/api/public/tv-version'
@@ -586,6 +606,7 @@ const rootRouteChildren: RootRouteChildren = {
   TitleIdRoute: TitleIdRoute,
   WatchIdRoute: WatchIdRoute,
   ApiProxySplatRoute: ApiProxySplatRoute,
+  ApiPublicPhoneVersionRoute: ApiPublicPhoneVersionRoute,
   ApiPublicTvVersionRoute: ApiPublicTvVersionRoute,
   ApiPublicRokuSplatRoute: ApiPublicRokuSplatRoute,
 }

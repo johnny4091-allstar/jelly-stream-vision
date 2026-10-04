@@ -79,8 +79,10 @@ export function useLiveStream({
     let lastTime = -1;
     let lastAdvanceAt = Date.now();
     let healthySeconds = 0;
-    const video = videoRef.current;
-    if (!video) return;
+    const videoElement = videoRef.current;
+    if (!videoElement) return;
+    const video: HTMLVideoElement = videoElement;
+    const streamItemId: string = itemId;
     video.muted = muted;
 
     const report = (kind: "Started" | "Progress" | "Stopped", isPaused = false) => {
@@ -114,12 +116,7 @@ export function useLiveStream({
     };
 
     const freshSession = () => {
-       if (cancelled) {
-         if (info.playSessionId) {
-           void stopTranscode({ data: { playSessionId: info.playSessionId, deviceId: deviceIdRef.current } });
-         }
-         return;
-       }
+      if (cancelled) return;
       if (!autoRetriedRef.current) {
         autoRetriedRef.current = true;
         setSessionNonce((value) => value + 1);
@@ -187,13 +184,18 @@ export function useLiveStream({
       const hlsModule = import("hls.js");
       let info: Awaited<ReturnType<typeof getPlaybackInfo>>;
       try {
-        info = await getPlaybackInfo({ data: { itemId, deviceId: deviceIdRef.current } });
+        info = await getPlaybackInfo({ data: { itemId: streamItemId, deviceId: deviceIdRef.current } });
       } catch {
         if (!autoRetriedRef.current) freshSession();
         else setError(streamFailedMessage);
         return;
       }
-      if (cancelled) return;
+      if (cancelled) {
+        if (info.playSessionId) {
+          void stopTranscode({ data: { playSessionId: info.playSessionId, deviceId: deviceIdRef.current } });
+        }
+        return;
+      }
       playSessionRef.current = info.playSessionId;
       infoRef.current = {
         mediaSourceId: info.mediaSourceId,
@@ -215,7 +217,7 @@ export function useLiveStream({
       });
       const streamUrl = info.transcodingUrl
         ? `/api/proxy${info.transcodingUrl}`
-        : `/api/proxy/Videos/${itemId}/master.m3u8?${params.toString()}`;
+        : `/api/proxy/Videos/${streamItemId}/master.m3u8?${params.toString()}`;
       const { default: Hls } = await hlsModule;
       if (cancelled) return;
       if (Hls.isSupported()) {

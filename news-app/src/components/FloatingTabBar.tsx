@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import * as Haptics from 'expo-haptics';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '../theme';
@@ -9,6 +9,7 @@ import { useTheme } from '../theme';
 const ICONS: Record<string, [keyof typeof Ionicons.glyphMap, keyof typeof Ionicons.glyphMap]> = {
   'For you': ['star', 'star-outline'],
   News: ['newspaper', 'newspaper-outline'],
+  'Live TV': ['tv', 'tv-outline'],
   Sports: ['football', 'football-outline'],
   Following: ['notifications', 'notifications-outline'],
 };
@@ -17,6 +18,8 @@ const ICONS: Record<string, [keyof typeof Ionicons.glyphMap, keyof typeof Ionico
 export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
   const c = useTheme();
   const insets = useSafeAreaInsets();
+  // Fit every tab on narrow phones; cap the width on wide ones.
+  const itemWidth = Math.min(80, (useWindowDimensions().width - 44) / state.routes.length);
   return (
     <View pointerEvents="box-none" style={[styles.wrap, { bottom: insets.bottom + 12 }]}>
       <View style={[styles.bar, { backgroundColor: c.tabBar }]}>
@@ -38,10 +41,12 @@ export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
               accessibilityRole="tab"
               accessibilityState={{ selected: focused }}
               accessibilityLabel={route.name}
-              style={[styles.item, focused && { backgroundColor: c.dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)' }]}
+              style={[styles.item, { width: itemWidth }, focused && { backgroundColor: c.dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)' }]}
             >
               <Ionicons name={focused ? on : off} size={24} color={c.text} />
-              <Text style={[styles.label, { color: c.text, fontWeight: focused ? '800' : '500' }]}>{route.name}</Text>
+              <Text style={[styles.label, { color: c.text, fontWeight: focused ? '800' : '500' }]} numberOfLines={1}>
+                {route.name}
+              </Text>
             </Pressable>
           );
         })}
@@ -63,6 +68,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 10,
   },
-  item: { alignItems: 'center', justifyContent: 'center', gap: 2, width: 82, paddingVertical: 8, borderRadius: 32 },
-  label: { fontSize: 13 },
+  item: { alignItems: 'center', justifyContent: 'center', gap: 2, paddingVertical: 8, borderRadius: 32 },
+  label: { fontSize: 12 },
 });

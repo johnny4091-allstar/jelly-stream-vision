@@ -14,6 +14,7 @@ import { setUpNotifications, type NotificationData } from './src/services/notifi
 import { FloatingTabBar } from './src/components/FloatingTabBar';
 import { FollowingScreen } from './src/screens/FollowingScreen';
 import { ForYouScreen } from './src/screens/ForYouScreen';
+import { LiveTvScreen } from './src/screens/LiveTvScreen';
 import { NewsScreen } from './src/screens/NewsScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { SportsScreen } from './src/screens/SportsScreen';
@@ -25,12 +26,13 @@ import { useTheme } from './src/theme';
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-// Samsung News-style tabs in a floating bar. Settings lives behind the ⋮ in the header.
+// Samsung News-style tabs in a floating bar, plus free live news channels. Settings lives behind the ⋮ in the header.
 function Tabs() {
   return (
     <Tab.Navigator screenOptions={{ headerShown: false, animation: 'shift' }} tabBar={(props) => <FloatingTabBar {...props} />}>
       <Tab.Screen name="For you" component={ForYouScreen} />
       <Tab.Screen name="News" component={NewsScreen} />
+      <Tab.Screen name="Live TV" component={LiveTvScreen} />
       <Tab.Screen name="Sports" component={SportsScreen} />
       <Tab.Screen name="Following" component={FollowingScreen} />
     </Tab.Navigator>

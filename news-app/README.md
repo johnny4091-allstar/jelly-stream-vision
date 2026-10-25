@@ -2,7 +2,7 @@
 
 A personal news app built with React Native and Expo (TypeScript). It pulls headlines from public RSS feeds (CNN, BBC, NPR, AP, Fox News, The Verge, ESPN) and shows them in one feed, newest first. Cards show only what the feed provides: headline, image, source, time and a short summary. Tapping a card opens the publisher's page in a reader inside the app.
 
-- Laid out like Samsung News, with a floating tab bar: **For you** (briefing card with a swipeable top-stories carousel, Top stories, For you), **News** (pinned topic chips and a section per topic you can Follow), **Sports**, and **Following** (saved stories and followed topics). Settings is behind the ⋮ in the header
+- Laid out like Samsung News, with a floating tab bar: **For you** (briefing card with a swipeable top-stories carousel, Top stories, For you), **News** (pinned topic chips and a section per topic you can Follow), **Live TV** (free 24/7 news channels), **Sports**, and **Following** (saved stories and followed topics). Settings is behind the ⋮ in the header
 - Turn sources on and off, and pick System, Light or Dark appearance, in Settings
 - Saved stories and settings are stored on the phone with AsyncStorage
 - Each feed is cached for 10 minutes. A feed that fails is skipped (its last cached copy is used if one exists)
@@ -68,6 +68,8 @@ Each release is tagged `build-<number>` (the workflow run number, which is also 
 
 ## Notes
 
+- **Live TV** plays each broadcaster's own free 24/7 live stream on YouTube (ABC News Live, NBC News NOW, CBS News 24/7, Sky News, Al Jazeera English, DW News, France 24, euronews, Bloomberg TV, NASA) using YouTube's embedded player, so YouTube's ads and rules apply. A channel that's off air, or that doesn't allow playback in other apps, shows YouTube's error; the YouTube button opens it in the YouTube app instead. Channels are listed in `src/live.ts`.
+
 - **AP** has no public RSS feed of its own, so its headlines come from Google News' public RSS search, limited to apnews.com. These stories have no images, and tapping one opens it through a Google News link.
 - **Fox News** has no entertainment feed, and **ESPN** only has sports. **The Verge** covers Tech and Entertainment. Those outlets don't show up under topics they don't publish.
 - CNN serves its feeds over plain `http`, so the Android build allows cleartext traffic (`expo-build-properties` in `app.json`).
@@ -83,6 +85,7 @@ Each release is tagged `build-<number>` (the workflow run number, which is also 
 | `src/services/appUpdate.ts`, `src/components/UpdatePrompt.tsx` | In-app updates: check, download, install |
 | `src/services/notifications.ts` | Background check and local notifications |
 | `src/screens/ArticleScreen.tsx` | The in-app reader |
+| `src/live.ts`, `src/screens/LiveTvScreen.tsx` | Live TV channels and player |
 | `WHATSNEW.md` | "What's new" text for the next update |
 | `app.config.ts` | Build-time version number and update repo |
 | `scripts/smoke-test.sh` | CI check that the APK opens on an emulator without crashing |

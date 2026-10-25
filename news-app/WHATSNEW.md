@@ -1,3 +1,4 @@
+- New Live TV tab: free 24/7 news channels like ABC News Live, NBC News NOW, CBS News 24/7 and Sky News
 - New look inspired by Samsung News, with a floating tab bar
 - For you: a morning, afternoon or evening briefing with a swipeable top-stories carousel
 - News: topic chips that stay pinned while you scroll, plus a section for each topic

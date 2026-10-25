@@ -51,11 +51,11 @@ jobs:
         # The generated project signs release builds with the debug key, so the APK installs directly.
         run: ./gradlew assembleRelease --no-daemon
       - name: Rename APK
-        run: cp android/app/build/outputs/apk/release/app-release.apk headlines.apk
+        run: cp android/app/build/outputs/apk/release/app-release.apk news-hammer.apk
       - uses: actions/upload-artifact@v5
         with:
-          name: headlines-apk
-          path: news-app/headlines.apk
+          name: news-hammer-apk
+          path: news-app/news-hammer.apk
           if-no-files-found: error
 
   smoke-test:
@@ -71,7 +71,7 @@ jobs:
       - uses: actions/checkout@v5
       - uses: actions/download-artifact@v5
         with:
-          name: headlines-apk
+          name: news-hammer-apk
           path: news-app
       - name: Enable KVM for the emulator
         run: |
@@ -86,7 +86,7 @@ jobs:
           arch: x86_64
           disable-animations: true
           working-directory: news-app
-          script: ./scripts/smoke-test.sh headlines.apk
+          script: ./scripts/smoke-test.sh news-hammer.apk
       - uses: actions/upload-artifact@v5
         if: always()
         with:
@@ -112,7 +112,7 @@ jobs:
       - uses: actions/checkout@v5
       - uses: actions/download-artifact@v5
         with:
-          name: headlines-apk
+          name: news-hammer-apk
           path: news-app
       - name: Publish APK for in-app updates
         if: env.GH_TOKEN != '' && env.UPDATE_REPO != ''
@@ -131,7 +131,7 @@ jobs:
           VERSION="$(node -p "require('./app.json').expo.version").$APP_VERSION_CODE"
           # The update pop-up shows these lines under "What's new".
           if [ -s WHATSNEW.md ]; then cp WHATSNEW.md notes.md; else git log -1 --pretty=%s > notes.md; fi
-          gh release create "build-$APP_VERSION_CODE" headlines.apk \
+          gh release create "build-$APP_VERSION_CODE" news-hammer.apk \
             --repo "$UPDATE_REPO" \
             --title "News Hammer $VERSION" \
             --notes-file notes.md \

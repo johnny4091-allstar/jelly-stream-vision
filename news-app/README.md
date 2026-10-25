@@ -31,7 +31,7 @@ Edits to the code reload on the phone automatically.
 
 ## Build the APK
 
-**GitHub Actions (no setup):** every push that changes `news-app/` runs the *News Hammer APK* workflow. It builds the APK, then installs and opens it on an Android emulator; if the app crashes or quits, the build fails and is never offered as an update. Open the run under the repo's **Actions** tab and download `headlines-apk` from **Artifacts**. Unzip it, copy `headlines.apk` to your phone, and open it. You'll have to allow installs from unknown sources. You can also start the workflow by hand with **Run workflow**.
+**GitHub Actions (no setup):** every push that changes `news-app/` runs the *News Hammer APK* workflow. It builds the APK, then installs and opens it on an Android emulator; if the app crashes or quits, the build fails and is never offered as an update. Open the run under the repo's **Actions** tab and download `news-hammer-apk` from **Artifacts**. Unzip it, copy `news-hammer.apk` to your phone, and open it. You'll have to allow installs from unknown sources. You can also start the workflow by hand with **Run workflow**.
 
 **Locally** (needs Android Studio / the Android SDK and JDK 17):
 ```sh

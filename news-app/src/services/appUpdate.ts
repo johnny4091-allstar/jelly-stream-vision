@@ -79,7 +79,7 @@ export async function checkForUpdate(): Promise<AppUpdate | null> {
 export async function downloadAndInstall(update: AppUpdate, onProgress: (p: number) => void): Promise<void> {
   const dir = FileSystem.cacheDirectory;
   if (!dir) throw new Error('No cache directory');
-  const fileUri = `${dir}headlines-${update.versionCode}.apk`;
+  const fileUri = `${dir}news-hammer-${update.versionCode}.apk`;
   const download = FileSystem.createDownloadResumable(update.apkUrl, fileUri, {}, (p) => {
     const total = p.totalBytesExpectedToWrite > 0 ? p.totalBytesExpectedToWrite : update.sizeBytes;
     if (total > 0) onProgress(Math.min(1, p.totalBytesWritten / total));

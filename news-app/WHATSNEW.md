@@ -1,4 +1,4 @@
-- Fixes the app closing right away after the last update
-- The app is now called News Hammer, with a new icon
-- Dark mode follows your phone's setting more reliably
+- News Hammer name and logo at the top of the Today screen
+- The download is now named news-hammer.apk
+- Fixes the app closing right away after updating to 1.0.7
 - Every update is now test-launched before it's offered to you

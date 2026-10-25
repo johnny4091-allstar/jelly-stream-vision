@@ -1,4 +1,5 @@
 import { useScrollToTop } from '@react-navigation/native';
+import { Image } from 'expo-image';
 import { useMemo, useRef } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View, type ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -29,6 +30,12 @@ export function TodayScreen() {
         <RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={c.tertiary} progressViewOffset={insets.top} />
       }
     >
+      <View style={styles.brand}>
+        <Image source={require('../../assets/icon.png')} style={styles.brandLogo} contentFit="cover" />
+        <Text style={[styles.brandName, { color: c.text }]}>
+          NEWS <Text style={{ color: c.accent }}>HAMMER</Text>
+        </Text>
+      </View>
       <ScreenHeader title="Today" subtitle={todayLabel()} />
       <FailedNotice failed={failed} />
       {loading && top.length === 0 ? (
@@ -60,6 +67,9 @@ export function TodayScreen() {
 }
 
 const styles = StyleSheet.create({
+  brand: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingTop: 10 },
+  brandLogo: { width: 28, height: 28, borderRadius: 7 },
+  brandName: { fontSize: 17, fontWeight: '900', letterSpacing: 1 },
   section: { fontSize: 22, fontWeight: '800', paddingHorizontal: 20, marginBottom: 12, letterSpacing: -0.3 },
   footer: { paddingHorizontal: 32, paddingTop: 4 },
 });

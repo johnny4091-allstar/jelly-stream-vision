@@ -5,7 +5,7 @@
 # the new APK is installed over it, the same way the in-app updater does it on a phone. The
 # relevant part of logcat is printed so a crash can be diagnosed from the CI log.
 set -u
-APK="${1:-headlines.apk}"
+APK="${1:-news-hammer.apk}"
 PKG=com.personal.headlines
 
 launch_and_check() {
@@ -32,8 +32,15 @@ launch_and_check() {
   echo "$label: running"
 }
 
-if [ -n "${UPDATE_REPO:-}" ] &&
-  curl -fsSL -o previous.apk "https://github.com/$UPDATE_REPO/releases/latest/download/headlines.apk"; then
+# Releases up to 1.0.10 named the file headlines.apk.
+download_previous() {
+  for name in news-hammer.apk headlines.apk; do
+    curl -fsSL -o previous.apk "https://github.com/$UPDATE_REPO/releases/latest/download/$name" && return 0
+  done
+  return 1
+}
+
+if [ -n "${UPDATE_REPO:-}" ] && download_previous; then
   echo "Installing the currently published version first"
   adb install -r previous.apk && launch_and_check previous || echo "(the published version has problems; see above)"
   echo "Updating to the new build"

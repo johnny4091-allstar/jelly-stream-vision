@@ -5,13 +5,13 @@ import { StatusBar } from 'expo-status-bar';
 import { useMemo } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { UpdatePrompt } from './src/components/UpdatePrompt';
 import { FeedScreen } from './src/screens/FeedScreen';
 import { SavedScreen } from './src/screens/SavedScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { TodayScreen } from './src/screens/TodayScreen';
 import { SavedProvider } from './src/state/SavedContext';
 import { SettingsProvider } from './src/state/SettingsContext';
-import { useUpdatePrompt } from './src/state/useUpdatePrompt';
 import { useTheme } from './src/theme';
 
 const Tab = createBottomTabNavigator();
@@ -25,7 +25,6 @@ const ICONS: Record<string, [keyof typeof Ionicons.glyphMap, keyof typeof Ionico
 
 function Root() {
   const c = useTheme();
-  useUpdatePrompt();
   const navTheme = useMemo<Theme>(() => {
     const base = c.dark ? DarkTheme : DefaultTheme;
     return {
@@ -55,6 +54,7 @@ function Root() {
         <Tab.Screen name="Saved" component={SavedScreen} />
         <Tab.Screen name="Settings" component={SettingsScreen} />
       </Tab.Navigator>
+      <UpdatePrompt />
     </NavigationContainer>
   );
 }

@@ -32,13 +32,6 @@ Edits to the code reload on the phone automatically.
 
 **GitHub Actions (no setup):** every push that changes `news-app/` runs the *Headlines news app APK* workflow. Open the run under the repo's **Actions** tab and download `headlines-apk` from **Artifacts**. Unzip it, copy `headlines.apk` to your phone, and open it. You'll have to allow installs from unknown sources. You can also start the workflow by hand with **Run workflow**.
 
-**EAS (Expo's cloud build):**
-```sh
-npx eas-cli@latest login
-npx eas-cli@latest build -p android --profile preview
-```
-When it finishes, EAS gives you a link to download the APK.
-
 **Locally** (needs Android Studio / the Android SDK and JDK 17):
 ```sh
 npx expo prebuild --platform android
@@ -50,25 +43,23 @@ The release APK is signed with the debug key from the generated project. That's 
 
 ## Automatic updates
 
-When the app opens, and when you come back to it (at most every 30 minutes), it checks for a new version. If one exists, it downloads it and asks **Update now** or **Later**. "Update now" restarts the app on the new version. "Later" keeps the current one, and the new version starts the next time you fully close and reopen the app.
+When the app opens, and when you come back to it (at most every 30 minutes), it checks for a newer APK. If there is one, it asks **Update now** or **Later**:
 
-Updates are published by the GitHub Actions workflow on every push that changes `news-app/`, using Expo's free EAS Update service. The repo is private, so the app can't read GitHub directly.
+- **Update now** downloads the APK in the app, showing progress, and opens Android's install screen. The first time, Android asks you to allow installs from Headlines. Your saved stories and settings are kept.
+- **Later** asks again in 12 hours, or sooner if an even newer build comes out.
+
+No Expo services are involved. Every GitHub Actions build gets a higher version number and is published as a release in a **public** GitHub repo, and the app checks that repo. A public repo is needed because this one is private, and a phone can't read a private repo without a password built into the app. The public repo only holds the APK files, not your code.
 
 ### One-time setup
 
-1. Create a free account at [expo.dev](https://expo.dev).
-2. On expo.dev, create a project named **headlines** and copy its **Project ID** (a UUID).
-3. On expo.dev, go to **Account settings → Access tokens** and create a token.
-4. In this GitHub repo, go to **Settings → Secrets and variables → Actions**:
-   - On the **Variables** tab, add `EAS_PROJECT_ID` with the Project ID.
-   - On the **Secrets** tab, add `EXPO_TOKEN` with the token.
-5. Re-run the workflow (Actions → *Headlines news app APK* → **Run workflow**) and install that APK once. APKs built before this setup don't check for updates.
+1. Create a new **public** repository, for example `johnny4091-allstar/headlines-releases`. It can stay empty.
+2. Create a token that can publish releases there: GitHub → Settings → Developer settings → **Fine-grained personal access tokens** → Generate new token. Under *Repository access*, choose only the releases repo, and set *Contents* to **Read and write**.
+3. In **this** repo, go to Settings → Secrets and variables → Actions:
+   - On the **Variables** tab, add `UPDATE_REPO` = `johnny4091-allstar/headlines-releases`.
+   - On the **Secrets** tab, add `RELEASES_TOKEN` = the token.
+4. Run the workflow (Actions → *Headlines news app APK* → **Run workflow**) and install that APK once by hand. APKs built before this setup don't know where to look for updates.
 
-After that, every push sends an update to the installed app. You don't have to reinstall.
-
-### When you still need a new APK
-
-Over-the-air updates can change the app's code, screens and feeds, but not its native parts. If a change adds a package with native code, bump `"version"` in `app.json` (for example `1.0.0` → `1.1.0`) and install the new APK. Older installs won't receive updates built for a different version, so nothing breaks.
+After that, every push that changes `news-app/` builds a new APK, publishes it, and installed apps offer it.
 
 ## Notes
 
@@ -83,7 +74,8 @@ Over-the-air updates can change the app's code, screens and feeds, but not its n
 | `src/sources.ts` | Outlets and their feed URLs per topic |
 | `src/services/parse.ts` | RSS 2.0 / Atom parsing, image and summary extraction |
 | `src/services/news.ts` | Fetching, 10-minute cache, merging, Today picks |
-| `src/state/` | Settings, saved stories, `useStories`, and the update prompt (`useUpdatePrompt`) |
-| `app.config.ts` | Turns on updates and sets the Android version code at build time |
+| `src/state/` | Settings, saved stories, and the `useStories` hook |
+| `src/services/appUpdate.ts`, `src/components/UpdatePrompt.tsx` | In-app updates: check, download, install |
+| `app.config.ts` | Build-time version number and update repo |
 | `src/screens/` | Today, Feed, Saved, Settings |
 | `src/components/StoryCard.tsx` | The story card (hero, standard and compact layouts) |

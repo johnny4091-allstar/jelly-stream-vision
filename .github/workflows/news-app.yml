@@ -1,8 +1,8 @@
 name: Headlines news app APK
 
 # Builds the Expo app in news-app/ into an installable Android APK (download it from the run's
-# "Artifacts" section) and, once EXPO_TOKEN and EAS_PROJECT_ID are set up, publishes an
-# over-the-air update so installed apps offer "Update now / Later". See news-app/README.md.
+# "Artifacts" section) and, once UPDATE_REPO and RELEASES_TOKEN are set up, publishes it as a
+# GitHub release so installed apps offer "Update now / Later". See news-app/README.md.
 
 on:
   push:
@@ -21,8 +21,9 @@ jobs:
       run:
         working-directory: news-app
     env:
-      EAS_PROJECT_ID: ${{ vars.EAS_PROJECT_ID }}
-      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      # Public "owner/repo" that holds the APK releases, and a token that can create releases there.
+      UPDATE_REPO: ${{ vars.UPDATE_REPO }}
+      GH_TOKEN: ${{ secrets.RELEASES_TOKEN }}
       APP_VERSION_CODE: ${{ github.run_number }}
     steps:
       - uses: actions/checkout@v5
@@ -56,15 +57,19 @@ jobs:
           name: headlines-apk
           path: news-app/headlines.apk
           if-no-files-found: error
-      - name: Publish over-the-air update
-        if: env.EXPO_TOKEN != '' && env.EAS_PROJECT_ID != ''
-        run: >
-          npx --yes eas-cli@25.3.0 update
-          --channel production
-          --environment production
-          --platform android
-          --message "$(git log -1 --pretty=%s)"
-          --non-interactive
+      - name: Publish APK for in-app updates
+        if: env.GH_TOKEN != '' && env.UPDATE_REPO != ''
+        # Installed apps check this repo's latest release and offer "Update now / Later".
+        run: |
+          # A re-run of the same build keeps its number; that release already exists.
+          if gh release view "build-$APP_VERSION_CODE" --repo "$UPDATE_REPO" >/dev/null 2>&1; then
+            echo "Release build-$APP_VERSION_CODE already exists"; exit 0
+          fi
+          gh release create "build-$APP_VERSION_CODE" headlines.apk \
+            --repo "$UPDATE_REPO" \
+            --title "Headlines build $APP_VERSION_CODE" \
+            --notes "$(git log -1 --pretty=%s)" \
+            --latest
       - name: Updates not set up
-        if: env.EXPO_TOKEN == '' || env.EAS_PROJECT_ID == ''
-        run: echo "::notice::Skipping the over-the-air update. Add the EXPO_TOKEN secret and EAS_PROJECT_ID variable to turn it on (news-app/README.md)."
+        if: env.GH_TOKEN == '' || env.UPDATE_REPO == ''
+        run: echo "::notice::Not publishing an in-app update. Add the UPDATE_REPO variable and RELEASES_TOKEN secret to turn it on (news-app/README.md)."

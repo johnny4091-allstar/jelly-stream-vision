@@ -62,6 +62,8 @@ jobs:
     needs: apk
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      UPDATE_REPO: ${{ vars.UPDATE_REPO }}
     defaults:
       run:
         working-directory: news-app
@@ -90,8 +92,8 @@ jobs:
         with:
           name: smoke-test
           path: |
-            news-app/logcat.txt
-            news-app/screenshot.png
+            news-app/logcat-*.txt
+            news-app/screenshot-*.png
           if-no-files-found: ignore
 
   publish:

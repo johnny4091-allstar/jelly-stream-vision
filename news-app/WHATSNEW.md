@@ -1,3 +1,4 @@
+- Fixes the app closing right away after the last update
 - The app is now called News Hammer, with a new icon
 - Dark mode follows your phone's setting more reliably
 - Every update is now test-launched before it's offered to you

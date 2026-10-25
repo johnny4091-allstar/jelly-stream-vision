@@ -39,7 +39,7 @@ export function SettingsScreen() {
     if (!on) return;
     const granted = await setUpNotifications().catch(() => false);
     if (!granted) {
-      Alert.alert('Notifications are off', 'Allow notifications for Headlines in your phone settings.', [
+      Alert.alert('Notifications are off', 'Allow notifications for News Hammer in your phone settings.', [
         { text: 'Not now', style: 'cancel' },
         { text: 'Open settings', onPress: () => Linking.openSettings().catch(() => {}) },
       ]);

@@ -77,7 +77,7 @@ async function notifyAppUpdate(): Promise<void> {
   await AsyncStorage.setItem(UPDATE_NOTIFIED_KEY, String(update.versionCode));
   await Notifications.scheduleNotificationAsync({
     content: {
-      title: 'Headlines update available',
+      title: 'News Hammer update available',
       body: `Version ${update.versionName} is ready. Open the app to install it.`,
       data: { kind: 'update' } satisfies NotificationData,
     },

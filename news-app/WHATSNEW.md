@@ -1,5 +1,3 @@
-- Stories now open inside the app in a built-in reader, with save and share at the top
-- Notifications for new top stories (turn them off in Settings → Notifications)
-- Tapping a notification opens that story
-- The update pop-up now shows the version number and what's new
-- Your app version is listed in Settings → About
+- The app is now called News Hammer, with a new icon
+- Dark mode follows your phone's setting more reliably
+- Every update is now test-launched before it's offered to you

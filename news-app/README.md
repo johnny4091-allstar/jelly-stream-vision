@@ -1,4 +1,4 @@
-# Headlines
+# News Hammer
 
 A personal news app built with React Native and Expo (TypeScript). It pulls headlines from public RSS feeds (CNN, BBC, NPR, AP, Fox News, The Verge, ESPN) and shows them in one feed, newest first. Cards show only what the feed provides: headline, image, source, time and a short summary. Tapping a card opens the publisher's page in a reader inside the app.
 
@@ -31,7 +31,7 @@ Edits to the code reload on the phone automatically.
 
 ## Build the APK
 
-**GitHub Actions (no setup):** every push that changes `news-app/` runs the *Headlines news app APK* workflow. Open the run under the repo's **Actions** tab and download `headlines-apk` from **Artifacts**. Unzip it, copy `headlines.apk` to your phone, and open it. You'll have to allow installs from unknown sources. You can also start the workflow by hand with **Run workflow**.
+**GitHub Actions (no setup):** every push that changes `news-app/` runs the *News Hammer APK* workflow. It builds the APK, then installs and opens it on an Android emulator; if the app crashes or quits, the build fails and is never offered as an update. Open the run under the repo's **Actions** tab and download `headlines-apk` from **Artifacts**. Unzip it, copy `headlines.apk` to your phone, and open it. You'll have to allow installs from unknown sources. You can also start the workflow by hand with **Run workflow**.
 
 **Locally** (needs Android Studio / the Android SDK and JDK 17):
 ```sh
@@ -46,7 +46,7 @@ The release APK is signed with the debug key from the generated project. That's 
 
 When the app opens, and when you come back to it (at most every 30 minutes), it checks for a newer APK. If there is one, it asks **Update now** or **Later**:
 
-- **Update now** downloads the APK in the app, showing progress, and opens Android's install screen. The first time, Android asks you to allow installs from Headlines. Your saved stories and settings are kept.
+- **Update now** downloads the APK in the app, showing progress, and opens Android's install screen. The first time, Android asks you to allow installs from News Hammer. Your saved stories and settings are kept.
 - **Later** asks again in 12 hours, or sooner if an even newer build comes out.
 
 The pop-up shows the new version number (for example `1.0.7`) and a **What's new** list. That list comes from `WHATSNEW.md`: one `- ` line per change. Update it in the same commit as the change. The version is `"version"` from `app.json` (`1.0`) plus the build number. If the app is in the background when a new version comes out, you also get a notification.
@@ -60,7 +60,7 @@ No Expo services are involved. Every GitHub Actions build gets a higher version 
 3. In **this** repo, go to Settings → Secrets and variables → Actions:
    - On the **Variables** tab, add `UPDATE_REPO` = `johnny4091-allstar/headlines-releases`.
    - On the **Secrets** tab, add `RELEASES_TOKEN` = the token.
-4. Run the workflow (Actions → *Headlines news app APK* → **Run workflow**) and install that APK once by hand. APKs built before this setup don't know where to look for updates.
+4. Run the workflow (Actions → *News Hammer APK* → **Run workflow**) and install that APK once by hand. APKs built before this setup don't know where to look for updates.
 
 After that, every push that changes `news-app/` builds a new APK, publishes it, and installed apps offer it.
 
@@ -85,5 +85,6 @@ Each release is tagged `build-<number>` (the workflow run number, which is also 
 | `src/screens/ArticleScreen.tsx` | The in-app reader |
 | `WHATSNEW.md` | "What's new" text for the next update |
 | `app.config.ts` | Build-time version number and update repo |
+| `scripts/smoke-test.sh` | CI check that the APK opens on an emulator without crashing |
 | `src/screens/` | Today, Feed, Saved, Settings |
 | `src/components/StoryCard.tsx` | The story card (hero, standard and compact layouts) |

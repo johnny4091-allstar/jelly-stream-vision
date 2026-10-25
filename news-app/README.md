@@ -48,6 +48,28 @@ cd android && ./gradlew assembleRelease
 
 The release APK is signed with the debug key from the generated project. That's fine for installing on your own phone, but not for the Play Store.
 
+## Automatic updates
+
+When the app opens, and when you come back to it (at most every 30 minutes), it checks for a new version. If one exists, it downloads it and asks **Update now** or **Later**. "Update now" restarts the app on the new version. "Later" keeps the current one, and the new version starts the next time you fully close and reopen the app.
+
+Updates are published by the GitHub Actions workflow on every push that changes `news-app/`, using Expo's free EAS Update service. The repo is private, so the app can't read GitHub directly.
+
+### One-time setup
+
+1. Create a free account at [expo.dev](https://expo.dev).
+2. On expo.dev, create a project named **headlines** and copy its **Project ID** (a UUID).
+3. On expo.dev, go to **Account settings → Access tokens** and create a token.
+4. In this GitHub repo, go to **Settings → Secrets and variables → Actions**:
+   - On the **Variables** tab, add `EAS_PROJECT_ID` with the Project ID.
+   - On the **Secrets** tab, add `EXPO_TOKEN` with the token.
+5. Re-run the workflow (Actions → *Headlines news app APK* → **Run workflow**) and install that APK once. APKs built before this setup don't check for updates.
+
+After that, every push sends an update to the installed app. You don't have to reinstall.
+
+### When you still need a new APK
+
+Over-the-air updates can change the app's code, screens and feeds, but not its native parts. If a change adds a package with native code, bump `"version"` in `app.json` (for example `1.0.0` → `1.1.0`) and install the new APK. Older installs won't receive updates built for a different version, so nothing breaks.
+
 ## Notes
 
 - **AP** has no public RSS feed of its own, so its headlines come from Google News' public RSS search, limited to apnews.com. These stories have no images, and tapping one opens it through a Google News link.
@@ -61,6 +83,7 @@ The release APK is signed with the debug key from the generated project. That's 
 | `src/sources.ts` | Outlets and their feed URLs per topic |
 | `src/services/parse.ts` | RSS 2.0 / Atom parsing, image and summary extraction |
 | `src/services/news.ts` | Fetching, 10-minute cache, merging, Today picks |
-| `src/state/` | Settings, saved stories, and the `useStories` hook |
+| `src/state/` | Settings, saved stories, `useStories`, and the update prompt (`useUpdatePrompt`) |
+| `app.config.ts` | Turns on updates and sets the Android version code at build time |
 | `src/screens/` | Today, Feed, Saved, Settings |
 | `src/components/StoryCard.tsx` | The story card (hero, standard and compact layouts) |

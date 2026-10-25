@@ -1,7 +1,8 @@
 name: Headlines news app APK
 
-# Builds the Expo app in news-app/ into an installable Android APK.
-# Download it from the run's "Artifacts" section.
+# Builds the Expo app in news-app/ into an installable Android APK (download it from the run's
+# "Artifacts" section) and, once EXPO_TOKEN and EAS_PROJECT_ID are set up, publishes an
+# over-the-air update so installed apps offer "Update now / Later". See news-app/README.md.
 
 on:
   push:
@@ -19,6 +20,10 @@ jobs:
     defaults:
       run:
         working-directory: news-app
+    env:
+      EAS_PROJECT_ID: ${{ vars.EAS_PROJECT_ID }}
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      APP_VERSION_CODE: ${{ github.run_number }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -51,3 +56,15 @@ jobs:
           name: headlines-apk
           path: news-app/headlines.apk
           if-no-files-found: error
+      - name: Publish over-the-air update
+        if: env.EXPO_TOKEN != '' && env.EAS_PROJECT_ID != ''
+        run: >
+          npx --yes eas-cli@25.3.0 update
+          --channel production
+          --environment production
+          --platform android
+          --message "$(git log -1 --pretty=%s)"
+          --non-interactive
+      - name: Updates not set up
+        if: env.EXPO_TOKEN == '' || env.EAS_PROJECT_ID == ''
+        run: echo "::notice::Skipping the over-the-air update. Add the EXPO_TOKEN secret and EAS_PROJECT_ID variable to turn it on (news-app/README.md)."

@@ -2,7 +2,7 @@
 
 A personal news app built with React Native and Expo (TypeScript). It pulls headlines from public RSS feeds (CNN, BBC, NPR, AP, Fox News, The Verge, ESPN) and shows them in one feed, newest first. Cards show only what the feed provides: headline, image, source, time and a short summary. Tapping a card opens the publisher's page in a reader inside the app.
 
-- Tabs: **Today** (top 5 stories), **Feed** (topic filters: Top, World, Sports, Tech, Entertainment), **Saved**, **Settings**
+- Laid out like Samsung News, with a floating tab bar: **For you** (briefing card with a swipeable top-stories carousel, Top stories, For you), **News** (pinned topic chips and a section per topic you can Follow), **Sports**, and **Following** (saved stories and followed topics). Settings is behind the ⋮ in the header
 - Turn sources on and off, and pick System, Light or Dark appearance, in Settings
 - Saved stories and settings are stored on the phone with AsyncStorage
 - Each feed is cached for 10 minutes. A feed that fails is skipped (its last cached copy is used if one exists)
@@ -86,5 +86,6 @@ Each release is tagged `build-<number>` (the workflow run number, which is also 
 | `WHATSNEW.md` | "What's new" text for the next update |
 | `app.config.ts` | Build-time version number and update repo |
 | `scripts/smoke-test.sh` | CI check that the APK opens on an emulator without crashing |
-| `src/screens/` | Today, Feed, Saved, Settings |
-| `src/components/StoryCard.tsx` | The story card (hero, standard and compact layouts) |
+| `src/screens/` | For you, News, Sports, Following, topic list, Settings, reader |
+| `src/components/StoryCard.tsx` | Story cards: Samsung-style row, lead row and full-image card |
+| `src/components/BriefingCard.tsx`, `FloatingTabBar.tsx`, `TopicChips.tsx` | Briefing carousel, floating tab bar, topic pills |

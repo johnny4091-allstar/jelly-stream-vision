@@ -1,4 +1,5 @@
-- News Hammer name and logo at the top of the Today screen
-- The download is now named news-hammer.apk
-- Fixes the app closing right away after updating to 1.0.7
-- Every update is now test-launched before it's offered to you
+- New look inspired by Samsung News, with a floating tab bar
+- For you: a morning, afternoon or evening briefing with a swipeable top-stories carousel
+- News: topic chips that stay pinned while you scroll, plus a section for each topic
+- Follow topics and find them, along with your saved stories, on the Following tab
+- Settings has moved to the ⋮ menu at the top right

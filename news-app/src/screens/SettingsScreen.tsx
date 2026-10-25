@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ScreenHeader } from '../components/common';
+import { StackHeader } from '../components/common';
 import { currentVersionCode, currentVersionName } from '../services/appUpdate';
 import { clearFeedCache } from '../services/news';
 import { setUpNotifications } from '../services/notifications';
@@ -55,11 +55,9 @@ export function SettingsScreen() {
   };
 
   return (
-    <ScrollView
-      style={{ backgroundColor: c.background }}
-      contentContainerStyle={{ paddingTop: insets.top, paddingBottom: 32 }}
-    >
-      <ScreenHeader title="Settings" />
+    <View style={{ flex: 1, backgroundColor: c.background }}>
+      <StackHeader title="Settings" />
+      <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}>
 
       <Section title="Appearance" footer="System follows your phone's light or dark setting.">
         <View style={[styles.segment, { backgroundColor: c.chip }]}>
@@ -130,7 +128,8 @@ export function SettingsScreen() {
           </Text>
         </View>
       </Section>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 

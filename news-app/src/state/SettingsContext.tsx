@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { SOURCE_IDS } from '../sources';
-import type { SourceId } from '../types';
+import type { SourceId, Topic } from '../types';
 import { loadJSON, saveJSON } from './storage';
 
 export type ThemeMode = 'system' | 'light' | 'dark';
@@ -12,6 +12,8 @@ export interface StoredSettings {
   themeMode: ThemeMode;
   /** Background alerts for new top stories (also read by the background task). */
   notifyTopStories: boolean;
+  /** Topics shown on the Following tab. */
+  followed: Topic[];
 }
 
 interface SettingsValue {
@@ -23,10 +25,13 @@ interface SettingsValue {
   setThemeMode: (mode: ThemeMode) => void;
   notifyTopStories: boolean;
   setNotifyTopStories: (on: boolean) => void;
+  followed: Topic[];
+  isFollowing: (topic: Topic) => boolean;
+  setFollowing: (topic: Topic, on: boolean) => void;
 }
 
 export const SETTINGS_KEY = 'settings:v1';
-export const DEFAULT_SETTINGS: StoredSettings = { disabled: [], themeMode: 'system', notifyTopStories: true };
+export const DEFAULT_SETTINGS: StoredSettings = { disabled: [], themeMode: 'system', notifyTopStories: true, followed: [] };
 const KEY = SETTINGS_KEY;
 const DEFAULTS = DEFAULT_SETTINGS;
 
@@ -66,6 +71,13 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       setThemeMode: (themeMode) => update((s) => ({ ...s, themeMode })),
       notifyTopStories: settings.notifyTopStories,
       setNotifyTopStories: (notifyTopStories) => update((s) => ({ ...s, notifyTopStories })),
+      followed: settings.followed,
+      isFollowing: (topic) => settings.followed.includes(topic),
+      setFollowing: (topic, on) =>
+        update((s) => ({
+          ...s,
+          followed: on ? [...new Set([...s.followed, topic])] : s.followed.filter((t) => t !== topic),
+        })),
     };
   }, [settings, ready, update]);
 

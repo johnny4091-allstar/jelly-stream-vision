@@ -1,20 +1,23 @@
-import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { DarkTheme, DefaultTheme, NavigationContainer, type Theme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useLastNotificationResponse } from 'expo-notifications';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { UpdatePrompt } from './src/components/UpdatePrompt';
 import { navigationRef, openArticle, type RootStackParamList } from './src/navigation';
 import { ArticleScreen } from './src/screens/ArticleScreen';
 import { setUpNotifications, type NotificationData } from './src/services/notifications';
-import { FeedScreen } from './src/screens/FeedScreen';
-import { SavedScreen } from './src/screens/SavedScreen';
+import { FloatingTabBar } from './src/components/FloatingTabBar';
+import { FollowingScreen } from './src/screens/FollowingScreen';
+import { ForYouScreen } from './src/screens/ForYouScreen';
+import { NewsScreen } from './src/screens/NewsScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
-import { TodayScreen } from './src/screens/TodayScreen';
+import { SportsScreen } from './src/screens/SportsScreen';
+import { TopicScreen } from './src/screens/TopicScreen';
 import { SavedProvider } from './src/state/SavedContext';
 import { SettingsProvider, useSettings } from './src/state/SettingsContext';
 import { useTheme } from './src/theme';
@@ -22,40 +25,24 @@ import { useTheme } from './src/theme';
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-const ICONS: Record<string, [keyof typeof Ionicons.glyphMap, keyof typeof Ionicons.glyphMap]> = {
-  Today: ['today', 'today-outline'],
-  Feed: ['newspaper', 'newspaper-outline'],
-  Saved: ['bookmark', 'bookmark-outline'],
-  Settings: ['settings', 'settings-outline'],
-};
-
+// Samsung News-style tabs in a floating bar. Settings lives behind the ⋮ in the header.
 function Tabs() {
-  const c = useTheme();
   return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        animation: 'shift',
-        tabBarActiveTintColor: c.accent,
-        tabBarInactiveTintColor: c.tertiary,
-        tabBarStyle: { backgroundColor: c.card, borderTopColor: c.separator },
-        tabBarIcon: ({ focused, color, size }) => {
-          const [on, off] = ICONS[route.name] ?? ['ellipse', 'ellipse-outline'];
-          return <Ionicons name={focused ? on : off} size={size} color={color} />;
-        },
-      })}
-    >
-      <Tab.Screen name="Today" component={TodayScreen} />
-      <Tab.Screen name="Feed" component={FeedScreen} />
-      <Tab.Screen name="Saved" component={SavedScreen} />
-      <Tab.Screen name="Settings" component={SettingsScreen} />
+    <Tab.Navigator screenOptions={{ headerShown: false, animation: 'shift' }} tabBar={(props) => <FloatingTabBar {...props} />}>
+      <Tab.Screen name="For you" component={ForYouScreen} />
+      <Tab.Screen name="News" component={NewsScreen} />
+      <Tab.Screen name="Sports" component={SportsScreen} />
+      <Tab.Screen name="Following" component={FollowingScreen} />
     </Tab.Navigator>
   );
 }
 
+// Notifications don't exist on web (used only for previewing the layout in a browser).
+const useNotificationResponse = Platform.OS === 'web' ? () => null : useLastNotificationResponse;
+
 /** Opens the story from a tapped notification, including one that launched the app. */
 function useNotificationTaps(navReady: boolean) {
-  const response = useLastNotificationResponse();
+  const response = useNotificationResponse();
   const handled = useRef<string | null>(null);
   useEffect(() => {
     if (!navReady || !response) return;
@@ -92,6 +79,8 @@ function Root() {
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Tabs" component={Tabs} />
         <Stack.Screen name="Article" component={ArticleScreen} options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="Topic" component={TopicScreen} options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="Settings" component={SettingsScreen} options={{ animation: 'slide_from_right' }} />
       </Stack.Navigator>
       <UpdatePrompt />
     </NavigationContainer>

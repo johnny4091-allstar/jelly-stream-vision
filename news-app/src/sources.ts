@@ -93,10 +93,26 @@ export function getSource(id: SourceId): Source | undefined {
   return SOURCES.find((s) => s.id === id);
 }
 
-export const TOPICS: { id: Topic; label: string }[] = [
-  { id: 'top', label: 'Top' },
-  { id: 'world', label: 'World' },
-  { id: 'sports', label: 'Sports' },
-  { id: 'tech', label: 'Tech' },
-  { id: 'entertainment', label: 'Entertainment' },
+export interface TopicInfo {
+  id: Topic;
+  /** Chip label on the News tab. */
+  label: string;
+  /** Section and screen title. */
+  title: string;
+  /** Ionicons name for the chip's round badge. */
+  icon: string;
+  /** Badge colour. */
+  color: string;
+}
+
+export const TOPICS: TopicInfo[] = [
+  { id: 'top', label: 'News', title: 'Top stories', icon: 'newspaper', color: '#E3141B' },
+  { id: 'world', label: 'World', title: 'World', icon: 'earth', color: '#1F6FD1' },
+  { id: 'sports', label: 'Sports', title: 'Sports', icon: 'football', color: '#1E9E57' },
+  { id: 'tech', label: 'Tech', title: 'Tech', icon: 'hardware-chip', color: '#6B4FD8' },
+  { id: 'entertainment', label: 'Entertainment', title: 'Entertainment', icon: 'film', color: '#E0730F' },
 ];
+
+export function getTopic(id: Topic): TopicInfo {
+  return TOPICS.find((t) => t.id === id) ?? TOPICS[0]!;
+}

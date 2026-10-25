@@ -18,9 +18,9 @@ interface StoriesState {
 /**
  * Stories for one topic from the enabled sources. Loads on mount, whenever the topic or sources
  * change, and when the app comes back to the foreground (the 10-minute cache decides whether that
- * hits the network). Pull-to-refresh always goes to the network.
+ * hits the network). Pull-to-refresh, or a new `refreshToken`, always goes to the network.
  */
-export function useStories(topic: Topic): StoriesState {
+export function useStories(topic: Topic, refreshToken = 0): StoriesState {
   const { enabledSources, ready } = useSettings();
   const [stories, setStories] = useState<Story[]>([]);
   const [failed, setFailed] = useState<SourceId[]>([]);
@@ -65,6 +65,11 @@ export function useStories(topic: Topic): StoriesState {
     setRefreshing(true);
     load(true);
   }, [load]);
+
+  // A parent's pull-to-refresh bumps refreshToken to force a network fetch.
+  useEffect(() => {
+    if (refreshToken > 0) refresh();
+  }, [refreshToken]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return { stories, failed, loading, refreshing, refresh };
 }

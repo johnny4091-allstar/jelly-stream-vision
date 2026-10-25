@@ -20,6 +20,8 @@ export interface Source {
   name: string;
   /** Brand accent used for the source label on cards. */
   color: string;
+  /** Text some feeds append to every headline (e.g. " - AP News"), removed for display. */
+  titleSuffix?: string;
   /** One feed URL per topic the outlet covers. `top` is the outlet's main feed. */
   feeds: Partial<Record<Topic, string>>;
 }

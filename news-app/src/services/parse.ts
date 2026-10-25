@@ -194,9 +194,12 @@ function atomLink(entry: Node): string {
 
 function makeStory(source: Source, fields: Omit<Story, 'id' | 'sourceId' | 'sourceName'>): Story | null {
   const link = fields.link.trim();
-  const title = cleanText(fields.title);
+  let title = cleanText(fields.title);
+  if (source.titleSuffix && title.endsWith(source.titleSuffix)) title = title.slice(0, -source.titleSuffix.length);
   if (!link || !title || !/^https?:\/\//.test(link)) return null;
-  return { ...fields, title, link, id: link, sourceId: source.id, sourceName: source.name };
+  // Aggregator feeds repeat the headline as the description; that's not a summary.
+  const summary = fields.summary.startsWith(title) ? '' : fields.summary;
+  return { ...fields, title, summary, link, id: link, sourceId: source.id, sourceName: source.name };
 }
 
 export function parseFeed(xml: string, source: Source): Story[] {

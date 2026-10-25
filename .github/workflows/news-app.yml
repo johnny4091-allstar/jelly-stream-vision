@@ -1,0 +1,50 @@
+name: Headlines news app APK
+
+# Builds the Expo app in news-app/ into an installable Android APK.
+# Download it from the run's "Artifacts" section.
+
+on:
+  push:
+    paths:
+      - 'news-app/**'
+      - '.github/workflows/news-app.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: news-app
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: news-app/package-lock.json
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v5
+      - run: npm ci
+      - name: Typecheck
+        run: npx tsc --noEmit
+      - name: Generate native Android project
+        run: npx expo prebuild --platform android --no-install
+      - name: Build release APK
+        working-directory: news-app/android
+        # The generated project signs release builds with the debug key, so the APK installs directly.
+        run: ./gradlew assembleRelease --no-daemon
+      - name: Rename APK
+        run: cp android/app/build/outputs/apk/release/app-release.apk headlines.apk
+      - uses: actions/upload-artifact@v5
+        with:
+          name: headlines-apk
+          path: news-app/headlines.apk
+          if-no-files-found: error

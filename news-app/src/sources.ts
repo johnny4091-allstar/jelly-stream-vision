@@ -37,7 +37,55 @@ export const SOURCES: Source[] = [
       entertainment: 'https://feeds.npr.org/1008/rss.xml',
     },
   },
+  {
+    // AP doesn't publish RSS, so its stories come via Google News' public RSS search, limited to apnews.com.
+    id: 'ap',
+    name: 'AP',
+    color: '#E4002B',
+    titleSuffix: ' - AP News',
+    feeds: {
+      top: googleNews('site:apnews.com when:1d'),
+      world: googleNews('site:apnews.com world when:1d'),
+      sports: googleNews('site:apnews.com sports when:1d'),
+      tech: googleNews('site:apnews.com technology when:2d'),
+      entertainment: googleNews('site:apnews.com entertainment when:2d'),
+    },
+  },
+  {
+    id: 'fox',
+    name: 'Fox News',
+    color: '#003366',
+    feeds: {
+      top: 'https://moxie.foxnews.com/google-publisher/latest.xml',
+      world: 'https://moxie.foxnews.com/google-publisher/world.xml',
+      sports: 'https://moxie.foxnews.com/google-publisher/sports.xml',
+      tech: 'https://moxie.foxnews.com/google-publisher/tech.xml',
+    },
+  },
+  {
+    id: 'verge',
+    name: 'The Verge',
+    color: '#5200FF',
+    feeds: {
+      top: 'https://www.theverge.com/rss/index.xml',
+      tech: 'https://www.theverge.com/rss/tech/index.xml',
+      entertainment: 'https://www.theverge.com/rss/entertainment/index.xml',
+    },
+  },
+  {
+    id: 'espn',
+    name: 'ESPN',
+    color: '#D00000',
+    feeds: {
+      top: 'https://www.espn.com/espn/rss/news',
+      sports: 'https://www.espn.com/espn/rss/news',
+    },
+  },
 ];
+
+function googleNews(query: string): string {
+  return `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en-US&gl=US&ceid=US:en`;
+}
 
 export const SOURCE_IDS = SOURCES.map((s) => s.id);
 

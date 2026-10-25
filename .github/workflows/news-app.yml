@@ -31,6 +31,9 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: android-actions/setup-android@v3
+        with:
+          # Gradle downloads the platform and build tools the generated project asks for.
+          packages: 'platform-tools'
       - uses: gradle/actions/setup-gradle@v5
       - run: npm ci
       - name: Typecheck

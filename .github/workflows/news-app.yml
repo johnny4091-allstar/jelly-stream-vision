@@ -61,6 +61,12 @@ jobs:
         if: env.GH_TOKEN != '' && env.UPDATE_REPO != ''
         # Installed apps check this repo's latest release and offer "Update now / Later".
         run: |
+          # GitHub can't create a release in a repo with no commits, so give a new one a README.
+          if ! gh api "repos/$UPDATE_REPO/commits?per_page=1" >/dev/null 2>&1; then
+            printf '# Headlines releases\n\nAPK builds of the Headlines app. The app installs updates from here.\n' > releases-readme.md
+            gh api -X PUT "repos/$UPDATE_REPO/contents/README.md" \
+              -f message="Add README" -f content="$(base64 -w0 releases-readme.md)" >/dev/null
+          fi
           # A re-run of the same build keeps its number; that release already exists.
           if gh release view "build-$APP_VERSION_CODE" --repo "$UPDATE_REPO" >/dev/null 2>&1; then
             echo "Release build-$APP_VERSION_CODE already exists"; exit 0

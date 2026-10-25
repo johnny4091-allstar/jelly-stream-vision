@@ -55,7 +55,7 @@ No Expo services are involved. Every GitHub Actions build gets a higher version 
 
 ### One-time setup
 
-1. Create a new **public** repository, for example `johnny4091-allstar/headlines-releases`. It can stay empty.
+1. Create a new **public** repository, for example `johnny4091-allstar/headlines-releases`. It can stay empty; the first build adds a README so releases can be published.
 2. Create a token that can publish releases there: GitHub → Settings → Developer settings → **Fine-grained personal access tokens** → Generate new token. Under *Repository access*, choose only the releases repo, and set *Contents* to **Read and write**.
 3. In **this** repo, go to Settings → Secrets and variables → Actions:
    - On the **Variables** tab, add `UPDATE_REPO` = `johnny4091-allstar/headlines-releases`.

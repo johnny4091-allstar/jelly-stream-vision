@@ -61,6 +61,8 @@ No Expo services are involved. Every GitHub Actions build gets a higher version 
 
 After that, every push that changes `news-app/` builds a new APK, publishes it, and installed apps offer it.
 
+Each release is tagged `build-<number>` (the workflow run number, which is also the APK's Android version code). The app always offers the release marked **Latest**.
+
 ## Notes
 
 - **AP** has no public RSS feed of its own, so its headlines come from Google News' public RSS search, limited to apnews.com. These stories have no images, and tapping one opens it through a Google News link.

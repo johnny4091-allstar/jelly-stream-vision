@@ -10,7 +10,10 @@ import { Platform } from 'react-native';
 
 export interface AppUpdate {
   versionCode: number;
-  notes: string;
+  /** Human version, e.g. "1.0.7". */
+  versionName: string;
+  /** "What's new" lines from the release notes (WHATSNEW.md in the repo). */
+  whatsNew: string[];
   apkUrl: string;
   sizeBytes: number;
 }
@@ -31,8 +34,22 @@ export function currentVersionCode(): number {
   return Number(Application.nativeBuildVersion) || 0;
 }
 
+export function currentVersionName(): string {
+  return Application.nativeApplicationVersion ?? '';
+}
+
+/** Release notes as a list: Markdown bullets become items, headings and blank lines are dropped. */
+function parseNotes(body: string): string[] {
+  return body
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter((l) => l && !l.startsWith('#'))
+    .map((l) => l.replace(/^[-*\u2022]\s+/, ''));
+}
+
 interface ReleaseJSON {
   tag_name?: string;
+  name?: string | null;
   body?: string | null;
   assets?: { name: string; browser_download_url: string; size: number }[];
 }
@@ -51,7 +68,8 @@ export async function checkForUpdate(): Promise<AppUpdate | null> {
   if (!versionCode || !apk || versionCode <= currentVersionCode()) return null;
   return {
     versionCode,
-    notes: (release.body ?? '').trim(),
+    versionName: /\d+\.\d+\.\d+/.exec(release.name ?? '')?.[0] ?? `build ${versionCode}`,
+    whatsNew: parseNotes(release.body ?? ''),
     apkUrl: apk.browser_download_url,
     sizeBytes: apk.size,
   };

@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, AppState, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, AppState, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { checkForUpdate, downloadAndInstall, updatesEnabled, type AppUpdate } from '../services/appUpdate';
+import {
+  checkForUpdate,
+  currentVersionName,
+  downloadAndInstall,
+  updatesEnabled,
+  type AppUpdate,
+} from '../services/appUpdate';
 import { loadJSON, saveJSON } from '../state/storage';
 import { type, useTheme } from '../theme';
 
@@ -72,20 +78,33 @@ export function UpdatePrompt() {
     }
   };
 
-  const sizeMb = update.sizeBytes > 0 ? ` (${(update.sizeBytes / 1_048_576).toFixed(0)} MB)` : '';
+  const sizeMb = update.sizeBytes > 0 ? `  \u00B7  ${(update.sizeBytes / 1_048_576).toFixed(0)} MB` : '';
 
   return (
     <Modal transparent animationType="fade" visible onRequestClose={downloading ? undefined : later}>
       <View style={styles.backdrop}>
         <View style={[styles.sheet, { backgroundColor: c.card }]}>
           <Text style={[type.title, { color: c.text }]}>Update available</Text>
-          <Text style={[type.body, { color: c.secondary }]}>
-            A new version of Headlines is ready{sizeMb}.
+          <Text style={[type.meta, { color: c.accent }]}>
+            Version {update.versionName}
+            {sizeMb}
           </Text>
-          {update.notes ? (
-            <Text style={[type.caption, { color: c.tertiary }]} numberOfLines={4}>
-              {update.notes}
-            </Text>
+          {currentVersionName() ? (
+            <Text style={[type.caption, { color: c.tertiary }]}>You have version {currentVersionName()}</Text>
+          ) : null}
+
+          {update.whatsNew.length > 0 ? (
+            <View style={[styles.whatsNew, { backgroundColor: c.background }]}>
+              <Text style={[styles.whatsNewTitle, { color: c.text }]}>What's new</Text>
+              <ScrollView style={styles.notes} contentContainerStyle={{ gap: 6 }}>
+                {update.whatsNew.map((line, i) => (
+                  <View key={i} style={styles.noteRow}>
+                    <Text style={[type.body, { color: c.accent }]}>{'\u2022'}</Text>
+                    <Text style={[type.body, { color: c.secondary, flex: 1 }]}>{line}</Text>
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
           ) : null}
           {error ? <Text style={[type.caption, { color: c.accent }]}>{error}</Text> : null}
 
@@ -125,4 +144,8 @@ const styles = StyleSheet.create({
   track: { height: 6, borderRadius: 3, overflow: 'hidden' },
   bar: { height: 6, borderRadius: 3 },
   progressRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  whatsNew: { borderRadius: 14, padding: 14, gap: 8, marginTop: 4 },
+  whatsNewTitle: { fontSize: 15, fontWeight: '700' },
+  notes: { maxHeight: 220 },
+  noteRow: { flexDirection: 'row', gap: 8 },
 });

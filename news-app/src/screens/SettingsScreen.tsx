@@ -1,10 +1,12 @@
 import * as Haptics from 'expo-haptics';
 import type { ReactNode } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ScreenHeader } from '../components/common';
+import { currentVersionCode, currentVersionName } from '../services/appUpdate';
 import { clearFeedCache } from '../services/news';
+import { setUpNotifications } from '../services/notifications';
 import { SOURCES } from '../sources';
 import { useSettings, type ThemeMode } from '../state/SettingsContext';
 import { type, useTheme } from '../theme';
@@ -29,7 +31,23 @@ function Section({ title, footer, children }: { title: string; footer?: string; 
 export function SettingsScreen() {
   const c = useTheme();
   const insets = useSafeAreaInsets();
-  const { themeMode, setThemeMode, isEnabled, setSourceEnabled } = useSettings();
+  const { themeMode, setThemeMode, isEnabled, setSourceEnabled, notifyTopStories, setNotifyTopStories } =
+    useSettings();
+
+  const toggleNotifications = async (on: boolean) => {
+    setNotifyTopStories(on);
+    if (!on) return;
+    const granted = await setUpNotifications().catch(() => false);
+    if (!granted) {
+      Alert.alert('Notifications are off', 'Allow notifications for Headlines in your phone settings.', [
+        { text: 'Not now', style: 'cancel' },
+        { text: 'Open settings', onPress: () => Linking.openSettings().catch(() => {}) },
+      ]);
+    }
+  };
+
+  const versionName = currentVersionName();
+  const versionCode = currentVersionCode();
 
   const clearCache = async () => {
     await clearFeedCache();
@@ -83,10 +101,34 @@ export function SettingsScreen() {
         ))}
       </Section>
 
+      <Section
+        title="Notifications"
+        footer="Checks your sources in the background about every 30 minutes and lets you know about a new top story. Android may check less often to save battery."
+      >
+        <View style={styles.row}>
+          <Text style={[styles.rowLabel, { color: c.text }]}>New top stories</Text>
+          <Switch
+            value={notifyTopStories}
+            onValueChange={toggleNotifications}
+            trackColor={{ true: '#34C759' }}
+            accessibilityLabel="Notify me about new top stories"
+          />
+        </View>
+      </Section>
+
       <Section title="Data" footer="Feeds are cached for 10 minutes so the app opens fast.">
         <Pressable onPress={clearCache} style={styles.row} accessibilityRole="button">
           <Text style={[styles.rowLabel, { color: c.accent }]}>Clear feed cache</Text>
         </Pressable>
+      </Section>
+
+      <Section title="About">
+        <View style={styles.row}>
+          <Text style={[styles.rowLabel, { color: c.text }]}>Version</Text>
+          <Text style={{ color: c.tertiary, fontSize: 17 }}>
+            {versionName ? `${versionName}${versionCode ? ` (build ${versionCode})` : ''}` : 'Development'}
+          </Text>
+        </View>
       </Section>
     </ScrollView>
   );

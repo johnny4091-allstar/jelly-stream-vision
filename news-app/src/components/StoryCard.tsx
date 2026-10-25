@@ -4,7 +4,8 @@ import { Image } from 'expo-image';
 import { memo, useEffect, useRef } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { openStory, shareStory } from '../services/actions';
+import { openArticle } from '../navigation';
+import { shareStory } from '../services/actions';
 import { getSource } from '../sources';
 import { useSaved } from '../state/SavedContext';
 import { type, useTheme } from '../theme';
@@ -94,7 +95,7 @@ function StoryCardImpl({ story, variant = 'standard', index = 0 }: Props) {
       }}
     >
       <Pressable
-        onPress={() => openStory(story, { toolbar: c.card, controls: c.accent })}
+        onPress={() => openArticle(story)}
         onPressIn={() => pressTo(0.97)}
         onPressOut={() => pressTo(1)}
         accessibilityRole="link"

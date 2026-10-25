@@ -1,12 +1,13 @@
 # Headlines
 
-A personal news app built with React Native and Expo (TypeScript). It pulls headlines from public RSS feeds (CNN, BBC, NPR, AP, Fox News, The Verge, ESPN) and shows them in one feed, newest first. Cards show only what the feed provides: headline, image, source, time and a short summary. Tapping a card opens the publisher's page in an in-app browser.
+A personal news app built with React Native and Expo (TypeScript). It pulls headlines from public RSS feeds (CNN, BBC, NPR, AP, Fox News, The Verge, ESPN) and shows them in one feed, newest first. Cards show only what the feed provides: headline, image, source, time and a short summary. Tapping a card opens the publisher's page in a reader inside the app.
 
 - Tabs: **Today** (top 5 stories), **Feed** (topic filters: Top, World, Sports, Tech, Entertainment), **Saved**, **Settings**
 - Turn sources on and off, and pick System, Light or Dark appearance, in Settings
 - Saved stories and settings are stored on the phone with AsyncStorage
 - Each feed is cached for 10 minutes. A feed that fails is skipped (its last cached copy is used if one exists)
 - Pull to refresh. The app also refreshes when it opens or comes back to the foreground
+- Notifications for new top stories, checked in the background about every 30 minutes (Android may check less often to save battery). Tapping one opens the story. Turn them off in Settings → Notifications
 
 ## Test on your phone with Expo Go
 
@@ -48,6 +49,8 @@ When the app opens, and when you come back to it (at most every 30 minutes), it 
 - **Update now** downloads the APK in the app, showing progress, and opens Android's install screen. The first time, Android asks you to allow installs from Headlines. Your saved stories and settings are kept.
 - **Later** asks again in 12 hours, or sooner if an even newer build comes out.
 
+The pop-up shows the new version number (for example `1.0.7`) and a **What's new** list. That list comes from `WHATSNEW.md`: one `- ` line per change. Update it in the same commit as the change. The version is `"version"` from `app.json` (`1.0`) plus the build number. If the app is in the background when a new version comes out, you also get a notification.
+
 No Expo services are involved. Every GitHub Actions build gets a higher version number and is published as a release in a **public** GitHub repo, and the app checks that repo. A public repo is needed because this one is private, and a phone can't read a private repo without a password built into the app. The public repo only holds the APK files, not your code.
 
 ### One-time setup
@@ -78,6 +81,9 @@ Each release is tagged `build-<number>` (the workflow run number, which is also 
 | `src/services/news.ts` | Fetching, 10-minute cache, merging, Today picks |
 | `src/state/` | Settings, saved stories, and the `useStories` hook |
 | `src/services/appUpdate.ts`, `src/components/UpdatePrompt.tsx` | In-app updates: check, download, install |
+| `src/services/notifications.ts` | Background check and local notifications |
+| `src/screens/ArticleScreen.tsx` | The in-app reader |
+| `WHATSNEW.md` | "What's new" text for the next update |
 | `app.config.ts` | Build-time version number and update repo |
 | `src/screens/` | Today, Feed, Saved, Settings |
 | `src/components/StoryCard.tsx` | The story card (hero, standard and compact layouts) |

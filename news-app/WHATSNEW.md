@@ -1,0 +1,5 @@
+- Stories now open inside the app in a built-in reader, with save and share at the top
+- Notifications for new top stories (turn them off in Settings → Notifications)
+- Tapping a notification opens that story
+- The update pop-up now shows the version number and what's new
+- Your app version is listed in Settings → About

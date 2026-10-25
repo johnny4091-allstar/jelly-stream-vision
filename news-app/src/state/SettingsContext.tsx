@@ -6,10 +6,12 @@ import { loadJSON, saveJSON } from './storage';
 
 export type ThemeMode = 'system' | 'light' | 'dark';
 
-interface StoredSettings {
+export interface StoredSettings {
   /** Sources the user switched off. Stored as a deny-list so newly added sources start on. */
   disabled: SourceId[];
   themeMode: ThemeMode;
+  /** Background alerts for new top stories (also read by the background task). */
+  notifyTopStories: boolean;
 }
 
 interface SettingsValue {
@@ -19,10 +21,14 @@ interface SettingsValue {
   setSourceEnabled: (id: SourceId, on: boolean) => void;
   themeMode: ThemeMode;
   setThemeMode: (mode: ThemeMode) => void;
+  notifyTopStories: boolean;
+  setNotifyTopStories: (on: boolean) => void;
 }
 
-const KEY = 'settings:v1';
-const DEFAULTS: StoredSettings = { disabled: [], themeMode: 'system' };
+export const SETTINGS_KEY = 'settings:v1';
+export const DEFAULT_SETTINGS: StoredSettings = { disabled: [], themeMode: 'system', notifyTopStories: true };
+const KEY = SETTINGS_KEY;
+const DEFAULTS = DEFAULT_SETTINGS;
 
 const SettingsContext = createContext<SettingsValue | null>(null);
 
@@ -58,6 +64,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         })),
       themeMode: settings.themeMode,
       setThemeMode: (themeMode) => update((s) => ({ ...s, themeMode })),
+      notifyTopStories: settings.notifyTopStories,
+      setNotifyTopStories: (notifyTopStories) => update((s) => ({ ...s, notifyTopStories })),
     };
   }, [settings, ready, update]);
 

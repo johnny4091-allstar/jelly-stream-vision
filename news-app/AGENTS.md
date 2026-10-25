@@ -27,7 +27,7 @@ Run lint and typecheck before declaring any task done.
 
 - This app uses **React Navigation** bottom tabs (owner's choice), not Expo Router. Tabs are set up in `App.tsx`; screens live in `src/screens/`.
 - Feed fetching, parsing and the 10-minute cache live in `src/services/`. Add or change outlets in `src/sources.ts`.
-- Only show what a feed provides (headline, summary, image). Never fetch or render full article text; tapping opens the publisher's page in the in-app browser.
+- Only show what a feed provides (headline, summary, image). Never fetch or render full article text; tapping opens the publisher's page in the in-app reader (`ArticleScreen`, a WebView).
 
 ## Building with EAS
 

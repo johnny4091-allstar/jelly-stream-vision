@@ -65,10 +65,13 @@ jobs:
           if gh release view "build-$APP_VERSION_CODE" --repo "$UPDATE_REPO" >/dev/null 2>&1; then
             echo "Release build-$APP_VERSION_CODE already exists"; exit 0
           fi
+          VERSION="$(node -p "require('./app.json').expo.version").$APP_VERSION_CODE"
+          # The update pop-up shows these lines under "What's new".
+          if [ -s WHATSNEW.md ]; then cp WHATSNEW.md notes.md; else git log -1 --pretty=%s > notes.md; fi
           gh release create "build-$APP_VERSION_CODE" headlines.apk \
             --repo "$UPDATE_REPO" \
-            --title "Headlines build $APP_VERSION_CODE" \
-            --notes "$(git log -1 --pretty=%s)" \
+            --title "Headlines $VERSION" \
+            --notes-file notes.md \
             --latest
       - name: Updates not set up
         if: env.GH_TOKEN == '' || env.UPDATE_REPO == ''

@@ -114,7 +114,8 @@ interface OpenMeteo {
   };
   hourly: { time: number[]; temperature_2m: number[]; weather_code: number[]; is_day: number[]; precipitation_probability: (number | null)[] };
   daily: {
-    time: string[];
+    /** With timeformat=unixtime these are numbers too: midnight at the place, in seconds. */
+    time: (number | string)[];
     weather_code: number[];
     temperature_2m_max: number[];
     temperature_2m_min: number[];
@@ -162,8 +163,8 @@ export async function fetchForecast(coords: Coords): Promise<Omit<Weather, 'plac
       wind: data.current.wind_speed_10m,
     },
     hourly,
-    daily: data.daily.time.map((date, i) => ({
-      date,
+    daily: data.daily.time.map((t, i) => ({
+      date: typeof t === 'number' ? new Date((t + data.utc_offset_seconds) * 1000).toISOString().slice(0, 10) : t,
       high: data.daily.temperature_2m_max[i] ?? 0,
       low: data.daily.temperature_2m_min[i] ?? 0,
       code: data.daily.weather_code[i] ?? 0,

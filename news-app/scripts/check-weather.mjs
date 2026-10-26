@@ -11,7 +11,7 @@ for (const [name, coords] of places) {
     const today = w.daily[0];
     console.log(
       `${name.padEnd(10)} ${formatTemp(w.current.temp, 'f')} ${condition(w.current.code).label}, ` +
-        `H ${formatTemp(today.high, 'f')} L ${formatTemp(today.low, 'f')}, ${w.hourly.length} hours, ${w.daily.length} days`,
+        `H ${formatTemp(today.high, 'f')} L ${formatTemp(today.low, 'f')}, ${w.hourly.length} hours, days ${w.daily.map((d) => d.date).join(' ')}`,
     );
   } catch (err) {
     console.log(`::warning::Weather for ${name} failed: ${err instanceof Error ? err.message : err}`);

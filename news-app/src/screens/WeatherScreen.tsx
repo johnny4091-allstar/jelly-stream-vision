@@ -18,8 +18,8 @@ const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 function dayLabel(d: DayForecast, i: number): string {
   if (i === 0) return 'Today';
-  const [y, m, day] = d.date.split('-').map(Number);
-  return DAYS[new Date(y!, m! - 1, day).getDay()] ?? d.date;
+  const [y, m, day] = String(d.date).split('-').map(Number);
+  return DAYS[new Date(y!, m! - 1, day).getDay()] ?? '';
 }
 
 /** The full forecast: now, the next 24 hours and the week. */

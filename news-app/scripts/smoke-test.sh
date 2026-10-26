@@ -85,6 +85,11 @@ check_alive() {
     echo "$label: crashed or stopped responding"
     return 1
   fi
+  # The weather error guard keeps the app open, but a caught error is still a bug.
+  if grep -q "\[weather\] UI error" "logcat-$label.txt"; then
+    echo "$label: the weather UI threw an error (see above)"
+    return 1
+  fi
   echo "$label: running"
 }
 
@@ -98,6 +103,11 @@ weather_flow() {
   adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null
   sleep 30
   check_alive weather-ask || return 1
+  # A newer published version shows the update pop-up over everything; dismiss it.
+  if tap "Later"; then
+    sleep 2
+    ui_texts >/dev/null
+  fi
   # The user's path: "Show weather", then Android's location pop-up.
   if tap "Show weather"; then
     sleep 4

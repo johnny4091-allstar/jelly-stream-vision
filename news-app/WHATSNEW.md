@@ -1,5 +1,5 @@
-- New: local weather. Tap "Show weather" on For you and allow location to see the weather where you are, with the next 24 hours and a 7-day forecast
-- New: rain radar on the weather card. Tap it for a full-screen radar map that plays the last 2 hours; pinch to zoom and drag to look around
-- The temperature shows next to the News Hammer name; tap it for the full forecast
+- Fixed: opening the weather no longer closes the app
+- Local weather on For you, with the next 24 hours and a 7-day forecast. Tap "Show weather" and allow location
+- Rain radar on the weather card. Tap it for a full-screen radar map that plays the last 2 hours
+- Finding your location is more reliable, including indoors
 - Settings → Weather: switch °F / °C, or turn weather off
-- The "Couldn't reach…" notice is shorter when many sources are offline

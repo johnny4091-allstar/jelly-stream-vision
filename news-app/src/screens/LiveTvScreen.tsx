@@ -3,7 +3,7 @@ import { useIsFocused, useScrollToTop } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, View, type ScrollViewInstance } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View, type ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 
@@ -56,31 +56,38 @@ function Player({ channel, playing }: { channel: LiveChannel; playing: boolean }
   const c = useTheme();
   const [result, setResult] = useState<LiveResult | null>(null);
   const [blocked, setBlocked] = useState(false);
-  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     setResult(null);
     setBlocked(false);
-    resolveLive(channel, attempt > 0).then((r) => {
+    resolveLive(channel).then((r) => {
       if (!cancelled) setResult(r);
     });
     return () => {
       cancelled = true;
     };
-  }, [channel, attempt]);
+  }, [channel]);
 
   const live = result?.status === 'live' ? result : null;
   const watchInApp = () => live && openWatch(liveWatchUrl(live.videoId), channel.name);
-  const retry = () => setAttempt((n) => n + 1);
+  const watchChannel = () => openWatch(liveChannelUrl(channel), channel.name);
 
   let body;
   if (!result) {
     body = <PlayerMessage title={`Finding ${channel.name}…`} />;
-  } else if (result.status === 'offline') {
-    body = <PlayerMessage icon="moon-outline" title={`${channel.name} isn't live right now`} action={{ label: 'Try again', onPress: retry }} />;
-  } else if (result.status === 'error') {
-    body = <PlayerMessage icon="cloud-offline-outline" title="Couldn't reach YouTube" action={{ label: 'Try again', onPress: retry }} />;
+  } else if (result.status !== 'live') {
+    // The lookup can fail (YouTube changes its page, or asks to confirm you're not a bot). YouTube's
+    // own /live page always forwards to whatever the channel is streaming, so offer that instead.
+    body = (
+      <Pressable onPress={watchChannel} style={[styles.web, { backgroundColor: channel.color }]} accessibilityRole="button" accessibilityLabel={`Watch ${channel.name}`}>
+        <View style={[styles.web, styles.paused, { backgroundColor: 'transparent' }]}>
+          <Text style={styles.fallbackWordmark}>{channel.short}</Text>
+          <Ionicons name="play-circle" size={60} color="#fff" />
+          <Text style={styles.playerMsg}>Tap to watch live</Text>
+        </View>
+      </Pressable>
+    );
   } else if (!result.embeddable || blocked) {
     body = (
       <Pressable onPress={watchInApp} style={styles.web} accessibilityRole="button" accessibilityLabel={`Watch ${channel.name}`}>
@@ -127,7 +134,7 @@ function Player({ channel, playing }: { channel: LiveChannel; playing: boolean }
           {channel.name}
         </Text>
         <Pressable
-          onPress={() => (live ? watchInApp() : Linking.openURL(liveChannelUrl(channel)).catch(() => {}))}
+          onPress={() => (live ? watchInApp() : watchChannel())}
           hitSlop={8}
           accessibilityRole="link"
           style={[styles.openYt, { borderColor: c.separator }]}
@@ -224,6 +231,7 @@ const styles = StyleSheet.create({
   web: { flex: 1, backgroundColor: '#000' },
   paused: { alignItems: 'center', justifyContent: 'center', gap: 10, padding: 16 },
   dim: { backgroundColor: 'rgba(0,0,0,0.35)' },
+  fallbackWordmark: { color: '#fff', fontSize: 24, fontWeight: '900', letterSpacing: -0.3 },
   playerMsg: { color: '#fff', fontSize: 15, fontWeight: '600', textAlign: 'center' },
   playerBtn: { borderRadius: 999, borderWidth: 1.5, borderColor: '#fff', paddingHorizontal: 16, paddingVertical: 6 },
   playerBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },

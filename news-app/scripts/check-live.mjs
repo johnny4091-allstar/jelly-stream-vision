@@ -1,6 +1,8 @@
 // Looks up every Live TV channel the way the app does and prints what it finds, so a wrong handle
 // or a channel that blocks embedding shows up in the CI log. Node 24 runs the TypeScript directly.
-import { LIVE_CHANNELS, resolveLive } from '../src/live.ts';
+import { LIVE_CHANNELS, liveDebug, resolveLive } from '../src/live.ts';
+
+liveDebug.log = (msg) => console.log(`    ${msg}`);
 
 let live = 0;
 for (const ch of LIVE_CHANNELS) {

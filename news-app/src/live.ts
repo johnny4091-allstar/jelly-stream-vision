@@ -131,10 +131,22 @@ export function parseLiveVideoId(html: string): string | null {
   return null;
 }
 
+/** Set by the CI check to see what YouTube actually returned. */
+export const liveDebug: { log?: (msg: string) => void } = {};
+
 async function liveVideoIdFrom(url: string): Promise<string | null> {
   const res = await fetch(url, { headers: HEADERS });
-  if (!res.ok) return null;
-  return parseLiveVideoId(await res.text());
+  if (!res.ok) {
+    liveDebug.log?.(`${url} -> HTTP ${res.status}`);
+    return null;
+  }
+  const html = await res.text();
+  const id = parseLiveVideoId(html);
+  if (!id && liveDebug.log) {
+    const title = /<title>([^<]*)<\/title>/.exec(html)?.[1] ?? '';
+    liveDebug.log(`${url} -> ${res.url} (${html.length} bytes) title="${title}" canonical=${/rel="canonical" href="([^"]+)"/.exec(html)?.[1] ?? 'none'}`);
+  }
+  return id;
 }
 
 /** YouTube's oEmbed answers 401/403 for videos whose owner turned off playback in other apps. */
@@ -193,7 +205,7 @@ export function liveWatchUrl(videoId: string): string {
   return `https://m.youtube.com/watch?v=${videoId}`;
 }
 
-/** The channel's live page, for when nothing could be resolved. */
+/** The channel's live page on YouTube's mobile site; YouTube forwards it to the current stream. */
 export function liveChannelUrl(channel: LiveChannel): string {
-  return `https://www.youtube.com/${channel.handle}/live`;
+  return `https://m.youtube.com/${channel.handle}/live`;
 }

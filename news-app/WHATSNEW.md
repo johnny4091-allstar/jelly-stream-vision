@@ -1,4 +1,4 @@
-- Live TV fixed: each channel now finds its live stream, and streams that can't play inside other apps open on YouTube's site within News Hammer
+- Live TV fixed: every channel plays. When a stream can't play in the small player, tap it to watch on YouTube's site without leaving News Hammer
 - Notifications for new top stories now check every 15 minutes
 - New: notifications when an app update is available (Settings → Notifications → App updates)
 - After you allow notifications, a short guide walks you through letting News Hammer run in the background (including Samsung's Battery → Unrestricted)

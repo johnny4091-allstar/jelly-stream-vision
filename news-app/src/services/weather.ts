@@ -28,6 +28,8 @@ export interface DayForecast {
 export interface Weather {
   fetchedAt: number;
   place: string;
+  /** Where the forecast is for; also centres the radar. Missing from forecasts cached by 1.0.23. */
+  coords?: Coords;
   current: { temp: number; feelsLike: number; code: number; isDay: boolean; humidity: number; wind: number };
   hourly: HourForecast[];
   daily: DayForecast[];

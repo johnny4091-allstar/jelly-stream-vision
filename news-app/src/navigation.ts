@@ -10,6 +10,7 @@ export type RootStackParamList = {
   Settings: undefined;
   Watch: { url: string; title: string };
   Weather: undefined;
+  Radar: undefined;
 };
 
 export type ArticleScreenProps = NativeStackScreenProps<RootStackParamList, 'Article'>;
@@ -35,6 +36,11 @@ export function openWatch(url: string, title: string): void {
 /** The full forecast for where the phone is. */
 export function openWeather(): void {
   if (navigationRef.isReady()) navigationRef.navigate('Weather');
+}
+
+/** Live rain radar around the user. */
+export function openRadar(): void {
+  if (navigationRef.isReady()) navigationRef.navigate('Radar');
 }
 
 export function openSettings(): void {

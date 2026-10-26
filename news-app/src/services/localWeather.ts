@@ -46,7 +46,7 @@ export async function loadWeather(): Promise<Weather> {
     coords = JSON.parse(raw) as Coords;
   }
   const [forecast, place] = await Promise.all([fetchForecast(coords), placeName(coords)]);
-  const weather: Weather = { ...forecast, place, fetchedAt: Date.now() };
+  const weather: Weather = { ...forecast, place, coords, fetchedAt: Date.now() };
   await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(weather)).catch(() => {});
   return weather;
 }

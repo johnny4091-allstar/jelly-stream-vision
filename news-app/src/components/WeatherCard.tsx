@@ -3,6 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { openWeather } from '../navigation';
+import { RadarPreview } from './RadarPreview';
 import { condition, conditionIcon, formatTemp, type HourForecast } from '../services/weather';
 import { useSettings } from '../state/SettingsContext';
 import { useWeather } from '../state/WeatherContext';
@@ -110,6 +111,7 @@ export function WeatherCard() {
             </View>
           ))}
         </View>
+        {weather.coords ? <RadarPreview coords={weather.coords} dark={c.dark} /> : null}
       </LinearGradient>
     </Pressable>
   );

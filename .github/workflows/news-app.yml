@@ -56,6 +56,10 @@ jobs:
         # Information only: shows Open-Meteo still answers the request the app makes.
         continue-on-error: true
         run: node scripts/check-weather.mjs
+      - name: Check weather radar
+        # Information only: shows RainViewer's radar list and tiles still load.
+        continue-on-error: true
+        run: node scripts/check-radar.mjs
       - name: Check Live TV channels
         # Information only: shows which channels are live and embeddable right now.
         continue-on-error: true

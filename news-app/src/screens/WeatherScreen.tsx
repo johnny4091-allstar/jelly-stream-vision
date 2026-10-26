@@ -4,7 +4,9 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'r
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { StackHeader } from '../components/common';
+import { RadarPreview } from '../components/RadarPreview';
 import { hourLabel, icon, skyColors, WeatherCard } from '../components/WeatherCard';
+import { RADAR_CREDIT } from '../services/radar';
 import { condition, conditionIcon, formatTemp, formatWind, type DayForecast } from '../services/weather';
 import { useSettings } from '../state/SettingsContext';
 import { useWeather } from '../state/WeatherContext';
@@ -91,6 +93,15 @@ export function WeatherScreen() {
           ))}
         </View>
 
+        {weather.coords ? (
+          <>
+            <Text style={[styles.heading, { color: c.text }]}>Radar</Text>
+            <View style={{ marginHorizontal: 12 }}>
+              <RadarPreview coords={weather.coords} height={220} dark={c.dark} />
+            </View>
+          </>
+        ) : null}
+
         <Text style={[styles.heading, { color: c.text }]}>Next 24 hours</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.hours}>
           {weather.hourly.map((h, i) => (
@@ -130,7 +141,8 @@ export function WeatherScreen() {
         </View>
 
         <Text style={[styles.credit, { color: c.tertiary }]}>
-          Updated {timeAgo(weather.fetchedAt).replace('Just now', 'just now') || 'just now'} · Weather data by Open-Meteo.com
+          Updated {timeAgo(weather.fetchedAt).replace('Just now', 'just now') || 'just now'} · Weather data by Open-Meteo.com{'\n'}
+          {RADAR_CREDIT}
         </Text>
       </ScrollView>
     </View>

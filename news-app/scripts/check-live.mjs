@@ -8,7 +8,7 @@ let live = 0;
 for (const ch of LIVE_CHANNELS) {
   const r = await resolveLive(ch, true);
   if (r.status === 'live') live++;
-  const detail = r.status === 'live' ? `${r.videoId} ${r.embeddable ? 'embeddable' : 'NOT embeddable (opens watch page)'}` : '';
+  const detail = r.status === 'live' ? `https://youtu.be/${r.videoId} ${r.embeddable ? 'embeddable' : 'NOT embeddable (opens watch page)'}` : '';
   console.log(`${ch.name.padEnd(22)} ${r.status.padEnd(8)} ${detail}`);
 }
 console.log(`\n${live}/${LIVE_CHANNELS.length} channels live`);

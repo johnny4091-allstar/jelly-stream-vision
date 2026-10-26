@@ -129,7 +129,10 @@ const LIVE_PATTERNS: [string, RegExp][] = [
   ['shortlink', /<link rel="shortlinkUrl" href="https:\/\/youtu\.be\/([\w-]{11})"/],
   // The player data embedded as JSON (pages whose link tags are filled in by JavaScript).
   ['videoDetails', /"videoDetails":\s*\{\s*"videoId":\s*"([\w-]{11})"/],
-  ['currentVideoEndpoint', /"currentVideoEndpoint":\{[^{}]*?"watchEndpoint":\{"videoId":"([\w-]{11})"/],
+  // The video the page is about. Nested objects come before its watchEndpoint, so allow any text.
+  ['currentVideoEndpoint', /"currentVideoEndpoint":\{[\s\S]{0,1500}?"watchEndpoint":\{"videoId":"([\w-]{11})"/],
+  ['currentVideoUrl', /"currentVideoEndpoint":\{[\s\S]{0,1500}?"url":"\/watch\?v(?:=|\\u003d)([\w-]{11})/],
+  ['updatedMetadata', /"updatedMetadataEndpoint":\{[\s\S]{0,800}?"videoId":"([\w-]{11})"/],
 ];
 
 /** Which patterns matched, for the CI diagnostics. */
@@ -140,7 +143,7 @@ export function liveMatches(html: string): string[] {
 /** The video id of the stream a /live page points at, or null when the channel isn't live. */
 export function parseLiveVideoId(html: string): string | null {
   // A /live page for a channel that isn't streaming is the channel page: no player data at all.
-  const isWatchPage = html.includes('"videoDetails"') || html.includes('watch?v=');
+  const isWatchPage = /"isLive(?:Now)?":true|"videoDetails"|"currentVideoEndpoint"/.test(html);
   if (!isWatchPage) return null;
   for (const [, re] of LIVE_PATTERNS) {
     const id = re.exec(html)?.[1];
@@ -164,7 +167,9 @@ async function liveVideoIdFrom(url: string): Promise<string | null> {
     const title = /<title>([^<]*)<\/title>/.exec(html)?.[1] ?? '';
     const live = /"isLive(?:Now|Content)?":true/.exec(html)?.[0] ?? 'no isLive flag';
     const ids = [...new Set(html.match(/"videoId":"[\w-]{11}"/g) ?? [])].slice(0, 3).join(' ');
-    liveDebug.log(`${url} (${html.length} bytes) title="${title}" ${live} ids=[${ids}]`);
+    const at = html.indexOf('"currentVideoEndpoint"');
+    const around = at >= 0 ? html.slice(at, at + 300).replace(/\s+/g, ' ') : 'no currentVideoEndpoint';
+    liveDebug.log(`${url} (${html.length} bytes) title="${title}" ${live} ids=[${ids}] :: ${around}`);
   }
   return id;
 }

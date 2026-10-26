@@ -37,7 +37,9 @@ export function ForYouScreen() {
   const scrollTop = useScrollTopVisibility();
 
   const layout = useMemo(() => {
-    const slides = pickTopStories(stories, 5);
+    // The carousel is all pictures, so it draws from stories that come with one.
+    const withImages = stories.filter((st) => st.imageUrl);
+    const slides = pickTopStories(withImages.length >= 3 ? withImages : stories, 5);
     const used = new Set(slides.map((s) => s.id));
     const rest = stories.filter((s) => !used.has(s.id));
     const bullets = rest.slice(0, 3);

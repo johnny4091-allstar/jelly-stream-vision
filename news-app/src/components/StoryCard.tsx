@@ -7,6 +7,7 @@ import { Alert, Animated, Pressable, StyleSheet, Text, View } from 'react-native
 
 import { openArticle } from '../navigation';
 import { shareStory } from '../services/actions';
+import { useStoryImage } from '../services/previewImage';
 import { getSource } from '../sources';
 import { useSaved } from '../state/SavedContext';
 import { type, useTheme } from '../theme';
@@ -66,6 +67,7 @@ function StoryCardImpl({ story, variant = 'row', index = 0 }: Props) {
   const appear = useAppear(index);
   const sourceColor = readable(getSource(story.sourceId)?.color ?? c.accent, c.dark);
   const time = timeAgo(story.publishedAt);
+  const imageUrl = useStoryImage(story);
 
   const pressTo = (to: number) =>
     Animated.spring(scale, { toValue: to, useNativeDriver: true, speed: 40, bounciness: 3 }).start();
@@ -92,9 +94,9 @@ function StoryCardImpl({ story, variant = 'row', index = 0 }: Props) {
     return (
       <Animated.View style={[styles.overlayWrap, animated]}>
         <Pressable {...pressable} style={[styles.overlay, { backgroundColor: c.skeleton }]}>
-          {story.imageUrl ? (
+          {imageUrl ? (
             <Image
-              source={{ uri: story.imageUrl }}
+              source={{ uri: imageUrl }}
               style={StyleSheet.absoluteFill}
               contentFit="cover"
               transition={300}
@@ -146,9 +148,9 @@ function StoryCardImpl({ story, variant = 'row', index = 0 }: Props) {
               </Text>
             ) : null}
           </View>
-          {story.imageUrl ? (
+          {imageUrl ? (
             <Image
-              source={{ uri: story.imageUrl }}
+              source={{ uri: imageUrl }}
               style={[lead ? styles.leadThumb : styles.thumb, { backgroundColor: c.skeleton }]}
               contentFit="cover"
               transition={250}

@@ -7,7 +7,8 @@ import { parseFeed } from './parse';
 export const CACHE_TTL_MS = 10 * 60 * 1000;
 const FETCH_TIMEOUT_MS = 12_000;
 const MAX_PER_FEED = 30;
-const CACHE_PREFIX = 'feedcache:v1:';
+// v2: parser fixes (ESPN images, "null" summaries) shouldn't wait for old cached feeds to expire.
+const CACHE_PREFIX = 'feedcache:v2:';
 
 interface CacheEntry {
   fetchedAt: number;

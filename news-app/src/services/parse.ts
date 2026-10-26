@@ -140,6 +140,8 @@ function findImage(item: Node, htmlFields: string[]): string | undefined {
     group ? bestMedia(asArray(group['media:thumbnail'])) : undefined,
     asArray(item.enclosure).map((e) => (isImage(e) ? attr(e, 'url') : undefined)).find(Boolean),
     attr(item['itunes:image'], 'href'),
+    // ESPN and some others use a bare <image>https://…</image> element.
+    /^https?:\/\/\S+$/.test(text(item.image).trim()) ? text(item.image).trim() : undefined,
     ...htmlFields.map((f) => firstImgSrc(text(item[f]))),
   ];
   const found = candidates.find((c): c is string => !!c);
@@ -197,8 +199,8 @@ function makeStory(source: Source, fields: Omit<Story, 'id' | 'sourceId' | 'sour
   let title = cleanText(fields.title);
   if (source.titleSuffix && title.endsWith(source.titleSuffix)) title = title.slice(0, -source.titleSuffix.length);
   if (!link || !title || !/^https?:\/\//.test(link)) return null;
-  // Aggregator feeds repeat the headline as the description; that's not a summary.
-  const summary = fields.summary.startsWith(title) ? '' : fields.summary;
+  // Aggregator feeds repeat the headline as the description, and some feeds send a literal "null".
+  const summary = fields.summary.startsWith(title) || /^(null|undefined)$/i.test(fields.summary) ? '' : fields.summary;
   return { ...fields, title, summary, link, id: link, sourceId: source.id, sourceName: source.name };
 }
 

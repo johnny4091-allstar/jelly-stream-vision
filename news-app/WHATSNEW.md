@@ -1,3 +1,6 @@
+- Pictures on more stories: ESPN images now show, and stories without a picture in their feed use the article's preview image
+- Fixed "null" showing under some headlines
+- The top-stories carousel now picks stories that have pictures
 - Live TV fixed: every channel plays. When a stream can't play in the small player, tap it to watch on YouTube's site without leaving News Hammer
 - Notifications for new top stories now check every 15 minutes
 - New: notifications when an app update is available (Settings → Notifications → App updates)

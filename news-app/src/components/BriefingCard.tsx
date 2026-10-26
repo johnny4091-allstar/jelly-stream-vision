@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { openArticle } from '../navigation';
+import { useStoryImage } from '../services/previewImage';
 import { getSource } from '../sources';
 import { headlineFont } from '../theme';
 import type { Story } from '../types';
@@ -11,6 +12,41 @@ import { partOfDay, todayLabel } from '../utils';
 
 const TINTS = { Morning: '#46698F', Afternoon: '#5C7A5E', Evening: '#8A6C55' } as const;
 const SLIDE_MS = 6000;
+
+/** One carousel slide. Uses the article's share image when the feed has no picture. */
+function Slide({ story, width }: { story: Story; width: number }) {
+  const image = useStoryImage(story);
+  return (
+    <Pressable
+      onPress={() => openArticle(story)}
+      style={[styles.slide, { width }]}
+      accessibilityRole="link"
+      accessibilityLabel={story.title}
+    >
+      {image ? (
+        <Image source={{ uri: image }} style={StyleSheet.absoluteFill} contentFit="cover" transition={300} />
+      ) : (
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: getSource(story.sourceId)?.color ?? '#333' }]} />
+      )}
+      <LinearGradient
+        colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.35)', 'rgba(0,0,0,0.88)']}
+        locations={[0.2, 0.5, 1]}
+        style={StyleSheet.absoluteFill}
+      />
+      <View style={styles.slideText}>
+        <Text style={styles.slideSource}>{story.sourceName.toUpperCase()}</Text>
+        <Text style={styles.slideTitle} numberOfLines={4}>
+          {story.title}
+        </Text>
+        {story.summary ? (
+          <Text style={styles.slideSummary} numberOfLines={2}>
+            {story.summary}
+          </Text>
+        ) : null}
+      </View>
+    </Pressable>
+  );
+}
 
 /**
  * "Evening briefing": three headlines as bullets, then a swipeable carousel of the top stories
@@ -70,36 +106,7 @@ export function BriefingCard({ bullets, slides }: { bullets: Story[]; slides: St
               touching.current = false;
               setIndex(Math.round(e.nativeEvent.contentOffset.x / slideWidth));
             }}
-            renderItem={({ item }) => (
-              <Pressable
-                onPress={() => openArticle(item)}
-                style={[styles.slide, { width: slideWidth }]}
-                accessibilityRole="link"
-                accessibilityLabel={item.title}
-              >
-                {item.imageUrl ? (
-                  <Image source={{ uri: item.imageUrl }} style={StyleSheet.absoluteFill} contentFit="cover" transition={300} />
-                ) : (
-                  <View style={[StyleSheet.absoluteFill, { backgroundColor: getSource(item.sourceId)?.color ?? '#333' }]} />
-                )}
-                <LinearGradient
-                  colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.35)', 'rgba(0,0,0,0.88)']}
-                  locations={[0.2, 0.5, 1]}
-                  style={StyleSheet.absoluteFill}
-                />
-                <View style={styles.slideText}>
-                  <Text style={styles.slideSource}>{item.sourceName.toUpperCase()}</Text>
-                  <Text style={styles.slideTitle} numberOfLines={4}>
-                    {item.title}
-                  </Text>
-                  {item.summary ? (
-                    <Text style={styles.slideSummary} numberOfLines={2}>
-                      {item.summary}
-                    </Text>
-                  ) : null}
-                </View>
-              </Pressable>
-            )}
+            renderItem={({ item }) => <Slide story={item} width={slideWidth} />}
           />
           <View style={styles.dots} pointerEvents="none">
             {slides.map((s, i) => (

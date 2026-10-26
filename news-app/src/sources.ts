@@ -88,7 +88,6 @@ export const SOURCES: Source[] = [
     feeds: {
       top: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml',
       world: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml',
-      sports: 'https://rss.nytimes.com/services/xml/rss/nyt/Sports.xml',
       tech: 'https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml',
       entertainment: 'https://rss.nytimes.com/services/xml/rss/nyt/Arts.xml',
     },
@@ -160,7 +159,6 @@ export const SOURCES: Source[] = [
     feeds: {
       top: 'https://www.aljazeera.com/xml/rss/all.xml',
       world: 'https://www.aljazeera.com/xml/rss/all.xml',
-      sports: 'https://www.aljazeera.com/xml/rss/sports.xml',
     },
   },
   {

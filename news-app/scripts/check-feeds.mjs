@@ -12,8 +12,12 @@ for (const source of SOURCES) {
     try {
       const res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const stories = parseFeed(await res.text(), source);
-      if (stories.length === 0) throw new Error('no stories');
+      const text = await res.text();
+      const stories = parseFeed(text, source);
+      if (stories.length === 0) {
+        const start = text.slice(0, 160).replace(/\s+/g, ' ');
+        throw new Error(`no stories (${res.headers.get('content-type')}, ${text.length} bytes): ${start}`);
+      }
       ok++;
       const images = stories.filter((s) => s.imageUrl).length;
       const dated = stories.filter((s) => s.publishedAt).length;

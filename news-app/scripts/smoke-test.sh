@@ -52,3 +52,8 @@ echo "Fresh install"
 adb uninstall "$PKG" >/dev/null 2>&1 || true
 adb install "$APK" || exit 1
 launch_and_check fresh || { echo "::error::The app doesn't open on a fresh install (see the log above)."; exit 1; }
+
+# Information only: the background news check should be scheduled with Android's JobScheduler.
+jobs="$(adb shell dumpsys jobscheduler | grep -c "$PKG/androidx.work" || true)"
+echo "Background check jobs scheduled for $PKG: $jobs"
+[ "$jobs" -gt 0 ] || echo "::warning::The background news check isn't scheduled; notifications won't arrive."

@@ -7,7 +7,7 @@ A personal news app built with React Native and Expo (TypeScript). It pulls head
 - Saved stories and settings are stored on the phone with AsyncStorage
 - Each feed is cached for 10 minutes. A feed that fails is skipped (its last cached copy is used if one exists)
 - Pull to refresh. The app also refreshes when it opens or comes back to the foreground
-- Notifications for new top stories, checked in the background about every 30 minutes (Android may check less often to save battery). Tapping one opens the story. Turn them off in Settings → Notifications
+- Notifications for new top stories and new app versions, checked in the background about every 15 minutes (Android may wait longer to save battery). Tapping a story notification opens it. Settings → Notifications has switches for each, a test notification, "Check for news now", and a shortcut to let the app run in the background (needed on many Samsung phones)
 
 ## Test on your phone with Expo Go
 
@@ -68,7 +68,7 @@ Each release is tagged `build-<number>` (the workflow run number, which is also 
 
 ## Notes
 
-- **Live TV** plays each broadcaster's own free 24/7 live stream on YouTube (ABC News Live, NBC News NOW, CBS News 24/7, Sky News, Al Jazeera English, DW News, France 24, euronews, Bloomberg TV, NASA) using YouTube's embedded player, so YouTube's ads and rules apply. A channel that's off air, or that doesn't allow playback in other apps, shows YouTube's error; the YouTube button opens it in the YouTube app instead. Channels are listed in `src/live.ts`.
+- **Live TV** plays each broadcaster's own free 24/7 live stream on YouTube (ABC News Live, NBC News NOW, CBS News 24/7, Sky News, Al Jazeera English, DW News, France 24, euronews, Bloomberg TV, NASA). The app looks up the video that's live on the channel's `/live` page and plays it with YouTube's player, so YouTube's ads and rules apply. Streams whose owner blocks playback in other apps show a thumbnail; tapping it opens YouTube's mobile site inside the app. Channels are in `src/live.ts`; the CI log's *Check Live TV channels* step shows which are live and embeddable.
 
 - **AP** has no public RSS feed of its own, so its headlines come from Google News' public RSS search, limited to apnews.com. These stories have no images, and tapping one opens it through a Google News link.
 - **Fox News** has no entertainment feed, and **ESPN** only has sports. **The Verge** covers Tech and Entertainment. Those outlets don't show up under topics they don't publish.

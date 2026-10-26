@@ -12,6 +12,8 @@ export interface StoredSettings {
   themeMode: ThemeMode;
   /** Background alerts for new top stories (also read by the background task). */
   notifyTopStories: boolean;
+  /** Notification when a new app version is published (also read by the background task). */
+  notifyUpdates: boolean;
   /** Topics shown on the Following tab. */
   followed: Topic[];
 }
@@ -25,13 +27,15 @@ interface SettingsValue {
   setThemeMode: (mode: ThemeMode) => void;
   notifyTopStories: boolean;
   setNotifyTopStories: (on: boolean) => void;
+  notifyUpdates: boolean;
+  setNotifyUpdates: (on: boolean) => void;
   followed: Topic[];
   isFollowing: (topic: Topic) => boolean;
   setFollowing: (topic: Topic, on: boolean) => void;
 }
 
 export const SETTINGS_KEY = 'settings:v1';
-export const DEFAULT_SETTINGS: StoredSettings = { disabled: [], themeMode: 'system', notifyTopStories: true, followed: [] };
+export const DEFAULT_SETTINGS: StoredSettings = { disabled: [], themeMode: 'system', notifyTopStories: true, notifyUpdates: true, followed: [] };
 const KEY = SETTINGS_KEY;
 const DEFAULTS = DEFAULT_SETTINGS;
 
@@ -71,6 +75,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       setThemeMode: (themeMode) => update((s) => ({ ...s, themeMode })),
       notifyTopStories: settings.notifyTopStories,
       setNotifyTopStories: (notifyTopStories) => update((s) => ({ ...s, notifyTopStories })),
+      notifyUpdates: settings.notifyUpdates,
+      setNotifyUpdates: (notifyUpdates) => update((s) => ({ ...s, notifyUpdates })),
       followed: settings.followed,
       isFollowing: (topic) => settings.followed.includes(topic),
       setFollowing: (topic, on) =>

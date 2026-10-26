@@ -1,13 +1,24 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useIsFocused, useScrollToTop } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
-import { useRef, useState } from 'react';
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View, type ScrollViewInstance } from 'react-native';
+import { Image } from 'expo-image';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, View, type ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 
 import { AppHeader, SectionHeader, useTabBarSpace } from '../components/common';
-import { LIVE_CHANNELS, LIVE_PLAYER_ORIGIN, livePlayerHtml, liveWatchUrl, type LiveChannel } from '../live';
+import {
+  LIVE_CHANNELS,
+  LIVE_PLAYER_ORIGIN,
+  liveChannelUrl,
+  livePlayerHtml,
+  liveWatchUrl,
+  resolveLive,
+  type LiveChannel,
+  type LiveResult,
+} from '../live';
+import { openWatch } from '../navigation';
 import { type, useTheme } from '../theme';
 
 const YOUTUBE_HOSTS = /^https:\/\/([a-z0-9-]+\.)*(youtube\.com|youtube-nocookie\.com|googlevideo\.com|ytimg\.com|google\.com|gstatic\.com|doubleclick\.net)\//i;
@@ -21,47 +32,102 @@ function LiveBadge() {
   );
 }
 
-/** Pinned player for the selected channel. Only mounted while the tab is on screen, so audio stops when you leave. */
+/** Plain message inside the player box (loading, off air, couldn't connect). */
+function PlayerMessage({ icon, title, action }: { icon?: keyof typeof Ionicons.glyphMap; title: string; action?: { label: string; onPress: () => void } }) {
+  return (
+    <View style={[styles.web, styles.paused]}>
+      {icon ? <Ionicons name={icon} size={34} color="rgba(255,255,255,0.7)" /> : <ActivityIndicator color="#fff" />}
+      <Text style={styles.playerMsg}>{title}</Text>
+      {action ? (
+        <Pressable onPress={action.onPress} style={styles.playerBtn} accessibilityRole="button">
+          <Text style={styles.playerBtnText}>{action.label}</Text>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
+/**
+ * Pinned player for the selected channel. Looks up the stream that's live now and plays it with
+ * YouTube's player; if the broadcaster blocks playback in other apps, offers YouTube's own watch
+ * page in the app instead. Only plays while the tab is on screen, so audio stops when you leave.
+ */
 function Player({ channel, playing }: { channel: LiveChannel; playing: boolean }) {
   const c = useTheme();
+  const [result, setResult] = useState<LiveResult | null>(null);
+  const [blocked, setBlocked] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    setResult(null);
+    setBlocked(false);
+    resolveLive(channel, attempt > 0).then((r) => {
+      if (!cancelled) setResult(r);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [channel, attempt]);
+
+  const live = result?.status === 'live' ? result : null;
+  const watchInApp = () => live && openWatch(liveWatchUrl(live.videoId), channel.name);
+  const retry = () => setAttempt((n) => n + 1);
+
+  let body;
+  if (!result) {
+    body = <PlayerMessage title={`Finding ${channel.name}…`} />;
+  } else if (result.status === 'offline') {
+    body = <PlayerMessage icon="moon-outline" title={`${channel.name} isn't live right now`} action={{ label: 'Try again', onPress: retry }} />;
+  } else if (result.status === 'error') {
+    body = <PlayerMessage icon="cloud-offline-outline" title="Couldn't reach YouTube" action={{ label: 'Try again', onPress: retry }} />;
+  } else if (!result.embeddable || blocked) {
+    body = (
+      <Pressable onPress={watchInApp} style={styles.web} accessibilityRole="button" accessibilityLabel={`Watch ${channel.name}`}>
+        <Image source={{ uri: `https://i.ytimg.com/vi/${result.videoId}/hqdefault_live.jpg` }} style={StyleSheet.absoluteFill} contentFit="cover" />
+        <View style={[StyleSheet.absoluteFill, styles.dim]} />
+        <View style={[styles.web, styles.paused, { backgroundColor: 'transparent' }]}>
+          <Ionicons name="play-circle" size={64} color="#fff" />
+          <Text style={styles.playerMsg}>Tap to watch</Text>
+        </View>
+      </Pressable>
+    );
+  } else if (!playing) {
+    body = <PlayerMessage icon="tv-outline" title={channel.name} />;
+  } else {
+    body = (
+      <WebView<object>
+        key={result.videoId}
+        source={{ html: livePlayerHtml(result.videoId), baseUrl: LIVE_PLAYER_ORIGIN }}
+        style={styles.web}
+        allowsInlineMediaPlayback
+        allowsFullscreenVideo
+        mediaPlaybackRequiresUserAction={false}
+        setSupportMultipleWindows={false}
+        onMessage={(e) => {
+          if (e.nativeEvent.data.startsWith('error:')) setBlocked(true);
+        }}
+        // The player stays in the frame; links out of it open in the app's reader.
+        onShouldStartLoadWithRequest={(req) => {
+          if (req.url === 'about:blank' || req.url.startsWith(LIVE_PLAYER_ORIGIN) || /\/embed\//.test(req.url)) return true;
+          if (YOUTUBE_HOSTS.test(req.url) && !/youtube\.com\/(watch|channel|@|shorts)/.test(req.url)) return true;
+          openWatch(req.url, channel.name);
+          return false;
+        }}
+      />
+    );
+  }
+
   return (
     <View style={{ backgroundColor: c.background, paddingBottom: 6 }}>
-      <View style={styles.player}>
-        {playing ? (
-          <WebView<object>
-            key={channel.id}
-            source={{ html: livePlayerHtml(channel), baseUrl: LIVE_PLAYER_ORIGIN }}
-            style={styles.web}
-            allowsInlineMediaPlayback
-            allowsFullscreenVideo
-            mediaPlaybackRequiresUserAction={false}
-            setSupportMultipleWindows={false}
-            // The player stays in the frame; tapping through to YouTube opens the YouTube app.
-            onShouldStartLoadWithRequest={(req) => {
-              if (req.url === 'about:blank' || req.url.startsWith(LIVE_PLAYER_ORIGIN) || YOUTUBE_HOSTS.test(req.url)) {
-                if (/youtube\.com\/(watch|channel|@)/.test(req.url) && !req.url.includes('/embed/')) {
-                  Linking.openURL(req.url).catch(() => {});
-                  return false;
-                }
-                return true;
-              }
-              Linking.openURL(req.url).catch(() => {});
-              return false;
-            }}
-          />
-        ) : (
-          <View style={[styles.web, styles.paused]}>
-            <Ionicons name="tv-outline" size={40} color="rgba(255,255,255,0.6)" />
-          </View>
-        )}
-      </View>
+      <View style={styles.player}>{body}</View>
       <View style={styles.nowRow}>
-        <LiveBadge />
+        {live ? <LiveBadge /> : null}
         <Text style={[styles.nowName, { color: c.text }]} numberOfLines={1}>
           {channel.name}
         </Text>
         <Pressable
-          onPress={() => Linking.openURL(liveWatchUrl(channel)).catch(() => {})}
+          onPress={() => (live ? watchInApp() : Linking.openURL(liveChannelUrl(channel)).catch(() => {}))}
           hitSlop={8}
           accessibilityRole="link"
           style={[styles.openYt, { borderColor: c.separator }]}
@@ -146,8 +212,8 @@ export function LiveTvScreen() {
         ))}
       </View>
       <Text style={[type.caption, styles.note, { color: c.tertiary }]}>
-        These are the channels' own free live streams on YouTube. If a channel is off air or won't play here, tap
-        YouTube to watch it there.
+        These are the channels' own free live streams on YouTube. A few broadcasters don't allow their stream inside
+        other apps; for those, tap the picture to watch on YouTube's site without leaving News Hammer.
       </Text>
     </ScrollView>
   );
@@ -156,7 +222,11 @@ export function LiveTvScreen() {
 const styles = StyleSheet.create({
   player: { marginHorizontal: 12, borderRadius: 18, overflow: 'hidden', aspectRatio: 16 / 9, backgroundColor: '#000' },
   web: { flex: 1, backgroundColor: '#000' },
-  paused: { alignItems: 'center', justifyContent: 'center' },
+  paused: { alignItems: 'center', justifyContent: 'center', gap: 10, padding: 16 },
+  dim: { backgroundColor: 'rgba(0,0,0,0.35)' },
+  playerMsg: { color: '#fff', fontSize: 15, fontWeight: '600', textAlign: 'center' },
+  playerBtn: { borderRadius: 999, borderWidth: 1.5, borderColor: '#fff', paddingHorizontal: 16, paddingVertical: 6 },
+  playerBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
   nowRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 4 },
   nowName: { flex: 1, fontSize: 17, fontWeight: '800' },
   openYt: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },

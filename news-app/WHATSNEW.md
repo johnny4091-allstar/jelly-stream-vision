@@ -1,6 +1,4 @@
-- New Live TV tab: free 24/7 news channels like ABC News Live, NBC News NOW, CBS News 24/7 and Sky News
-- New look inspired by Samsung News, with a floating tab bar
-- For you: a morning, afternoon or evening briefing with a swipeable top-stories carousel
-- News: topic chips that stay pinned while you scroll, plus a section for each topic
-- Follow topics and find them, along with your saved stories, on the Following tab
-- Settings has moved to the ⋮ menu at the top right
+- Live TV fixed: each channel now finds its live stream, and streams that can't play inside other apps open on YouTube's site within News Hammer
+- Notifications for new top stories now check every 15 minutes
+- New: notifications when an app update is available (Settings → Notifications → App updates)
+- Settings → Notifications: send a test notification, check for news now, and let News Hammer run in the background

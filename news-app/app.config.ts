@@ -22,6 +22,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         // Lets the app hand a downloaded update to Android's installer.
         'android.permission.REQUEST_INSTALL_PACKAGES',
         'android.permission.POST_NOTIFICATIONS',
+        // Lets Settings offer "run in the background" so Samsung doesn't put the news checks to sleep.
+        'android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS',
       ],
     },
     extra: { ...config.extra, updateRepo: process.env.UPDATE_REPO ?? '' },

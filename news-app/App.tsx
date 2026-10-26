@@ -19,6 +19,7 @@ import { NewsScreen } from './src/screens/NewsScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { SportsScreen } from './src/screens/SportsScreen';
 import { TopicScreen } from './src/screens/TopicScreen';
+import { WatchScreen } from './src/screens/WatchScreen';
 import { SavedProvider } from './src/state/SavedContext';
 import { SettingsProvider, useSettings } from './src/state/SettingsContext';
 import { useTheme } from './src/theme';
@@ -83,6 +84,7 @@ function Root() {
         <Stack.Screen name="Article" component={ArticleScreen} options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="Topic" component={TopicScreen} options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="Settings" component={SettingsScreen} options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="Watch" component={WatchScreen} options={{ animation: 'slide_from_bottom' }} />
       </Stack.Navigator>
       <UpdatePrompt />
     </NavigationContainer>

@@ -1,12 +1,12 @@
 import * as Haptics from 'expo-haptics';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { StackHeader } from '../components/common';
 import { currentVersionCode, currentVersionName } from '../services/appUpdate';
 import { clearFeedCache } from '../services/news';
-import { setUpNotifications } from '../services/notifications';
+import { requestBackgroundAccess, runCheck, sendTestNotification, setUpNotifications } from '../services/notifications';
 import { SOURCES } from '../sources';
 import { useSettings, type ThemeMode } from '../state/SettingsContext';
 import { type, useTheme } from '../theme';
@@ -31,18 +31,41 @@ function Section({ title, footer, children }: { title: string; footer?: string; 
 export function SettingsScreen() {
   const c = useTheme();
   const insets = useSafeAreaInsets();
-  const { themeMode, setThemeMode, isEnabled, setSourceEnabled, notifyTopStories, setNotifyTopStories } =
-    useSettings();
+  const {
+    themeMode,
+    setThemeMode,
+    isEnabled,
+    setSourceEnabled,
+    notifyTopStories,
+    setNotifyTopStories,
+    notifyUpdates,
+    setNotifyUpdates,
+  } = useSettings();
+  const [checking, setChecking] = useState(false);
 
-  const toggleNotifications = async (on: boolean) => {
-    setNotifyTopStories(on);
-    if (!on) return;
-    const granted = await setUpNotifications().catch(() => false);
-    if (!granted) {
-      Alert.alert('Notifications are off', 'Allow notifications for News Hammer in your phone settings.', [
-        { text: 'Not now', style: 'cancel' },
-        { text: 'Open settings', onPress: () => Linking.openSettings().catch(() => {}) },
-      ]);
+  const permissionOff = () =>
+    Alert.alert('Notifications are off', 'Allow notifications for News Hammer in your phone settings.', [
+      { text: 'Not now', style: 'cancel' },
+      { text: 'Open settings', onPress: () => Linking.openSettings().catch(() => {}) },
+    ]);
+
+  const toggle = (set: (on: boolean) => void) => async (on: boolean) => {
+    set(on);
+    if (on && !(await setUpNotifications().catch(() => false))) permissionOff();
+  };
+
+  const testNotification = async () => {
+    if (!(await sendTestNotification().catch(() => false))) permissionOff();
+  };
+
+  const checkNow = async () => {
+    setChecking(true);
+    try {
+      if (!(await setUpNotifications().catch(() => false))) return permissionOff();
+      const { stories, update } = await runCheck();
+      if (stories === 0 && !update) Alert.alert("You're up to date", 'No new top stories since the last check.');
+    } finally {
+      setChecking(false);
     }
   };
 
@@ -101,17 +124,35 @@ export function SettingsScreen() {
 
       <Section
         title="Notifications"
-        footer="Checks your sources in the background about every 30 minutes and lets you know about a new top story. Android may check less often to save battery."
+        footer="News Hammer checks your sources in the background every 15 minutes or so. Android may wait longer to save battery; on Samsung phones, allow it to run in the background so alerts arrive on time."
       >
         <View style={styles.row}>
           <Text style={[styles.rowLabel, { color: c.text }]}>New top stories</Text>
           <Switch
             value={notifyTopStories}
-            onValueChange={toggleNotifications}
+            onValueChange={toggle(setNotifyTopStories)}
             trackColor={{ true: '#34C759' }}
             accessibilityLabel="Notify me about new top stories"
           />
         </View>
+        <View style={[styles.row, styles.divider, { borderTopColor: c.separator }]}>
+          <Text style={[styles.rowLabel, { color: c.text }]}>App updates</Text>
+          <Switch
+            value={notifyUpdates}
+            onValueChange={toggle(setNotifyUpdates)}
+            trackColor={{ true: '#34C759' }}
+            accessibilityLabel="Notify me when a new version is available"
+          />
+        </View>
+        <Pressable onPress={requestBackgroundAccess} style={[styles.row, styles.divider, { borderTopColor: c.separator }]} accessibilityRole="button">
+          <Text style={[styles.rowLabel, { color: c.accent }]}>Allow running in the background</Text>
+        </Pressable>
+        <Pressable onPress={checkNow} disabled={checking} style={[styles.row, styles.divider, { borderTopColor: c.separator }]} accessibilityRole="button">
+          <Text style={[styles.rowLabel, { color: c.accent }]}>{checking ? 'Checking…' : 'Check for news now'}</Text>
+        </Pressable>
+        <Pressable onPress={testNotification} style={[styles.row, styles.divider, { borderTopColor: c.separator }]} accessibilityRole="button">
+          <Text style={[styles.rowLabel, { color: c.accent }]}>Send a test notification</Text>
+        </Pressable>
       </Section>
 
       <Section title="Data" footer="Feeds are cached for 10 minutes so the app opens fast.">
@@ -140,6 +181,7 @@ const styles = StyleSheet.create({
   footer: { marginHorizontal: 16, marginTop: 8, lineHeight: 18 },
   row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, minHeight: 50, gap: 12 },
   rowLabel: { flex: 1, fontSize: 17 },
+  divider: { borderTopWidth: StyleSheet.hairlineWidth },
   dot: { width: 10, height: 10, borderRadius: 5 },
   segment: { flexDirection: 'row', margin: 10, padding: 3, borderRadius: 10 },
   segmentItem: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 8 },

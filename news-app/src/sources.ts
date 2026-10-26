@@ -81,6 +81,131 @@ export const SOURCES: Source[] = [
       sports: 'https://www.espn.com/espn/rss/news',
     },
   },
+  {
+    id: 'nyt',
+    name: 'The New York Times',
+    color: '#121212',
+    feeds: {
+      top: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml',
+      world: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml',
+      sports: 'https://rss.nytimes.com/services/xml/rss/nyt/Sports.xml',
+      tech: 'https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml',
+      entertainment: 'https://rss.nytimes.com/services/xml/rss/nyt/Arts.xml',
+    },
+  },
+  {
+    id: 'guardian',
+    name: 'The Guardian',
+    color: '#052962',
+    feeds: {
+      top: 'https://www.theguardian.com/us-news/rss',
+      world: 'https://www.theguardian.com/world/rss',
+      sports: 'https://www.theguardian.com/us/sport/rss',
+      tech: 'https://www.theguardian.com/us/technology/rss',
+      entertainment: 'https://www.theguardian.com/us/culture/rss',
+    },
+  },
+  {
+    // Like AP, Reuters has no public RSS, so it comes via Google News limited to reuters.com.
+    id: 'reuters',
+    name: 'Reuters',
+    color: '#FF8000',
+    titleSuffix: ' - Reuters',
+    feeds: {
+      top: googleNews('site:reuters.com when:1d'),
+      world: googleNews('site:reuters.com world when:1d'),
+      sports: googleNews('site:reuters.com sports when:2d'),
+      tech: googleNews('site:reuters.com technology when:2d'),
+      entertainment: googleNews('site:reuters.com lifestyle when:2d'),
+    },
+  },
+  {
+    id: 'abc',
+    name: 'ABC News',
+    color: '#003DA5',
+    feeds: {
+      top: 'https://abcnews.go.com/abcnews/topstories',
+      world: 'https://abcnews.go.com/abcnews/internationalheadlines',
+      sports: 'https://abcnews.go.com/abcnews/sportsheadlines',
+      tech: 'https://abcnews.go.com/abcnews/technologyheadlines',
+      entertainment: 'https://abcnews.go.com/abcnews/entertainmentheadlines',
+    },
+  },
+  {
+    id: 'cbs',
+    name: 'CBS News',
+    color: '#00539B',
+    feeds: {
+      top: 'https://www.cbsnews.com/latest/rss/main',
+      world: 'https://www.cbsnews.com/latest/rss/world',
+      tech: 'https://www.cbsnews.com/latest/rss/technology',
+      entertainment: 'https://www.cbsnews.com/latest/rss/entertainment',
+    },
+  },
+  {
+    id: 'nbc',
+    name: 'NBC News',
+    color: '#5C2D91',
+    feeds: {
+      top: 'https://feeds.nbcnews.com/nbcnews/public/news',
+      world: 'https://feeds.nbcnews.com/nbcnews/public/world',
+      tech: 'https://feeds.nbcnews.com/nbcnews/public/tech',
+      entertainment: 'https://feeds.nbcnews.com/nbcnews/public/pop-culture',
+    },
+  },
+  {
+    id: 'aljazeera',
+    name: 'Al Jazeera',
+    color: '#C78100',
+    feeds: {
+      top: 'https://www.aljazeera.com/xml/rss/all.xml',
+      world: 'https://www.aljazeera.com/xml/rss/all.xml',
+      sports: 'https://www.aljazeera.com/xml/rss/sports.xml',
+    },
+  },
+  {
+    id: 'sky',
+    name: 'Sky News',
+    color: '#C8102E',
+    feeds: {
+      top: 'https://feeds.skynews.com/feeds/rss/home.xml',
+      world: 'https://feeds.skynews.com/feeds/rss/world.xml',
+      tech: 'https://feeds.skynews.com/feeds/rss/technology.xml',
+      entertainment: 'https://feeds.skynews.com/feeds/rss/entertainment.xml',
+    },
+  },
+  {
+    id: 'techcrunch',
+    name: 'TechCrunch',
+    color: '#0A9E01',
+    feeds: {
+      tech: 'https://techcrunch.com/feed/',
+    },
+  },
+  {
+    id: 'ars',
+    name: 'Ars Technica',
+    color: '#FF4E00',
+    feeds: {
+      tech: 'https://feeds.arstechnica.com/arstechnica/index',
+    },
+  },
+  {
+    id: 'variety',
+    name: 'Variety',
+    color: '#B8312F',
+    feeds: {
+      entertainment: 'https://variety.com/feed/',
+    },
+  },
+  {
+    id: 'cbssports',
+    name: 'CBS Sports',
+    color: '#0F3A6E',
+    feeds: {
+      sports: 'https://www.cbssports.com/rss/headlines/',
+    },
+  },
 ];
 
 function googleNews(query: string): string {

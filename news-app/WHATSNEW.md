@@ -1,8 +1,2 @@
-- Pictures on more stories: ESPN images now show, and stories without a picture in their feed use the article's preview image
-- Fixed "null" showing under some headlines
-- The top-stories carousel now picks stories that have pictures
-- Live TV fixed: every channel plays. When a stream can't play in the small player, tap it to watch on YouTube's site without leaving News Hammer
-- Notifications for new top stories now check every 15 minutes
-- New: notifications when an app update is available (Settings → Notifications → App updates)
-- After you allow notifications, a short guide walks you through letting News Hammer run in the background (including Samsung's Battery → Unrestricted)
-- Settings → Notifications: send a test notification, check for news now, and reopen the background guide
+- 12 more news sources: The New York Times, The Guardian, Reuters, ABC News, CBS News, NBC News, Al Jazeera, Sky News, TechCrunch, Ars Technica, Variety and CBS Sports
+- Turn any source on or off in Settings → Sources

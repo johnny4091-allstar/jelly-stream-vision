@@ -48,6 +48,10 @@ jobs:
       - run: npm ci
       - name: Typecheck
         run: npx tsc --noEmit
+      - name: Check news feeds
+        # Information only: shows which feeds answer and how many stories and pictures each has.
+        continue-on-error: true
+        run: node scripts/check-feeds.mjs
       - name: Check Live TV channels
         # Information only: shows which channels are live and embeddable right now.
         continue-on-error: true

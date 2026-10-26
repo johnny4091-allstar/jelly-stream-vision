@@ -1,6 +1,25 @@
 export type Topic = 'top' | 'world' | 'sports' | 'tech' | 'entertainment';
 
-export type SourceId = 'cnn' | 'bbc' | 'npr' | 'ap' | 'fox' | 'verge' | 'espn';
+export type SourceId =
+  | 'cnn'
+  | 'bbc'
+  | 'npr'
+  | 'ap'
+  | 'fox'
+  | 'verge'
+  | 'espn'
+  | 'nyt'
+  | 'guardian'
+  | 'reuters'
+  | 'abc'
+  | 'cbs'
+  | 'nbc'
+  | 'aljazeera'
+  | 'sky'
+  | 'techcrunch'
+  | 'ars'
+  | 'variety'
+  | 'cbssports';
 
 export interface Story {
   /** Stable id (the article link). */

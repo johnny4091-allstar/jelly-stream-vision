@@ -14,6 +14,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { goBack, openSettings } from '../navigation';
+import { WeatherChip } from './WeatherCard';
 import { getSource } from '../sources';
 import { useSettings } from '../state/SettingsContext';
 import { type, useTheme } from '../theme';
@@ -33,6 +34,7 @@ export function AppHeader() {
       <Text style={[styles.appName, { color: c.text }]}>
         News <Text style={{ color: c.accent }}>Hammer</Text>
       </Text>
+      <WeatherChip />
       <Pressable
         onPress={openSettings}
         hitSlop={12}
@@ -230,7 +232,8 @@ export function EmptyState({
 export function FailedNotice({ failed }: { failed: SourceId[] }) {
   const c = useTheme();
   if (failed.length === 0) return null;
-  const names = failed.map((id) => getSource(id)?.name ?? id).join(', ');
+  // Name a few; offline, nearly every source fails and the list would fill the screen.
+  const names = failed.length <= 3 ? failed.map((id) => getSource(id)?.name ?? id).join(', ') : `${failed.length} sources`;
   return (
     <View style={[styles.notice, { backgroundColor: c.card }]}>
       <Ionicons name="cloud-offline-outline" size={16} color={c.secondary} />

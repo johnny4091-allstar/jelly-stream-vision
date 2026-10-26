@@ -68,6 +68,7 @@ Each release is tagged `build-<number>` (the workflow run number, which is also 
 
 ## Notes
 
+- **Weather** on For you uses the phone's location (asked the first time you tap *Show weather*, only while the app is open) and a free forecast from [Open-Meteo](https://open-meteo.com), which needs no API key. Coordinates are rounded to about 1 km before they're sent; the place name comes from the phone's own geocoder. Settings → Weather switches °F/°C or turns it off. `node scripts/check-weather.mjs` (run in CI) checks the forecast request.
 - **Live TV** plays each broadcaster's own free 24/7 live stream on YouTube (ABC News Live, NBC News NOW, CBS News 24/7, Sky News, Al Jazeera English, DW News, France 24, euronews, Bloomberg TV, NASA). The app looks up the video that's live on the channel's `/live` page and plays it with YouTube's player, so YouTube's ads and rules apply. Streams whose owner blocks playback in other apps show a thumbnail; tapping it opens YouTube's mobile site inside the app. Channels are in `src/live.ts`; the CI log's *Check Live TV channels* step shows which are live and embeddable.
 
 - **AP** has no public RSS feed of its own, so its headlines come from Google News' public RSS search, limited to apnews.com. These stories have no images, and tapping one opens it through a Google News link.

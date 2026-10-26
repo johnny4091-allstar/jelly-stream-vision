@@ -21,8 +21,10 @@ import { SettingsScreen } from './src/screens/SettingsScreen';
 import { SportsScreen } from './src/screens/SportsScreen';
 import { TopicScreen } from './src/screens/TopicScreen';
 import { WatchScreen } from './src/screens/WatchScreen';
+import { WeatherScreen } from './src/screens/WeatherScreen';
 import { SavedProvider } from './src/state/SavedContext';
 import { SettingsProvider, useSettings } from './src/state/SettingsContext';
+import { WeatherProvider } from './src/state/WeatherContext';
 import { useTheme } from './src/theme';
 
 const Tab = createBottomTabNavigator();
@@ -90,6 +92,7 @@ function Root() {
         <Stack.Screen name="Topic" component={TopicScreen} options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="Settings" component={SettingsScreen} options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="Watch" component={WatchScreen} options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="Weather" component={WeatherScreen} options={{ animation: 'slide_from_right' }} />
       </Stack.Navigator>
       <UpdatePrompt />
       <BackgroundGuide />
@@ -102,7 +105,9 @@ export default function App() {
     <SafeAreaProvider>
       <SettingsProvider>
         <SavedProvider>
-          <Root />
+          <WeatherProvider>
+            <Root />
+          </WeatherProvider>
         </SavedProvider>
       </SettingsProvider>
     </SafeAreaProvider>

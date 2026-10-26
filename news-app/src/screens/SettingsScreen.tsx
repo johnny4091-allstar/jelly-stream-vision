@@ -8,9 +8,15 @@ import { currentVersionCode, currentVersionName } from '../services/appUpdate';
 import { clearFeedCache } from '../services/news';
 import { showBackgroundGuide, showBackgroundGuideOnce } from '../components/BackgroundGuide';
 import { runCheck, sendTestNotification, setUpNotifications } from '../services/notifications';
+import type { TempUnit } from '../services/weather';
 import { SOURCES } from '../sources';
 import { useSettings, type ThemeMode } from '../state/SettingsContext';
 import { type, useTheme } from '../theme';
+
+const UNITS: { id: TempUnit; label: string }[] = [
+  { id: 'f', label: '°F' },
+  { id: 'c', label: '°C' },
+];
 
 const MODES: { id: ThemeMode; label: string }[] = [
   { id: 'system', label: 'System' },
@@ -41,6 +47,10 @@ export function SettingsScreen() {
     setNotifyTopStories,
     notifyUpdates,
     setNotifyUpdates,
+    showWeather,
+    setShowWeather,
+    tempUnit,
+    setTempUnit,
   } = useSettings();
   const [checking, setChecking] = useState(false);
 
@@ -101,6 +111,40 @@ export function SettingsScreen() {
                 style={[styles.segmentItem, active && { backgroundColor: c.elevated }, active && styles.segmentShadow]}
               >
                 <Text style={{ color: c.text, fontWeight: active ? '700' : '500', fontSize: 15 }}>{m.label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </Section>
+
+      <Section
+        title="Weather"
+        footer="Uses your phone's location only while News Hammer is open. Forecasts come from Open-Meteo.com."
+      >
+        <View style={styles.row}>
+          <Text style={[styles.rowLabel, { color: c.text }]}>Show local weather</Text>
+          <Switch
+            value={showWeather}
+            onValueChange={setShowWeather}
+            trackColor={{ true: '#34C759' }}
+            accessibilityLabel="Show local weather"
+          />
+        </View>
+        <View style={[styles.segment, { backgroundColor: c.chip }]}>
+          {UNITS.map((u) => {
+            const active = u.id === tempUnit;
+            return (
+              <Pressable
+                key={u.id}
+                onPress={() => {
+                  Haptics.selectionAsync().catch(() => {});
+                  setTempUnit(u.id);
+                }}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: active }}
+                style={[styles.segmentItem, active && { backgroundColor: c.elevated }, active && styles.segmentShadow]}
+              >
+                <Text style={{ color: c.text, fontWeight: active ? '700' : '500', fontSize: 15 }}>{u.label}</Text>
               </Pressable>
             );
           })}

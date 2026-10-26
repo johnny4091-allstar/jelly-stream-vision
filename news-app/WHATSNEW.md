@@ -1,2 +1,4 @@
-- 12 more news sources: The New York Times, The Guardian, Reuters, ABC News, CBS News, NBC News, Al Jazeera, Sky News, TechCrunch, Ars Technica, Variety and CBS Sports
-- Turn any source on or off in Settings → Sources
+- New: local weather. Tap "Show weather" on For you and allow location to see the weather where you are, with the next 24 hours and a 7-day forecast
+- The temperature shows next to the News Hammer name; tap it for the full forecast
+- Settings → Weather: switch °F / °C, or turn weather off
+- The "Couldn't reach…" notice is shorter when many sources are offline

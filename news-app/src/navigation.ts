@@ -9,6 +9,7 @@ export type RootStackParamList = {
   Topic: { topic: Topic };
   Settings: undefined;
   Watch: { url: string; title: string };
+  Weather: undefined;
 };
 
 export type ArticleScreenProps = NativeStackScreenProps<RootStackParamList, 'Article'>;
@@ -29,6 +30,11 @@ export function openTopic(topic: Topic): void {
 /** A web page (e.g. a YouTube live stream) full screen inside the app. */
 export function openWatch(url: string, title: string): void {
   if (navigationRef.isReady()) navigationRef.navigate('Watch', { url, title });
+}
+
+/** The full forecast for where the phone is. */
+export function openWeather(): void {
+  if (navigationRef.isReady()) navigationRef.navigate('Weather');
 }
 
 export function openSettings(): void {

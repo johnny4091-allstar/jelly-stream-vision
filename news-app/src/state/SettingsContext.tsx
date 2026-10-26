@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
+import { defaultTempUnit, type TempUnit } from '../services/weather';
 import { SOURCE_IDS } from '../sources';
 import type { SourceId, Topic } from '../types';
 import { loadJSON, saveJSON } from './storage';
@@ -16,6 +17,10 @@ export interface StoredSettings {
   notifyUpdates: boolean;
   /** Topics shown on the Following tab. */
   followed: Topic[];
+  /** Local weather on For you. Turning it off stops all location use. */
+  showWeather: boolean;
+  /** null until the user picks one: follows the phone's region. */
+  tempUnit: TempUnit | null;
 }
 
 interface SettingsValue {
@@ -32,10 +37,14 @@ interface SettingsValue {
   followed: Topic[];
   isFollowing: (topic: Topic) => boolean;
   setFollowing: (topic: Topic, on: boolean) => void;
+  showWeather: boolean;
+  setShowWeather: (on: boolean) => void;
+  tempUnit: TempUnit;
+  setTempUnit: (unit: TempUnit) => void;
 }
 
 export const SETTINGS_KEY = 'settings:v1';
-export const DEFAULT_SETTINGS: StoredSettings = { disabled: [], themeMode: 'system', notifyTopStories: true, notifyUpdates: true, followed: [] };
+export const DEFAULT_SETTINGS: StoredSettings = { disabled: [], themeMode: 'system', notifyTopStories: true, notifyUpdates: true, followed: [], showWeather: true, tempUnit: null };
 const KEY = SETTINGS_KEY;
 const DEFAULTS = DEFAULT_SETTINGS;
 
@@ -84,6 +93,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           ...s,
           followed: on ? [...new Set([...s.followed, topic])] : s.followed.filter((t) => t !== topic),
         })),
+      showWeather: settings.showWeather,
+      setShowWeather: (showWeather) => update((s) => ({ ...s, showWeather })),
+      tempUnit: settings.tempUnit ?? defaultTempUnit(),
+      setTempUnit: (tempUnit) => update((s) => ({ ...s, tempUnit })),
     };
   }, [settings, ready, update]);
 

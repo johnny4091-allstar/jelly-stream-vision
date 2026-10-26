@@ -16,6 +16,7 @@ import {
   useTabBarSpace,
 } from '../components/common';
 import { StoryCard } from '../components/StoryCard';
+import { WeatherCard } from '../components/WeatherCard';
 import { openSettings, openTopic } from '../navigation';
 import { pickTopStories } from '../services/news';
 import { useSettings } from '../state/SettingsContext';
@@ -68,6 +69,7 @@ export function ForYouScreen() {
         }
       >
         <AppHeader />
+        <WeatherCard />
         <FailedNotice failed={failed} />
 
         {loading && stories.length === 0 ? (

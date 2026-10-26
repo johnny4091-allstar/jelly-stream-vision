@@ -44,8 +44,18 @@ export function radarTileTemplate(host: string, frame: RadarFrame): string {
 }
 
 /** Street map under the radar (CARTO's free basemaps, OpenStreetMap data). */
-export function baseTileUrl(dark: boolean, z: number, x: number, y: number): string {
-  return `https://basemaps.cartocdn.com/${dark ? 'dark_all' : 'light_all'}/${z}/${x}/${y}.png`;
+// With a CARTO Basemaps key (set at build time from the CARTO_KEY secret) the map uses the keyed
+// raster tiles and their free monthly allowance; without one, CARTO's open tiles.
+export const BASEMAP_STYLES = { light: 'voyager', dark: 'dark_all' } as const;
+
+function baseTemplate(dark: boolean, key?: string): string {
+  if (!key) return `https://basemaps.cartocdn.com/${dark ? 'dark_all' : 'light_all'}/{z}/{x}/{y}.png`;
+  const style = dark ? BASEMAP_STYLES.dark : BASEMAP_STYLES.light;
+  return `https://basemaps.cartocdn.com/rastertiles/${style}/{z}/{x}/{y}.png?key=${encodeURIComponent(key)}`;
+}
+
+export function baseTileUrl(dark: boolean, z: number, x: number, y: number, key?: string): string {
+  return baseTemplate(dark, key).replace('{z}', String(z)).replace('{x}', String(x)).replace('{y}', String(y));
 }
 
 export const RADAR_CREDIT = 'Radar: RainViewer · Map: © CARTO, © OpenStreetMap';
@@ -64,9 +74,9 @@ export function worldPixel(latitude: number, longitude: number, z: number): { x:
  * Leaflet map with the last two hours of radar playing as a loop. Pinch to zoom and drag to look
  * around; the play button pauses on a frame.
  */
-export function radarHtml(frames: RadarFrames, coords: Coords, located: boolean, dark: boolean): string {
+export function radarHtml(frames: RadarFrames, coords: Coords, located: boolean, dark: boolean, key?: string): string {
   const layers = frames.frames.map((f) => ({ url: radarTileTemplate(frames.host, f), time: f.time }));
-  const base = `https://{s}.basemaps.cartocdn.com/${dark ? 'dark_all' : 'light_all'}/{z}/{x}/{y}{r}.png`;
+  const base = baseTemplate(dark, key);
   return `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -85,7 +95,7 @@ var frames=${JSON.stringify(layers)};
 var map=L.map('map',{zoomControl:false,attributionControl:true,maxZoom:10,minZoom:3})
   .setView([${coords.latitude},${coords.longitude}],${located ? 7 : 4});
 map.attributionControl.setPrefix(false);
-L.tileLayer(${JSON.stringify(base)},{subdomains:'abcd',maxZoom:10,attribution:${JSON.stringify(RADAR_CREDIT)}}).addTo(map);
+L.tileLayer(${JSON.stringify(base)},{maxZoom:10,attribution:${JSON.stringify(RADAR_CREDIT)}}).addTo(map);
 ${located ? `L.marker([${coords.latitude},${coords.longitude}],{icon:L.divIcon({className:'',html:'<div class="me"></div>',iconSize:[20,20]})}).addTo(map);` : ''}
 var layers=frames.map(function(f){return L.tileLayer(f.url,{opacity:0,maxNativeZoom:${RADAR_MAX_ZOOM},maxZoom:10,zIndex:5}).addTo(map)});
 var i=frames.length-1,playing=true,slider=document.getElementById('slider'),label=document.getElementById('time'),btn=document.getElementById('play');

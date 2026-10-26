@@ -17,10 +17,39 @@ async function placeName(coords: Coords): Promise<string> {
   }
 }
 
-/** Where the phone is. A recent fix is good enough for weather and much faster than a new one. */
+function withTimeout<T>(promise: Promise<T>, ms: number, what: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`${what} timed out`)), ms);
+    promise.then(
+      (v) => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      (e: unknown) => {
+        clearTimeout(timer);
+        reject(e instanceof Error ? e : new Error(String(e)));
+      },
+    );
+  });
+}
+
+/**
+ * Where the phone is. A recent fix is good enough for weather and much faster than a new one.
+ * Otherwise ask for a fix (network first, then GPS), and as a last resort take an older one.
+ * Each step has a time limit so a phone indoors never leaves the card spinning.
+ */
 async function currentCoords(): Promise<Coords> {
-  const last = await Location.getLastKnownPositionAsync({ maxAge: WEATHER_TTL_MS }).catch(() => null);
-  const pos = last ?? (await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Low }));
+  const recent = await Location.getLastKnownPositionAsync({ maxAge: WEATHER_TTL_MS }).catch(() => null);
+  const pos =
+    recent ??
+    (await withTimeout(Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }), 15_000, 'Location').catch(
+      () => null,
+    )) ??
+    (await withTimeout(Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High }), 20_000, 'GPS').catch(
+      () => null,
+    )) ??
+    (await Location.getLastKnownPositionAsync().catch(() => null));
+  if (!pos) throw new Error('No location fix');
   return { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
 }
 

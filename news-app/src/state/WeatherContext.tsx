@@ -45,7 +45,9 @@ export function WeatherProvider({ children }: { children: ReactNode }) {
     try {
       setWeather(await loadWeather());
       setFailed(false);
-    } catch {
+    } catch (err) {
+      // Shows in logcat (ReactNativeJS), where the emulator test reads it.
+      console.warn(`[weather] ${err instanceof Error ? err.message : String(err)}`);
       setFailed(true);
     } finally {
       busy.current = false;

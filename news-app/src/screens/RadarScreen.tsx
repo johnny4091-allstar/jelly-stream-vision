@@ -4,6 +4,7 @@ import { WebView } from 'react-native-webview';
 
 import { StackHeader } from '../components/common';
 import { useRadarFrames } from '../components/RadarPreview';
+import { cartoKey } from '../services/mapKey';
 import { radarHtml } from '../services/radar';
 import type { Coords } from '../services/weather';
 import { useWeather } from '../state/WeatherContext';
@@ -25,7 +26,7 @@ export function RadarScreen() {
       <View style={{ flex: 1, paddingBottom: insets.bottom }}>
         {frames ? (
           <WebView<object>
-            source={{ html: radarHtml(frames, coords ?? FALLBACK, !!coords, c.dark), baseUrl: 'https://newshammer.app' }}
+            source={{ html: radarHtml(frames, coords ?? FALLBACK, !!coords, c.dark, cartoKey), baseUrl: 'https://newshammer.app' }}
             style={{ flex: 1, backgroundColor: c.background }}
             originWhitelist={['*']}
             setSupportMultipleWindows={false}

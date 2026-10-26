@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { openRadar } from '../navigation';
+import { cartoKey } from '../services/mapKey';
 import {
   RADAR_MAX_ZOOM,
   baseTileUrl,
@@ -72,7 +73,7 @@ export function RadarPreview({ coords, height = 150, dark }: { coords: Coords; h
         const pos = { left: t.x * 256 - left, top: t.y * 256 - top, width: 256, height: 256 };
         return (
           <View key={`${t.x}:${t.y}`} style={[styles.tile, pos]}>
-            <Image source={{ uri: baseTileUrl(dark, z, wrap(t.x), t.y) }} style={StyleSheet.absoluteFill} />
+            <Image source={{ uri: baseTileUrl(dark, z, wrap(t.x), t.y, cartoKey) }} style={StyleSheet.absoluteFill} />
             {latest && frames ? (
               <Image
                 source={{ uri: radarTileUrl(frames.host, latest, z, wrap(t.x), t.y) }}

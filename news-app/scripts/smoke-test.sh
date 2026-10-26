@@ -89,28 +89,40 @@ check_alive() {
 }
 
 weather_flow() {
-  adb shell pm grant "$PKG" android.permission.ACCESS_COARSE_LOCATION
-  adb shell pm grant "$PKG" android.permission.ACCESS_FINE_LOCATION
   adb shell cmd location set-location-enabled true 2>/dev/null || true
-  adb emu geo fix -74.006 40.713 >/dev/null 2>&1 || true
+  # Keep feeding the emulator's GPS a position while the app looks for one.
+  ( for _ in $(seq 1 60); do adb emu geo fix -74.006 40.713 >/dev/null 2>&1; sleep 3; done ) &
+  local feeder=$!
   adb logcat -c
   adb shell am force-stop "$PKG"
   adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null
-  sleep 40
-  adb emu geo fix -74.006 40.713 >/dev/null 2>&1 || true
-  check_alive weather-card || return 1
+  sleep 30
+  check_alive weather-ask || return 1
+  # The user's path: "Show weather", then Android's location pop-up.
+  if tap "Show weather"; then
+    sleep 4
+    ui_texts >/dev/null
+    tap "While using the app" || tap "Only this time" || tap "Allow" || echo "::warning::No location pop-up appeared."
+    sleep 40
+  else
+    echo "::warning::No Show weather button on For you."
+  fi
+  check_alive weather-card || { kill $feeder 2>/dev/null; return 1; }
   if ! tap "Weather"; then
+    kill $feeder 2>/dev/null
     echo "::warning::No weather card on For you (location or forecast didn't load); skipped the weather screens."
     return 0
   fi
   sleep 15
-  check_alive weather-screen || return 1
+  check_alive weather-screen || { kill $feeder 2>/dev/null; return 1; }
   if tap "Open weather radar"; then
     sleep 20
-    check_alive radar-screen || return 1
+    check_alive radar-screen || { kill $feeder 2>/dev/null; return 1; }
   else
     echo "::warning::No radar on the Weather screen."
   fi
+  kill $feeder 2>/dev/null
+  return 0
 }
 weather_flow || { echo "::error::The app crashed or froze opening the weather (see the log above)."; exit 1; }
 

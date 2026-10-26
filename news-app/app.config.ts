@@ -6,6 +6,8 @@ import type { ConfigContext, ExpoConfig } from 'expo/config';
 //                     newer and Android installs it over the old one.
 //   UPDATE_REPO       Public "owner/repo" whose GitHub releases hold the APKs. Without it the
 //                     app never checks for updates.
+//   CARTO_KEY         CARTO Basemaps key for the radar's street map. Without it the app uses
+//                     CARTO's open tiles.
 export default ({ config }: ConfigContext): ExpoConfig => {
   const versionCode = Number(process.env.APP_VERSION_CODE) || 1;
   return {
@@ -26,6 +28,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         'android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS',
       ],
     },
-    extra: { ...config.extra, updateRepo: process.env.UPDATE_REPO ?? '' },
+    extra: { ...config.extra, updateRepo: process.env.UPDATE_REPO ?? '', cartoKey: process.env.CARTO_KEY ?? '' },
   };
 };

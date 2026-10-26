@@ -29,6 +29,8 @@ jobs:
       # Public "owner/repo" the app checks for updates, and the build number.
       UPDATE_REPO: ${{ vars.UPDATE_REPO }}
       APP_VERSION_CODE: ${{ github.run_number }}
+      # CARTO Basemaps key for the radar's street map (optional; masked in logs).
+      CARTO_KEY: ${{ secrets.CARTO_KEY }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7

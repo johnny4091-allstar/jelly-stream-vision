@@ -122,12 +122,30 @@ const HEADERS = {
   Cookie: 'SOCS=CAI; CONSENT=YES+1',
 };
 
+const LIVE_PATTERNS: [string, RegExp][] = [
+  // Server-rendered link tags (older pages, and some regions).
+  ['canonical', /<link rel="canonical" href="https:\/\/www\.youtube\.com\/watch\?v=([\w-]{11})"/],
+  ['og:url', /<meta property="og:url" content="https:\/\/www\.youtube\.com\/watch\?v=([\w-]{11})"/],
+  ['shortlink', /<link rel="shortlinkUrl" href="https:\/\/youtu\.be\/([\w-]{11})"/],
+  // The player data embedded as JSON (pages whose link tags are filled in by JavaScript).
+  ['videoDetails', /"videoDetails":\s*\{\s*"videoId":\s*"([\w-]{11})"/],
+  ['currentVideoEndpoint', /"currentVideoEndpoint":\{[^{}]*?"watchEndpoint":\{"videoId":"([\w-]{11})"/],
+];
+
+/** Which patterns matched, for the CI diagnostics. */
+export function liveMatches(html: string): string[] {
+  return LIVE_PATTERNS.filter(([, re]) => re.test(html)).map(([name]) => name);
+}
+
 /** The video id of the stream a /live page points at, or null when the channel isn't live. */
 export function parseLiveVideoId(html: string): string | null {
-  const canonical = /<link rel="canonical" href="https:\/\/www\.youtube\.com\/watch\?v=([\w-]{11})"/.exec(html);
-  if (canonical?.[1]) return canonical[1];
-  const details = /"videoDetails":\{"videoId":"([\w-]{11})"/.exec(html);
-  if (details?.[1] && /"isLive(?:Now)?":true/.test(html)) return details[1];
+  // A /live page for a channel that isn't streaming is the channel page: no player data at all.
+  const isWatchPage = html.includes('"videoDetails"') || html.includes('watch?v=');
+  if (!isWatchPage) return null;
+  for (const [, re] of LIVE_PATTERNS) {
+    const id = re.exec(html)?.[1];
+    if (id) return id;
+  }
   return null;
 }
 
@@ -144,7 +162,9 @@ async function liveVideoIdFrom(url: string): Promise<string | null> {
   const id = parseLiveVideoId(html);
   if (!id && liveDebug.log) {
     const title = /<title>([^<]*)<\/title>/.exec(html)?.[1] ?? '';
-    liveDebug.log(`${url} -> ${res.url} (${html.length} bytes) title="${title}" canonical=${/rel="canonical" href="([^"]+)"/.exec(html)?.[1] ?? 'none'}`);
+    const live = /"isLive(?:Now|Content)?":true/.exec(html)?.[0] ?? 'no isLive flag';
+    const ids = [...new Set(html.match(/"videoId":"[\w-]{11}"/g) ?? [])].slice(0, 3).join(' ');
+    liveDebug.log(`${url} (${html.length} bytes) title="${title}" ${live} ids=[${ids}]`);
   }
   return id;
 }

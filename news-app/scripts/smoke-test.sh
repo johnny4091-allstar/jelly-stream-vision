@@ -53,6 +53,67 @@ adb uninstall "$PKG" >/dev/null 2>&1 || true
 adb install "$APK" || exit 1
 launch_and_check fresh || { echo "::error::The app doesn't open on a fresh install (see the log above)."; exit 1; }
 
+# Weather: allow location, put the emulator in New York, then open the forecast and the radar the way
+# a user taps them. A crash or "not responding" here fails the build so it never reaches phones.
+ui_texts() {
+  adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
+  adb shell cat /sdcard/ui.xml > ui.xml 2>/dev/null
+  grep -oE '(text|content-desc)="[^"]+"' ui.xml | sed -E 's/^(text|content-desc)=//' | tr '\n' ' ' | cut -c1-1500
+  echo
+}
+
+# Taps the first element whose text or content-desc matches the regex. Returns 1 if none.
+tap() {
+  local node bounds
+  node="$(grep -oE '<node [^>]*>' ui.xml | grep -E "(text|content-desc)=\"$1" | head -n 1)"
+  bounds="$(echo "$node" | grep -oE 'bounds="\[[0-9]+,[0-9]+\]\[[0-9]+,[0-9]+\]"' | grep -oE '[0-9]+' | tr '\n' ' ')"
+  [ -n "$bounds" ] || return 1
+  set -- $bounds
+  adb shell input tap $(( ($1 + $3) / 2 )) $(( ($2 + $4) / 2 ))
+}
+
+check_alive() {
+  local label="$1"
+  adb logcat -d > "logcat-$label.txt"
+  adb exec-out screencap -p > "screenshot-$label.png" || true
+  echo "==== $label: on screen ===="
+  ui_texts
+  echo "==== $label: crash / React Native log ===="
+  grep -E "FATAL EXCEPTION|AndroidRuntime|Fatal signal|ANR in|ReactNativeJS|unknown:React|libc +:|DEBUG +:" "logcat-$label.txt" | tail -n 120 || true
+  echo "==== end ===="
+  if grep -q "FATAL EXCEPTION\|Fatal signal\|ANR in $PKG" "logcat-$label.txt" || [ -z "$(adb shell pidof "$PKG" | tr -d '\r')" ]; then
+    echo "$label: crashed or stopped responding"
+    return 1
+  fi
+  echo "$label: running"
+}
+
+weather_flow() {
+  adb shell pm grant "$PKG" android.permission.ACCESS_COARSE_LOCATION
+  adb shell pm grant "$PKG" android.permission.ACCESS_FINE_LOCATION
+  adb shell cmd location set-location-enabled true 2>/dev/null || true
+  adb emu geo fix -74.006 40.713 >/dev/null 2>&1 || true
+  adb logcat -c
+  adb shell am force-stop "$PKG"
+  adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null
+  sleep 40
+  adb emu geo fix -74.006 40.713 >/dev/null 2>&1 || true
+  check_alive weather-card || return 1
+  if ! tap "Weather"; then
+    echo "::warning::No weather card on For you (location or forecast didn't load); skipped the weather screens."
+    return 0
+  fi
+  sleep 15
+  check_alive weather-screen || return 1
+  if tap "Open weather radar"; then
+    sleep 20
+    check_alive radar-screen || return 1
+  else
+    echo "::warning::No radar on the Weather screen."
+  fi
+}
+weather_flow || { echo "::error::The app crashed or froze opening the weather (see the log above)."; exit 1; }
+
 # Information only: the background news check should be scheduled with Android's JobScheduler.
 jobs="$(adb shell dumpsys jobscheduler | grep -c "$PKG/androidx.work" || true)"
 echo "Background check jobs scheduled for $PKG: $jobs"

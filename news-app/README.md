@@ -7,7 +7,7 @@ A personal news app built with React Native and Expo (TypeScript). It pulls head
 - Saved stories and settings are stored on the phone with AsyncStorage
 - Each feed is cached for 10 minutes. A feed that fails is skipped (its last cached copy is used if one exists)
 - Pull to refresh. The app also refreshes when it opens or comes back to the foreground
-- Notifications for new top stories and new app versions, checked in the background about every 15 minutes (Android may wait longer to save battery). Tapping a story notification opens it. Settings → Notifications has switches for each, a test notification, "Check for news now", and a shortcut to let the app run in the background (needed on many Samsung phones)
+- Notifications for new top stories and new app versions, checked in the background about every 15 minutes (Android may wait longer to save battery). Tapping a story notification opens it. Settings → Notifications has switches for each, a test notification, "Check for news now", and a guide to let the app run in the background (needed on many Samsung phones). The guide also opens once, right after notifications are first allowed
 
 ## Test on your phone with Expo Go
 

@@ -11,6 +11,7 @@ import { UpdatePrompt } from './src/components/UpdatePrompt';
 import { navigationRef, openArticle, type RootStackParamList } from './src/navigation';
 import { ArticleScreen } from './src/screens/ArticleScreen';
 import { setUpNotifications, type NotificationData } from './src/services/notifications';
+import { BackgroundGuide, showBackgroundGuideOnce } from './src/components/BackgroundGuide';
 import { FloatingTabBar } from './src/components/FloatingTabBar';
 import { FollowingScreen } from './src/screens/FollowingScreen';
 import { ForYouScreen } from './src/screens/ForYouScreen';
@@ -65,7 +66,11 @@ function Root() {
 
   useEffect(() => {
     // Asks for notification permission on first launch and keeps the background check scheduled.
-    if (ready) setUpNotifications().catch(() => {});
+    // Once notifications are allowed, walk the user through letting the app run in the background.
+    if (ready)
+      setUpNotifications()
+        .then((granted) => (granted ? showBackgroundGuideOnce() : undefined))
+        .catch(() => {});
   }, [ready]);
 
   const navTheme = useMemo<Theme>(() => {
@@ -87,6 +92,7 @@ function Root() {
         <Stack.Screen name="Watch" component={WatchScreen} options={{ animation: 'slide_from_bottom' }} />
       </Stack.Navigator>
       <UpdatePrompt />
+      <BackgroundGuide />
     </NavigationContainer>
   );
 }

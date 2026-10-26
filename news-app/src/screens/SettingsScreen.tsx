@@ -6,7 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StackHeader } from '../components/common';
 import { currentVersionCode, currentVersionName } from '../services/appUpdate';
 import { clearFeedCache } from '../services/news';
-import { requestBackgroundAccess, runCheck, sendTestNotification, setUpNotifications } from '../services/notifications';
+import { showBackgroundGuide, showBackgroundGuideOnce } from '../components/BackgroundGuide';
+import { runCheck, sendTestNotification, setUpNotifications } from '../services/notifications';
 import { SOURCES } from '../sources';
 import { useSettings, type ThemeMode } from '../state/SettingsContext';
 import { type, useTheme } from '../theme';
@@ -51,7 +52,9 @@ export function SettingsScreen() {
 
   const toggle = (set: (on: boolean) => void) => async (on: boolean) => {
     set(on);
-    if (on && !(await setUpNotifications().catch(() => false))) permissionOff();
+    if (!on) return;
+    if (await setUpNotifications().catch(() => false)) await showBackgroundGuideOnce();
+    else permissionOff();
   };
 
   const testNotification = async () => {
@@ -144,7 +147,7 @@ export function SettingsScreen() {
             accessibilityLabel="Notify me when a new version is available"
           />
         </View>
-        <Pressable onPress={requestBackgroundAccess} style={[styles.row, styles.divider, { borderTopColor: c.separator }]} accessibilityRole="button">
+        <Pressable onPress={showBackgroundGuide} style={[styles.row, styles.divider, { borderTopColor: c.separator }]} accessibilityRole="button">
           <Text style={[styles.rowLabel, { color: c.accent }]}>Allow running in the background</Text>
         </Pressable>
         <Pressable onPress={checkNow} disabled={checking} style={[styles.row, styles.divider, { borderTopColor: c.separator }]} accessibilityRole="button">

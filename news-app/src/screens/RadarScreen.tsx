@@ -3,6 +3,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 
 import { StackHeader } from '../components/common';
+import { WeatherBoundary, WeatherUnavailable } from '../components/WeatherBoundary';
 import { useRadarFrames } from '../components/RadarPreview';
 import { cartoKey } from '../services/mapKey';
 import { radarHtml } from '../services/radar';
@@ -13,7 +14,7 @@ import { useTheme } from '../theme';
 /** Middle of the US, for a forecast cached before the radar knew where it was. */
 const FALLBACK: Coords = { latitude: 39.5, longitude: -98.35 };
 
-export function RadarScreen() {
+function RadarScreenBody() {
   const c = useTheme();
   const insets = useSafeAreaInsets();
   const { weather } = useWeather();
@@ -47,3 +48,19 @@ export function RadarScreen() {
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 },
 });
+
+export function RadarScreen() {
+  const c = useTheme();
+  return (
+    <WeatherBoundary
+      fallback={
+        <View style={{ flex: 1, backgroundColor: c.background }}>
+          <StackHeader title="Radar" />
+          <WeatherUnavailable color={c.secondary} />
+        </View>
+      }
+    >
+      <RadarScreenBody />
+    </WeatherBoundary>
+  );
+}

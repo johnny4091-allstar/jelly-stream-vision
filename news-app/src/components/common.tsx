@@ -14,6 +14,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { goBack, openSettings } from '../navigation';
+import { WeatherBoundary } from './WeatherBoundary';
 import { WeatherChip } from './WeatherCard';
 import { getSource } from '../sources';
 import { useSettings } from '../state/SettingsContext';
@@ -34,7 +35,9 @@ export function AppHeader() {
       <Text style={[styles.appName, { color: c.text }]}>
         News <Text style={{ color: c.accent }}>Hammer</Text>
       </Text>
-      <WeatherChip />
+      <WeatherBoundary>
+        <WeatherChip />
+      </WeatherBoundary>
       <Pressable
         onPress={openSettings}
         hitSlop={12}

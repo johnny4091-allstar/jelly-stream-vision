@@ -10,7 +10,8 @@ const COORDS_KEY = 'weather:coords:v1';
 
 async function placeName(coords: Coords): Promise<string> {
   try {
-    const [a] = await Location.reverseGeocodeAsync(coords);
+    // On Android 13+ the geocoder never answers if it fails, so don't wait on it for long.
+    const [a] = await withTimeout(Location.reverseGeocodeAsync(coords), 8_000, 'Place name');
     return a?.city || a?.district || a?.subregion || a?.region || '';
   } catch {
     return '';

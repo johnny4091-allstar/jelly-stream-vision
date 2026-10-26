@@ -4,6 +4,7 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'r
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { StackHeader } from '../components/common';
+import { WeatherBoundary, WeatherUnavailable } from '../components/WeatherBoundary';
 import { RadarPreview } from '../components/RadarPreview';
 import { hourLabel, icon, skyColors, WeatherCard } from '../components/WeatherCard';
 import { RADAR_CREDIT } from '../services/radar';
@@ -22,7 +23,7 @@ function dayLabel(d: DayForecast, i: number): string {
 }
 
 /** The full forecast: now, the next 24 hours and the week. */
-export function WeatherScreen() {
+function WeatherScreenBody() {
   const c = useTheme();
   const insets = useSafeAreaInsets();
   const { tempUnit } = useSettings();
@@ -176,3 +177,19 @@ const styles = StyleSheet.create({
   range: { position: 'absolute', top: 0, bottom: 0, borderRadius: 3 },
   credit: { fontSize: 12, textAlign: 'center', marginTop: 16, marginHorizontal: 20 },
 });
+
+export function WeatherScreen() {
+  const c = useTheme();
+  return (
+    <WeatherBoundary
+      fallback={
+        <View style={{ flex: 1, backgroundColor: c.background }}>
+          <StackHeader title="Weather" />
+          <WeatherUnavailable color={c.secondary} />
+        </View>
+      }
+    >
+      <WeatherScreenBody />
+    </WeatherBoundary>
+  );
+}

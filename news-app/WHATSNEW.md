@@ -1,4 +1,5 @@
-- 14 more news sources: PBS News, CNBC, Politico, The Hill, Axios, Los Angeles Times, Yahoo News, Newsweek, The Independent, DW News, France 24, Wired, Engadget and The Hollywood Reporter
+- 30 more news sources, 49 in all. New: PBS News, CNBC, Politico, The Hill, Axios, Los Angeles Times, Yahoo News, Newsweek, The Independent, DW News, France 24, New York Post, The Washington Post, The Wall Street Journal, USA Today, Bloomberg, CBC News, euronews, The Atlantic, Vox and Business Insider
+- More for Sports (Sky Sports, SB Nation), Tech (Wired, Engadget, 9to5Google, SamMobile) and Entertainment (The Hollywood Reporter, Deadline, TMZ)
 - Turn any source on or off in Settings → Sources
 - The radar's street map now loads properly
 - Fixed: opening the weather no longer closes the app

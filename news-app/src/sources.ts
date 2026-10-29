@@ -332,6 +332,161 @@ export const SOURCES: Source[] = [
       entertainment: 'https://www.hollywoodreporter.com/feed/',
     },
   },
+  {
+    id: 'nypost',
+    name: 'New York Post',
+    color: '#C8102E',
+    feeds: {
+      top: 'https://nypost.com/news/feed/',
+      sports: 'https://nypost.com/sports/feed/',
+      tech: 'https://nypost.com/tech/feed/',
+      entertainment: 'https://nypost.com/entertainment/feed/',
+    },
+  },
+  {
+    id: 'wapo',
+    name: 'The Washington Post',
+    color: '#1A1A1A',
+    feeds: {
+      top: 'https://feeds.washingtonpost.com/rss/national',
+      world: 'https://feeds.washingtonpost.com/rss/world',
+      sports: 'https://feeds.washingtonpost.com/rss/sports',
+      tech: 'https://feeds.washingtonpost.com/rss/business/technology',
+      entertainment: 'https://feeds.washingtonpost.com/rss/entertainment',
+    },
+  },
+  {
+    id: 'wsj',
+    name: 'The Wall Street Journal',
+    color: '#0274B6',
+    feeds: {
+      top: 'https://feeds.a.dj.com/rss/RSSWorldNews.xml',
+      world: 'https://feeds.a.dj.com/rss/RSSWorldNews.xml',
+      tech: 'https://feeds.a.dj.com/rss/RSSWSJD.xml',
+      entertainment: 'https://feeds.a.dj.com/rss/RSSArtsCulture.xml',
+    },
+  },
+  {
+    // USA Today's own RSS was retired, so its stories come via Google News, like AP's.
+    id: 'usatoday',
+    name: 'USA Today',
+    color: '#009BFF',
+    titleSuffix: ' - USA Today',
+    feeds: {
+      top: googleNews('site:usatoday.com when:1d'),
+      sports: googleNews('site:usatoday.com sports when:1d'),
+      tech: googleNews('site:usatoday.com tech when:2d'),
+      entertainment: googleNews('site:usatoday.com entertainment when:2d'),
+    },
+  },
+  {
+    // Bloomberg has no public RSS; its headlines come via Google News.
+    id: 'bloomberg',
+    name: 'Bloomberg',
+    color: '#2800D7',
+    titleSuffix: [' - Bloomberg.com', ' - Bloomberg'],
+    feeds: {
+      top: googleNews('site:bloomberg.com when:1d'),
+      world: googleNews('site:bloomberg.com world when:1d'),
+      tech: googleNews('site:bloomberg.com technology when:2d'),
+    },
+  },
+  {
+    id: 'cbc',
+    name: 'CBC News',
+    color: '#D40000',
+    feeds: {
+      top: 'https://www.cbc.ca/webfeed/rss/rss-topstories',
+      world: 'https://www.cbc.ca/webfeed/rss/rss-world',
+      sports: 'https://www.cbc.ca/webfeed/rss/rss-sports',
+      tech: 'https://www.cbc.ca/webfeed/rss/rss-technology',
+      entertainment: 'https://www.cbc.ca/webfeed/rss/rss-arts',
+    },
+  },
+  {
+    id: 'euronews',
+    name: 'euronews',
+    color: '#00287A',
+    feeds: {
+      top: 'https://www.euronews.com/rss',
+      world: 'https://www.euronews.com/rss?level=theme&name=news',
+    },
+  },
+  {
+    id: 'atlantic',
+    name: 'The Atlantic',
+    color: '#1A1A1A',
+    feeds: {
+      top: 'https://www.theatlantic.com/feed/all/',
+      tech: 'https://www.theatlantic.com/feed/channel/technology/',
+      entertainment: 'https://www.theatlantic.com/feed/channel/entertainment/',
+    },
+  },
+  {
+    id: 'vox',
+    name: 'Vox',
+    color: '#E8CC00',
+    feeds: {
+      top: 'https://www.vox.com/rss/index.xml',
+    },
+  },
+  {
+    id: 'businessinsider',
+    name: 'Business Insider',
+    color: '#1B5FAA',
+    feeds: {
+      top: 'https://feeds.businessinsider.com/custom/all',
+      tech: 'https://feeds.businessinsider.com/custom/tech',
+    },
+  },
+  {
+    id: 'deadline',
+    name: 'Deadline',
+    color: '#1A1A1A',
+    feeds: {
+      entertainment: 'https://deadline.com/feed/',
+    },
+  },
+  {
+    id: 'tmz',
+    name: 'TMZ',
+    color: '#C8102E',
+    feeds: {
+      entertainment: 'https://www.tmz.com/rss.xml',
+    },
+  },
+  {
+    id: 'skysports',
+    name: 'Sky Sports',
+    color: '#00205B',
+    feeds: {
+      sports: 'https://www.skysports.com/rss/12040',
+    },
+  },
+  {
+    id: 'sbnation',
+    name: 'SB Nation',
+    color: '#C4002D',
+    feeds: {
+      sports: 'https://www.sbnation.com/rss/current',
+    },
+  },
+  {
+    id: '9to5google',
+    name: '9to5Google',
+    color: '#1A73E8',
+    feeds: {
+      tech: 'https://9to5google.com/feed/',
+    },
+  },
+  {
+    id: 'sammobile',
+    name: 'SamMobile',
+    color: '#1428A0',
+    feeds: {
+      tech: 'https://www.sammobile.com/feed/',
+    },
+  },
 ];
 
 function googleNews(query: string): string {

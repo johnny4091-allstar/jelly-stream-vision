@@ -33,7 +33,23 @@ export type SourceId =
   | 'france24'
   | 'wired'
   | 'engadget'
-  | 'thr';
+  | 'thr'
+  | 'nypost'
+  | 'wapo'
+  | 'wsj'
+  | 'usatoday'
+  | 'bloomberg'
+  | 'cbc'
+  | 'euronews'
+  | 'atlantic'
+  | 'vox'
+  | 'businessinsider'
+  | 'deadline'
+  | 'tmz'
+  | 'skysports'
+  | 'sbnation'
+  | '9to5google'
+  | 'sammobile';
 
 export interface Story {
   /** Stable id (the article link). */
@@ -53,8 +69,8 @@ export interface Source {
   name: string;
   /** Brand accent used for the source label on cards. */
   color: string;
-  /** Text some feeds append to every headline (e.g. " - AP News"), removed for display. */
-  titleSuffix?: string;
+  /** Text some feeds append to every headline (e.g. " - AP News"), removed for display. Any case. */
+  titleSuffix?: string | string[];
   /** One feed URL per topic the outlet covers. `top` is the outlet's main feed. */
   feeds: Partial<Record<Topic, string>>;
 }

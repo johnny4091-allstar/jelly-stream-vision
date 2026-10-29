@@ -197,7 +197,12 @@ function atomLink(entry: Node): string {
 function makeStory(source: Source, fields: Omit<Story, 'id' | 'sourceId' | 'sourceName'>): Story | null {
   const link = fields.link.trim();
   let title = cleanText(fields.title);
-  if (source.titleSuffix && title.endsWith(source.titleSuffix)) title = title.slice(0, -source.titleSuffix.length);
+  for (const suffix of [source.titleSuffix ?? []].flat()) {
+    if (title.toLowerCase().endsWith(suffix.toLowerCase())) {
+      title = title.slice(0, -suffix.length);
+      break;
+    }
+  }
   if (!link || !title || !/^https?:\/\//.test(link)) return null;
   // Aggregator feeds repeat the headline as the description, and some feeds send a literal "null".
   const summary = fields.summary.startsWith(title) || /^(null|undefined)$/i.test(fields.summary) ? '' : fields.summary;

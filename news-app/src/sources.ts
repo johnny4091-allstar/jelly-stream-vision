@@ -327,7 +327,6 @@ export const SOURCES: Source[] = [
     feeds: {
       top: 'https://news.yahoo.com/rss/',
       sports: 'https://sports.yahoo.com/rss/',
-      business: 'https://finance.yahoo.com/news/rssindex',
     },
   },
   {
@@ -362,7 +361,6 @@ export const SOURCES: Source[] = [
       top: 'https://rss.dw.com/rdf/rss-en-top',
       world: 'https://rss.dw.com/rdf/rss-en-world',
       business: 'https://rss.dw.com/rdf/rss-en-bus',
-      science: 'https://rss.dw.com/rdf/rss-en-sci',
     },
   },
   {
@@ -413,20 +411,6 @@ export const SOURCES: Source[] = [
     },
   },
   {
-    id: 'wapo',
-    name: 'The Washington Post',
-    color: '#1A1A1A',
-    feeds: {
-      top: 'https://feeds.washingtonpost.com/rss/national',
-      world: 'https://feeds.washingtonpost.com/rss/world',
-      sports: 'https://feeds.washingtonpost.com/rss/sports',
-      tech: 'https://feeds.washingtonpost.com/rss/business/technology',
-      entertainment: 'https://feeds.washingtonpost.com/rss/entertainment',
-      business: 'https://feeds.washingtonpost.com/rss/business',
-      politics: 'https://feeds.washingtonpost.com/rss/politics',
-    },
-  },
-  {
     id: 'wsj',
     name: 'The Wall Street Journal',
     color: '#0274B6',
@@ -434,7 +418,6 @@ export const SOURCES: Source[] = [
       top: 'https://feeds.a.dj.com/rss/RSSWorldNews.xml',
       world: 'https://feeds.a.dj.com/rss/RSSWorldNews.xml',
       tech: 'https://feeds.a.dj.com/rss/RSSWSJD.xml',
-      entertainment: 'https://feeds.a.dj.com/rss/RSSArtsCulture.xml',
       business: 'https://feeds.a.dj.com/rss/WSJcomUSBusiness.xml',
     },
   },
@@ -499,7 +482,6 @@ export const SOURCES: Source[] = [
     feeds: {
       top: 'https://www.theatlantic.com/feed/all/',
       tech: 'https://www.theatlantic.com/feed/channel/technology/',
-      entertainment: 'https://www.theatlantic.com/feed/channel/entertainment/',
       politics: 'https://www.theatlantic.com/feed/channel/politics/',
       science: 'https://www.theatlantic.com/feed/channel/science/',
       health: 'https://www.theatlantic.com/feed/channel/health/',
@@ -519,7 +501,6 @@ export const SOURCES: Source[] = [
     color: '#1B5FAA',
     feeds: {
       top: 'https://feeds.businessinsider.com/custom/all',
-      tech: 'https://feeds.businessinsider.com/custom/tech',
       business: 'https://feeds.businessinsider.com/custom/all',
     },
   },
@@ -548,14 +529,6 @@ export const SOURCES: Source[] = [
     },
   },
   {
-    id: 'sbnation',
-    name: 'SB Nation',
-    color: '#C4002D',
-    feeds: {
-      sports: 'https://www.sbnation.com/rss/current',
-    },
-  },
-  {
     id: '9to5google',
     name: '9to5Google',
     color: '#1A73E8',
@@ -577,14 +550,6 @@ export const SOURCES: Source[] = [
     color: '#00AC4E',
     feeds: {
       business: 'https://feeds.content.dowjones.io/public/rss/mw_topstories',
-    },
-  },
-  {
-    id: 'foxbusiness',
-    name: 'Fox Business',
-    color: '#003366',
-    feeds: {
-      business: 'https://moxie.foxnews.com/google-publisher/foxbusiness.xml',
     },
   },
   {

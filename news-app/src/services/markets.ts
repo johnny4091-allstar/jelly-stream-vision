@@ -1,22 +1,27 @@
-// Stock market quotes from Yahoo Finance's public chart data (no API key). Prices can be delayed
-// up to about 15 minutes. Kept free of React Native imports so CI can check it in Node.
+// Stock market quotes from Yahoo Finance's public chart data, with CNBC's public quote service as a
+// fallback when Yahoo turns a request away (it rate-limits some networks). Neither needs an API key;
+// prices can be delayed up to about 15 minutes. Kept free of React Native imports so CI can check it
+// in Node.
 
 export interface MarketSymbol {
+  /** Yahoo Finance symbol; also used for the quote page. */
   symbol: string;
+  /** The same instrument on CNBC. */
+  cnbc: string;
   name: string;
   /** How the value reads: index points, a dollar price, or a yield in percent. */
   kind: 'index' | 'usd' | 'percent';
 }
 
 export const MARKET_SYMBOLS: MarketSymbol[] = [
-  { symbol: '^GSPC', name: 'S&P 500', kind: 'index' },
-  { symbol: '^DJI', name: 'Dow Jones', kind: 'index' },
-  { symbol: '^IXIC', name: 'Nasdaq', kind: 'index' },
-  { symbol: '^RUT', name: 'Russell 2000', kind: 'index' },
-  { symbol: 'BTC-USD', name: 'Bitcoin', kind: 'usd' },
-  { symbol: 'GC=F', name: 'Gold', kind: 'usd' },
-  { symbol: 'CL=F', name: 'Crude oil', kind: 'usd' },
-  { symbol: '^TNX', name: '10-yr Treasury', kind: 'percent' },
+  { symbol: '^GSPC', cnbc: '.SPX', name: 'S&P 500', kind: 'index' },
+  { symbol: '^DJI', cnbc: '.DJI', name: 'Dow Jones', kind: 'index' },
+  { symbol: '^IXIC', cnbc: '.IXIC', name: 'Nasdaq', kind: 'index' },
+  { symbol: '^RUT', cnbc: '.RUT', name: 'Russell 2000', kind: 'index' },
+  { symbol: 'BTC-USD', cnbc: 'BTC.CM=', name: 'Bitcoin', kind: 'usd' },
+  { symbol: 'GC=F', cnbc: '@GC.1', name: 'Gold', kind: 'usd' },
+  { symbol: 'CL=F', cnbc: '@CL.1', name: 'Crude oil', kind: 'usd' },
+  { symbol: '^TNX', cnbc: 'US10Y', name: '10-yr Treasury', kind: 'percent' },
 ];
 
 export interface Quote extends MarketSymbol {
@@ -29,6 +34,7 @@ export interface Quote extends MarketSymbol {
   open: boolean;
   /** Milliseconds since epoch of the latest price. */
   time: number;
+  provider: 'yahoo' | 'cnbc';
 }
 
 const HEADERS = {
@@ -94,13 +100,71 @@ export async function fetchQuote(m: MarketSymbol): Promise<Quote> {
     points,
     open: session ? now >= session.start && now < session.end : false,
     time: (meta.regularMarketTime ?? now) * 1000,
+    provider: 'yahoo',
   };
 }
 
-/** Every quote that loads; a symbol that fails is left out. */
+interface CnbcQuote {
+  symbol?: string;
+  last?: string;
+  change?: string;
+  change_pct?: string;
+  previous_day_closing?: string;
+  curmktstatus?: string;
+}
+
+/** "6,843.12", "+0.37%", "-12.30" → numbers. */
+function cnbcNumber(v: string | undefined): number {
+  return Number(String(v ?? '').replace(/[,%+\s]/g, ''));
+}
+
+/** Several quotes in one request from CNBC's public quote service. No intraday chart. */
+export async function fetchCnbcQuotes(symbols: MarketSymbol[]): Promise<Quote[]> {
+  if (symbols.length === 0) return [];
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    const list = encodeURIComponent(symbols.map((m) => m.cnbc).join('|'));
+    const url =
+      `https://quote.cnbc.com/quote-html-webservice/restQuote/symbolType/symbol?symbols=${list}` +
+      '&requestMethod=itv&noform=1&partnerId=2&fund=1&exthrs=1&output=json&events=1';
+    const res = await fetch(url, { headers: HEADERS, signal: controller.signal });
+    if (!res.ok) throw new Error(`CNBC HTTP ${res.status}`);
+    const data = (await res.json()) as { FormattedQuoteResult?: { FormattedQuote?: CnbcQuote[] | CnbcQuote } };
+    const raw = data.FormattedQuoteResult?.FormattedQuote;
+    const rows = Array.isArray(raw) ? raw : raw ? [raw] : [];
+    return symbols.flatMap((m) => {
+      const row = rows.find((r) => r.symbol === m.cnbc);
+      const price = cnbcNumber(row?.last);
+      if (!row || !Number.isFinite(price) || price === 0) return [];
+      const previous = cnbcNumber(row.previous_day_closing);
+      const change = Number.isFinite(cnbcNumber(row.change)) ? cnbcNumber(row.change) : price - previous;
+      const pct = cnbcNumber(row.change_pct);
+      return [
+        {
+          ...m,
+          price,
+          change,
+          changePercent: Number.isFinite(pct) ? pct : previous ? (change / previous) * 100 : 0,
+          points: [],
+          open: row.curmktstatus === 'REG_MKT',
+          time: Date.now(),
+          provider: 'cnbc' as const,
+        },
+      ];
+    });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** Every quote that loads, in list order: Yahoo first, CNBC for any Yahoo turned away. */
 export async function fetchQuotes(symbols: MarketSymbol[] = MARKET_SYMBOLS): Promise<Quote[]> {
   const results = await Promise.allSettled(symbols.map(fetchQuote));
-  return results.flatMap((r) => (r.status === 'fulfilled' ? [r.value] : []));
+  const got = results.flatMap((r) => (r.status === 'fulfilled' ? [r.value] : []));
+  const missing = symbols.filter((m) => !got.some((q) => q.symbol === m.symbol));
+  const fallback = await fetchCnbcQuotes(missing).catch(() => []);
+  return symbols.flatMap((m) => [...got, ...fallback].filter((q) => q.symbol === m.symbol));
 }
 
 function number(n: number, digits: number): string {

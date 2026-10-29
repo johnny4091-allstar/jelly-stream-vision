@@ -110,7 +110,7 @@ export function MarketsStrip() {
           ))}
         </ScrollView>
       )}
-      <Text style={[styles.note, { color: c.tertiary }]}>Prices from Yahoo Finance; may be delayed. Tap for details.</Text>
+      <Text style={[styles.note, { color: c.tertiary }]}>Prices from Yahoo Finance and CNBC; may be delayed. Tap for details.</Text>
     </View>
   );
 }

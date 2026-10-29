@@ -1,5 +1,5 @@
 - New: stock market on For you and the Business page: S&P 500, Dow, Nasdaq, Russell 2000, Bitcoin, gold, oil and the 10-year yield, with today's chart. Tap one for details
 - New topics: Business & markets, Politics, Science and Health. Follow them on the Following tab
-- More sources: MarketWatch, Fox Business, Yahoo Finance, ScienceDaily, NASA and STAT, plus PBS News, CNBC, Politico, The Hill, Axios, LA Times, Newsweek, The Independent, DW, France 24, NY Post, Washington Post, WSJ, USA Today, Bloomberg, CBC and more
+- More sources: MarketWatch, ScienceDaily, NASA and STAT, plus PBS News, CNBC, Politico, The Hill, Axios, LA Times, Newsweek, The Independent, DW, France 24, NY Post, WSJ, USA Today, Bloomberg, CBC and more
 - Faster loading with many sources on
 - The radar's street map now loads properly

@@ -330,14 +330,6 @@ export const SOURCES: Source[] = [
     },
   },
   {
-    id: 'newsweek',
-    name: 'Newsweek',
-    color: '#D2232A',
-    feeds: {
-      top: 'https://www.newsweek.com/rss',
-    },
-  },
-  {
     id: 'independent',
     name: 'The Independent',
     color: '#EC1A2E',

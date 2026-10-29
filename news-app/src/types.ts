@@ -36,7 +36,6 @@ export type SourceId =
   | 'axios'
   | 'latimes'
   | 'yahoo'
-  | 'newsweek'
   | 'independent'
   | 'dw'
   | 'france24'

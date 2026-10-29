@@ -113,6 +113,28 @@ interface CnbcQuote {
   curmktstatus?: string;
 }
 
+/** The nth (1-based) Sunday of a month, as a UTC date at midnight. */
+function nthSunday(year: number, month: number, n: number): number {
+  const first = new Date(Date.UTC(year, month, 1)).getUTCDay();
+  return Date.UTC(year, month, 1 + ((7 - first) % 7) + (n - 1) * 7);
+}
+
+/**
+ * Whether the New York Stock Exchange's regular session (9:30am–4pm Eastern, Monday to Friday) is
+ * under way. Market holidays aren't counted. US daylight time runs from the second Sunday of March
+ * to the first Sunday of November, both at 2am local.
+ */
+export function usMarketOpen(now = Date.now()): boolean {
+  const year = new Date(now).getUTCFullYear();
+  const dstStart = nthSunday(year, 2, 2) + 7 * 3600_000; // 2am EST is 7am UTC
+  const dstEnd = nthSunday(year, 10, 1) + 6 * 3600_000; // 2am EDT is 6am UTC
+  const offsetHours = now >= dstStart && now < dstEnd ? -4 : -5;
+  const local = new Date(now + offsetHours * 3600_000);
+  const day = local.getUTCDay();
+  const minutes = local.getUTCHours() * 60 + local.getUTCMinutes();
+  return day >= 1 && day <= 5 && minutes >= 9 * 60 + 30 && minutes < 16 * 60;
+}
+
 /** "6,843.12", "+0.37%", "-12.30" → numbers. */
 function cnbcNumber(v: string | undefined): number {
   return Number(String(v ?? '').replace(/[,%+\s]/g, ''));
@@ -147,7 +169,8 @@ export async function fetchCnbcQuotes(symbols: MarketSymbol[]): Promise<Quote[]>
           change,
           changePercent: Number.isFinite(pct) ? pct : previous ? (change / previous) * 100 : 0,
           points: [],
-          open: row.curmktstatus === 'REG_MKT',
+          // CNBC's status field can lag (it said REG_MKT overnight), so use the session hours.
+          open: usMarketOpen(),
           time: Date.now(),
           provider: 'cnbc' as const,
         },

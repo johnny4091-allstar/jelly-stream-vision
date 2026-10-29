@@ -204,6 +204,134 @@ export const SOURCES: Source[] = [
       sports: 'https://www.cbssports.com/rss/headlines/',
     },
   },
+  {
+    id: 'pbs',
+    name: 'PBS News',
+    color: '#2638C4',
+    feeds: {
+      top: 'https://www.pbs.org/newshour/feeds/rss/headlines',
+      world: 'https://www.pbs.org/newshour/feeds/rss/world',
+      entertainment: 'https://www.pbs.org/newshour/feeds/rss/arts',
+    },
+  },
+  {
+    id: 'cnbc',
+    name: 'CNBC',
+    color: '#005594',
+    feeds: {
+      top: 'https://www.cnbc.com/id/100003114/device/rss/rss.html',
+      world: 'https://www.cnbc.com/id/100727362/device/rss/rss.html',
+      tech: 'https://www.cnbc.com/id/19854910/device/rss/rss.html',
+    },
+  },
+  {
+    id: 'politico',
+    name: 'Politico',
+    color: '#B4171E',
+    feeds: {
+      top: 'https://rss.politico.com/politics-news.xml',
+    },
+  },
+  {
+    id: 'thehill',
+    name: 'The Hill',
+    color: '#00529B',
+    feeds: {
+      top: 'https://thehill.com/news/feed/',
+      tech: 'https://thehill.com/policy/technology/feed/',
+    },
+  },
+  {
+    id: 'axios',
+    name: 'Axios',
+    color: '#1E5AE8',
+    feeds: {
+      top: 'https://api.axios.com/feed/',
+    },
+  },
+  {
+    id: 'latimes',
+    name: 'Los Angeles Times',
+    color: '#1A1A1A',
+    feeds: {
+      top: 'https://www.latimes.com/world-nation/rss2.0.xml',
+      world: 'https://www.latimes.com/world-nation/rss2.0.xml',
+      sports: 'https://www.latimes.com/sports/rss2.0.xml',
+      tech: 'https://www.latimes.com/business/technology/rss2.0.xml',
+      entertainment: 'https://www.latimes.com/entertainment-arts/rss2.0.xml',
+    },
+  },
+  {
+    id: 'yahoo',
+    name: 'Yahoo News',
+    color: '#6001D2',
+    feeds: {
+      top: 'https://news.yahoo.com/rss/',
+      sports: 'https://sports.yahoo.com/rss/',
+    },
+  },
+  {
+    id: 'newsweek',
+    name: 'Newsweek',
+    color: '#D2232A',
+    feeds: {
+      top: 'https://www.newsweek.com/rss',
+    },
+  },
+  {
+    id: 'independent',
+    name: 'The Independent',
+    color: '#EC1A2E',
+    feeds: {
+      top: 'https://www.independent.co.uk/news/rss',
+      world: 'https://www.independent.co.uk/news/world/rss',
+      sports: 'https://www.independent.co.uk/sport/rss',
+      tech: 'https://www.independent.co.uk/tech/rss',
+      entertainment: 'https://www.independent.co.uk/arts-entertainment/rss',
+    },
+  },
+  {
+    id: 'dw',
+    name: 'DW News',
+    color: '#05437C',
+    feeds: {
+      top: 'https://rss.dw.com/rdf/rss-en-top',
+      world: 'https://rss.dw.com/rdf/rss-en-world',
+    },
+  },
+  {
+    id: 'france24',
+    name: 'France 24',
+    color: '#0096D6',
+    feeds: {
+      top: 'https://www.france24.com/en/rss',
+      world: 'https://www.france24.com/en/rss',
+    },
+  },
+  {
+    id: 'wired',
+    name: 'Wired',
+    color: '#1A1A1A',
+    feeds: {
+      tech: 'https://www.wired.com/feed/rss',
+    },
+  },
+  {
+    id: 'engadget',
+    name: 'Engadget',
+    color: '#7A2CF5',
+    feeds: {
+      tech: 'https://www.engadget.com/rss.xml',
+    },
+  },
+  {
+    id: 'thr',
+    name: 'The Hollywood Reporter',
+    color: '#B8862B',
+    feeds: {
+      entertainment: 'https://www.hollywoodreporter.com/feed/',
+    },
+  },
 ];
 
 function googleNews(query: string): string {

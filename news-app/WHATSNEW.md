@@ -1,5 +1,4 @@
+- 14 more news sources: PBS News, CNBC, Politico, The Hill, Axios, Los Angeles Times, Yahoo News, Newsweek, The Independent, DW News, France 24, Wired, Engadget and The Hollywood Reporter
+- Turn any source on or off in Settings → Sources
+- The radar's street map now loads properly
 - Fixed: opening the weather no longer closes the app
-- Local weather on For you, with the next 24 hours and a 7-day forecast. Tap "Show weather" and allow location
-- Rain radar on the weather card. Tap it for a full-screen radar map that plays the last 2 hours
-- Finding your location is more reliable, including indoors
-- Settings → Weather: switch °F / °C, or turn weather off

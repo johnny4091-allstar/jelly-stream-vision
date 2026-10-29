@@ -19,7 +19,21 @@ export type SourceId =
   | 'techcrunch'
   | 'ars'
   | 'variety'
-  | 'cbssports';
+  | 'cbssports'
+  | 'pbs'
+  | 'cnbc'
+  | 'politico'
+  | 'thehill'
+  | 'axios'
+  | 'latimes'
+  | 'yahoo'
+  | 'newsweek'
+  | 'independent'
+  | 'dw'
+  | 'france24'
+  | 'wired'
+  | 'engadget'
+  | 'thr';
 
 export interface Story {
   /** Stable id (the article link). */

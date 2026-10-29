@@ -51,6 +51,8 @@ export function SettingsScreen() {
     setShowWeather,
     tempUnit,
     setTempUnit,
+    showMarkets,
+    setShowMarkets,
   } = useSettings();
   const [checking, setChecking] = useState(false);
 
@@ -148,6 +150,18 @@ export function SettingsScreen() {
               </Pressable>
             );
           })}
+        </View>
+      </Section>
+
+      <Section title="Markets" footer="Major indexes, Bitcoin, gold, oil and the 10-year Treasury yield from Yahoo Finance. Prices may be delayed.">
+        <View style={styles.row}>
+          <Text style={[styles.rowLabel, { color: c.text }]}>Show stock market on For you</Text>
+          <Switch
+            value={showMarkets}
+            onValueChange={setShowMarkets}
+            trackColor={{ true: '#34C759' }}
+            accessibilityLabel="Show stock market on For you"
+          />
         </View>
       </Section>
 

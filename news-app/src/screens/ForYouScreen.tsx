@@ -15,6 +15,7 @@ import {
   useScrollTopVisibility,
   useTabBarSpace,
 } from '../components/common';
+import { MarketsStrip } from '../components/MarketsStrip';
 import { StoryCard } from '../components/StoryCard';
 import { WeatherBoundary } from '../components/WeatherBoundary';
 import { WeatherCard } from '../components/WeatherCard';
@@ -33,7 +34,7 @@ export function ForYouScreen() {
   const insets = useSafeAreaInsets();
   const bottom = useTabBarSpace();
   const { stories, failed, loading, refreshing, refresh } = useStories('top');
-  const { enabledSources } = useSettings();
+  const { enabledSources, showMarkets } = useSettings();
   const scrollRef = useRef<ScrollViewInstance>(null);
   useScrollToTop(scrollRef);
   const scrollTop = useScrollTopVisibility();
@@ -73,6 +74,7 @@ export function ForYouScreen() {
         <WeatherBoundary>
           <WeatherCard />
         </WeatherBoundary>
+        {showMarkets ? <MarketsStrip /> : null}
         <FailedNotice failed={failed} />
 
         {loading && stories.length === 0 ? (

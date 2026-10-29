@@ -1,4 +1,13 @@
-export type Topic = 'top' | 'world' | 'sports' | 'tech' | 'entertainment';
+export type Topic =
+  | 'top'
+  | 'world'
+  | 'business'
+  | 'politics'
+  | 'sports'
+  | 'tech'
+  | 'science'
+  | 'health'
+  | 'entertainment';
 
 export type SourceId =
   | 'cnn'
@@ -49,7 +58,12 @@ export type SourceId =
   | 'skysports'
   | 'sbnation'
   | '9to5google'
-  | 'sammobile';
+  | 'sammobile'
+  | 'marketwatch'
+  | 'foxbusiness'
+  | 'sciencedaily'
+  | 'nasa'
+  | 'statnews';
 
 export interface Story {
   /** Stable id (the article link). */

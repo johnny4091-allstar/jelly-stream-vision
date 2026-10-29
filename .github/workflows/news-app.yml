@@ -54,6 +54,10 @@ jobs:
         # Information only: shows which feeds answer and how many stories and pictures each has.
         continue-on-error: true
         run: node scripts/check-feeds.mjs
+      - name: Check market quotes
+        # Information only: shows Yahoo Finance still answers the quote requests the app makes.
+        continue-on-error: true
+        run: node scripts/check-markets.mjs
       - name: Check weather forecast
         # Information only: shows Open-Meteo still answers the request the app makes.
         continue-on-error: true

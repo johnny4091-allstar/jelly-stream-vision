@@ -47,7 +47,28 @@ export async function clearFeedCache(): Promise<void> {
   await AsyncStorage.multiRemove(keys.filter((k) => k.startsWith(CACHE_PREFIX)));
 }
 
-async function fetchText(url: string): Promise<string> {
+// The News tab asks for every topic at once (well over 100 feeds). Fetch a few at a time so the
+// phone's connection isn't swamped; the rest wait their turn, first asked first served.
+const MAX_CONCURRENT_FETCHES = 6;
+let active = 0;
+const waiting: (() => void)[] = [];
+
+async function withFetchSlot<T>(task: () => Promise<T>): Promise<T> {
+  if (active >= MAX_CONCURRENT_FETCHES) await new Promise<void>((resolve) => waiting.push(resolve));
+  active++;
+  try {
+    return await task();
+  } finally {
+    active--;
+    waiting.shift()?.();
+  }
+}
+
+function fetchText(url: string): Promise<string> {
+  return withFetchSlot(() => fetchTextNow(url));
+}
+
+async function fetchTextNow(url: string): Promise<string> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {

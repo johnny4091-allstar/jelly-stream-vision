@@ -1,5 +1,5 @@
-- 30 more news sources, 49 in all. New: PBS News, CNBC, Politico, The Hill, Axios, Los Angeles Times, Yahoo News, Newsweek, The Independent, DW News, France 24, New York Post, The Washington Post, The Wall Street Journal, USA Today, Bloomberg, CBC News, euronews, The Atlantic, Vox and Business Insider
-- More for Sports (Sky Sports, SB Nation), Tech (Wired, Engadget, 9to5Google, SamMobile) and Entertainment (The Hollywood Reporter, Deadline, TMZ)
-- Turn any source on or off in Settings → Sources
+- New: stock market on For you and the Business page: S&P 500, Dow, Nasdaq, Russell 2000, Bitcoin, gold, oil and the 10-year yield, with today's chart. Tap one for details
+- New topics: Business & markets, Politics, Science and Health. Follow them on the Following tab
+- More sources: MarketWatch, Fox Business, Yahoo Finance, ScienceDaily, NASA and STAT, plus PBS News, CNBC, Politico, The Hill, Axios, LA Times, Newsweek, The Independent, DW, France 24, NY Post, Washington Post, WSJ, USA Today, Bloomberg, CBC and more
+- Faster loading with many sources on
 - The radar's street map now loads properly
-- Fixed: opening the weather no longer closes the app

@@ -1,4 +1,4 @@
-- New: Watch & Listen on For you: the latest videos from news channels (CNN, Fox, ABC, NBC, CBS, PBS, AP, Reuters, BBC-style world channels, ESPN, NASA…) and news podcasts (Up First, The Daily, BBC Global News, WSJ What's News and more)
+- New: Watch & Listen on For you: the latest videos from news channels (CNN, Fox, NBC, CBS, PBS, AP, Reuters, Sky, DW, Bloomberg, ESPN, NASA) and news podcasts (Up First, The Daily, BBC Global News, WSJ What's News and more)
 - Podcasts play right in the app, keep playing with the screen off, and have lock-screen controls
 - New share menu: send stories to Messages, WhatsApp, Facebook, X, Telegram, Reddit or Email in one tap, or copy the link
 - Market Open/Closed now follows real US market hours

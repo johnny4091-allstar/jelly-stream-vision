@@ -10,7 +10,7 @@ import { WebView } from 'react-native-webview';
 type ReaderWebView = WebView<object>;
 
 import type { ArticleScreenProps } from '../navigation';
-import { shareStory } from '../services/actions';
+import { openShareSheet } from '../components/ShareSheet';
 import { useSaved } from '../state/SavedContext';
 import { type, useTheme } from '../theme';
 
@@ -64,7 +64,7 @@ export function ArticleScreen({ route, navigation }: ArticleScreenProps) {
           </Text>
         </View>
         {iconButton(saved ? 'bookmark' : 'bookmark-outline', saved ? 'Remove from saved' : 'Save for later', () => toggleSaved(story), saved ? c.accent : c.text)}
-        {iconButton('share-outline', 'Share story', () => shareStory(story))}
+        {iconButton('share-outline', 'Share story', () => openShareSheet({ title: story.title, link: story.link }))}
       </View>
       {progress < 1 && !failed ? (
         <View style={[styles.progressTrack, { backgroundColor: c.separator }]}>

@@ -6,7 +6,7 @@ import { memo, useEffect, useRef } from 'react';
 import { Alert, Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { openArticle } from '../navigation';
-import { shareStory } from '../services/actions';
+import { openShareSheet } from './ShareSheet';
 import { useStoryImage } from '../services/previewImage';
 import { getSource } from '../sources';
 import { useSaved } from '../state/SavedContext';
@@ -55,7 +55,7 @@ export function showStoryMenu(story: Story, saved: boolean, toggleSaved: (s: Sto
   Alert.alert(story.sourceName, story.title, [
     { text: 'Cancel', style: 'cancel' },
     { text: saved ? 'Remove from saved' : 'Save for later', onPress: () => toggleSaved(story) },
-    { text: 'Share', onPress: () => shareStory(story) },
+    { text: 'Share', onPress: () => openShareSheet({ title: story.title, link: story.link }) },
   ]);
 }
 

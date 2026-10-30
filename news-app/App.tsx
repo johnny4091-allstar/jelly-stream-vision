@@ -26,9 +26,15 @@ import { WeatherScreen } from './src/screens/WeatherScreen';
 import { SavedProvider } from './src/state/SavedContext';
 import { SettingsProvider, useSettings } from './src/state/SettingsContext';
 import { WeatherProvider } from './src/state/WeatherContext';
+import { AudioProvider } from './src/state/AudioContext';
+import { MiniPlayer } from './src/components/Media';
+import { ShareSheet } from './src/components/ShareSheet';
+import { MediaScreen } from './src/screens/MediaScreen';
+import { VideoScreen } from './src/screens/VideoScreen';
 import { useTheme } from './src/theme';
 
 const Tab = createBottomTabNavigator();
+const TAB_NAMES = ['For you', 'News', 'Live TV', 'Sports', 'Following'];
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 // Samsung News-style tabs in a floating bar, plus free live news channels. Settings lives behind the ⋮ in the header.
@@ -65,6 +71,8 @@ function Root() {
   const c = useTheme();
   const { ready } = useSettings();
   const [navReady, setNavReady] = useState(false);
+  // The mini player shows on the tabs and the media screen, and sits above the tab bar on the tabs.
+  const [routeName, setRouteName] = useState<string | undefined>();
   useNotificationTaps(navReady);
 
   useEffect(() => {
@@ -85,7 +93,15 @@ function Root() {
   }, [c]);
 
   return (
-    <NavigationContainer ref={navigationRef} theme={navTheme} onReady={() => setNavReady(true)}>
+    <NavigationContainer
+      ref={navigationRef}
+      theme={navTheme}
+      onReady={() => {
+        setNavReady(true);
+        setRouteName(navigationRef.getCurrentRoute()?.name);
+      }}
+      onStateChange={() => setRouteName(navigationRef.getCurrentRoute()?.name)}
+    >
       <StatusBar style={c.dark ? 'light' : 'dark'} />
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Tabs" component={Tabs} />
@@ -95,7 +111,11 @@ function Root() {
         <Stack.Screen name="Watch" component={WatchScreen} options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="Weather" component={WeatherScreen} options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="Radar" component={RadarScreen} options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="Video" component={VideoScreen} options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="Media" component={MediaScreen} options={{ animation: 'slide_from_right' }} />
       </Stack.Navigator>
+      {routeName === 'Media' || TAB_NAMES.includes(routeName ?? '') ? <MiniPlayer aboveTabs={routeName !== 'Media'} /> : null}
+      <ShareSheet />
       <UpdatePrompt />
       <BackgroundGuide />
     </NavigationContainer>
@@ -108,7 +128,9 @@ export default function App() {
       <SettingsProvider>
         <SavedProvider>
           <WeatherProvider>
-            <Root />
+            <AudioProvider>
+              <Root />
+            </AudioProvider>
           </WeatherProvider>
         </SavedProvider>
       </SettingsProvider>

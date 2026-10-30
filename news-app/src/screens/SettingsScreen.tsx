@@ -53,6 +53,8 @@ export function SettingsScreen() {
     setTempUnit,
     showMarkets,
     setShowMarkets,
+    showMedia,
+    setShowMedia,
   } = useSettings();
   const [checking, setChecking] = useState(false);
 
@@ -161,6 +163,21 @@ export function SettingsScreen() {
             onValueChange={setShowMarkets}
             trackColor={{ true: '#34C759' }}
             accessibilityLabel="Show stock market on For you"
+          />
+        </View>
+      </Section>
+
+      <Section
+        title="Videos & podcasts"
+        footer="Latest videos from news channels' YouTube pages and episodes of news podcasts. Podcasts keep playing with the screen off."
+      >
+        <View style={styles.row}>
+          <Text style={[styles.rowLabel, { color: c.text }]}>Show on For you</Text>
+          <Switch
+            value={showMedia}
+            onValueChange={setShowMedia}
+            trackColor={{ true: '#34C759' }}
+            accessibilityLabel="Show videos and podcasts on For you"
           />
         </View>
       </Section>

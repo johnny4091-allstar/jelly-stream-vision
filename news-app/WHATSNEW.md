@@ -1,5 +1,4 @@
-- New: stock market on For you and the Business page: S&P 500, Dow, Nasdaq, Russell 2000, Bitcoin, gold, oil and the 10-year yield, with today's chart. Tap one for details
-- New topics: Business & markets, Politics, Science and Health. Follow them on the Following tab
-- More sources: MarketWatch, ScienceDaily, NASA and STAT, plus PBS News, CNBC, Politico, The Hill, Axios, LA Times, The Independent, DW, France 24, NY Post, WSJ, USA Today, Bloomberg, CBC and more
-- Faster loading with many sources on
-- The radar's street map now loads properly
+- New: Watch & Listen on For you: the latest videos from news channels (CNN, Fox, ABC, NBC, CBS, PBS, AP, Reuters, BBC-style world channels, ESPN, NASA…) and news podcasts (Up First, The Daily, BBC Global News, WSJ What's News and more)
+- Podcasts play right in the app, keep playing with the screen off, and have lock-screen controls
+- New share menu: send stories to Messages, WhatsApp, Facebook, X, Telegram, Reddit or Email in one tap, or copy the link
+- Market Open/Closed now follows real US market hours

@@ -23,6 +23,8 @@ export interface StoredSettings {
   tempUnit: TempUnit | null;
   /** Stock market prices on For you. */
   showMarkets: boolean;
+  /** "Watch" and "Listen" shelves on For you. */
+  showMedia: boolean;
 }
 
 interface SettingsValue {
@@ -45,10 +47,12 @@ interface SettingsValue {
   setTempUnit: (unit: TempUnit) => void;
   showMarkets: boolean;
   setShowMarkets: (on: boolean) => void;
+  showMedia: boolean;
+  setShowMedia: (on: boolean) => void;
 }
 
 export const SETTINGS_KEY = 'settings:v1';
-export const DEFAULT_SETTINGS: StoredSettings = { disabled: [], themeMode: 'system', notifyTopStories: true, notifyUpdates: true, followed: [], showWeather: true, tempUnit: null, showMarkets: true };
+export const DEFAULT_SETTINGS: StoredSettings = { disabled: [], themeMode: 'system', notifyTopStories: true, notifyUpdates: true, followed: [], showWeather: true, tempUnit: null, showMarkets: true, showMedia: true };
 const KEY = SETTINGS_KEY;
 const DEFAULTS = DEFAULT_SETTINGS;
 
@@ -103,6 +107,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       setTempUnit: (tempUnit) => update((s) => ({ ...s, tempUnit })),
       showMarkets: settings.showMarkets,
       setShowMarkets: (showMarkets) => update((s) => ({ ...s, showMarkets })),
+      showMedia: settings.showMedia,
+      setShowMedia: (showMedia) => update((s) => ({ ...s, showMedia })),
     };
   }, [settings, ready, update]);
 

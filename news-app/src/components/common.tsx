@@ -14,6 +14,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { goBack, openSettings } from '../navigation';
+import { MINI_PLAYER_SPACE, useAudio } from '../state/AudioContext';
 import { WeatherBoundary } from './WeatherBoundary';
 import { WeatherChip } from './WeatherCard';
 import { getSource } from '../sources';
@@ -23,7 +24,8 @@ import type { SourceId, Topic } from '../types';
 
 /** Space to leave at the bottom of tab screens so content clears the floating tab bar. */
 export function useTabBarSpace(): number {
-  return useSafeAreaInsets().bottom + 104;
+  const { episode } = useAudio();
+  return useSafeAreaInsets().bottom + 104 + (episode ? MINI_PLAYER_SPACE : 0);
 }
 
 /** App bar on the tab screens: logo and name on the left, menu (Settings) on the right. */

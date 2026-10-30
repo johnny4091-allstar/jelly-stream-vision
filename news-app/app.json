@@ -26,6 +26,13 @@
     "plugins": [
       "expo-image",
       [
+        "expo-audio",
+        {
+          "recordAudioAndroid": false,
+          "enableBackgroundPlayback": true
+        }
+      ],
+      [
         "expo-location",
         {
           "locationWhenInUsePermission": "News Hammer uses your location to show the local weather.",

@@ -16,6 +16,7 @@ import {
   useTabBarSpace,
 } from '../components/common';
 import { MarketsStrip } from '../components/MarketsStrip';
+import { MediaShelves } from '../components/Media';
 import { StoryCard } from '../components/StoryCard';
 import { WeatherBoundary } from '../components/WeatherBoundary';
 import { WeatherCard } from '../components/WeatherCard';
@@ -34,7 +35,7 @@ export function ForYouScreen() {
   const insets = useSafeAreaInsets();
   const bottom = useTabBarSpace();
   const { stories, failed, loading, refreshing, refresh } = useStories('top');
-  const { enabledSources, showMarkets } = useSettings();
+  const { enabledSources, showMarkets, showMedia } = useSettings();
   const scrollRef = useRef<ScrollViewInstance>(null);
   useScrollToTop(scrollRef);
   const scrollTop = useScrollTopVisibility();
@@ -108,6 +109,8 @@ export function ForYouScreen() {
               <StoryCard key={s.id} story={s} index={i} />
             ))}
             <MoreLink label="More top stories" onPress={() => openTopic('top')} />
+
+            {showMedia ? <MediaShelves /> : null}
 
             {layout.forYou.length > 0 ? (
               <>

@@ -41,7 +41,18 @@ export function radarTimeLabel(seconds: number): string {
  * A still of the latest radar around the user, drawn from map tiles (no map library or WebView,
  * so it's light enough for the For you feed). Taps through to the live radar.
  */
-export function RadarPreview({ coords, height = 150, dark }: { coords: Coords; height?: number; dark: boolean }) {
+export function RadarPreview({
+  coords,
+  height = 150,
+  dark,
+  compact,
+}: {
+  coords: Coords;
+  height?: number;
+  dark: boolean;
+  /** Small tile: shorter label and credit. */
+  compact?: boolean;
+}) {
   const { frames } = useRadarFrames();
   const [width, setWidth] = useState(0);
   const latest = frames?.frames[frames.frames.length - 1];
@@ -87,9 +98,11 @@ export function RadarPreview({ coords, height = 150, dark }: { coords: Coords; h
       <View style={[styles.dot, { left: width / 2 - 7, top: height / 2 - 7 }]} />
       <View style={styles.label}>
         <Ionicons name="radio-outline" size={13} color="#fff" />
-        <Text style={styles.labelText}>{latest ? `Radar · ${radarTimeLabel(latest.time)}` : 'Radar'}</Text>
+        <Text style={styles.labelText}>{latest && !compact ? `Radar · ${radarTimeLabel(latest.time)}` : 'Radar'}</Text>
       </View>
-      <Text style={styles.credit}>© CARTO © OpenStreetMap · RainViewer</Text>
+      <Text style={styles.credit} numberOfLines={1}>
+        {compact ? '© CARTO · OSM · RainViewer' : '© CARTO © OpenStreetMap · RainViewer'}
+      </Text>
       <View style={styles.open}>
         <Ionicons name="expand" size={14} color="#fff" />
       </View>

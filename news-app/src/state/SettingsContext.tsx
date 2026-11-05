@@ -25,6 +25,8 @@ export interface StoredSettings {
   showMarkets: boolean;
   /** "Watch" and "Listen" shelves on For you. */
   showMedia: boolean;
+  /** Team abbreviations (ESPN's, e.g. "TB") whose games show first. */
+  favoriteTeams: string[];
 }
 
 interface SettingsValue {
@@ -49,10 +51,12 @@ interface SettingsValue {
   setShowMarkets: (on: boolean) => void;
   showMedia: boolean;
   setShowMedia: (on: boolean) => void;
+  favoriteTeams: string[];
+  toggleFavoriteTeam: (abbr: string) => void;
 }
 
 export const SETTINGS_KEY = 'settings:v1';
-export const DEFAULT_SETTINGS: StoredSettings = { disabled: [], themeMode: 'system', notifyTopStories: true, notifyUpdates: true, followed: [], showWeather: true, tempUnit: null, showMarkets: true, showMedia: true };
+export const DEFAULT_SETTINGS: StoredSettings = { disabled: [], themeMode: 'system', notifyTopStories: true, notifyUpdates: true, followed: [], showWeather: true, tempUnit: null, showMarkets: true, showMedia: true, favoriteTeams: [] };
 const KEY = SETTINGS_KEY;
 const DEFAULTS = DEFAULT_SETTINGS;
 
@@ -109,6 +113,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       setShowMarkets: (showMarkets) => update((s) => ({ ...s, showMarkets })),
       showMedia: settings.showMedia,
       setShowMedia: (showMedia) => update((s) => ({ ...s, showMedia })),
+      favoriteTeams: settings.favoriteTeams,
+      toggleFavoriteTeam: (abbr) =>
+        update((s) => ({
+          ...s,
+          favoriteTeams: s.favoriteTeams.includes(abbr) ? s.favoriteTeams.filter((t) => t !== abbr) : [...s.favoriteTeams, abbr],
+        })),
     };
   }, [settings, ready, update]);
 

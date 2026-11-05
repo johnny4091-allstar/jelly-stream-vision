@@ -3,7 +3,7 @@ import { useMemo, useRef } from 'react';
 import { RefreshControl, ScrollView, View, type ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BriefingCard } from '../components/BriefingCard';
+import { Dashboard } from '../components/Dashboard';
 import {
   AppHeader,
   EmptyState,
@@ -15,11 +15,8 @@ import {
   useScrollTopVisibility,
   useTabBarSpace,
 } from '../components/common';
-import { MarketsStrip } from '../components/MarketsStrip';
 import { MediaShelves } from '../components/Media';
 import { StoryCard } from '../components/StoryCard';
-import { WeatherBoundary } from '../components/WeatherBoundary';
-import { WeatherCard } from '../components/WeatherCard';
 import { openSettings, openTopic } from '../navigation';
 import { pickTopStories } from '../services/news';
 import { useSettings } from '../state/SettingsContext';
@@ -29,32 +26,29 @@ import type { Story } from '../types';
 
 const FOR_YOU_COUNT = 15;
 
-/** Home tab: briefing with a carousel, Top stories, then a longer For you list. */
+/** Home tab: the "Today" dashboard, Top stories, Watch & Listen, then a longer For you list. */
 export function ForYouScreen() {
   const c = useTheme();
   const insets = useSafeAreaInsets();
   const bottom = useTabBarSpace();
   const { stories, failed, loading, refreshing, refresh } = useStories('top');
-  const { enabledSources, showMarkets, showMedia } = useSettings();
+  const { enabledSources, showMedia } = useSettings();
   const scrollRef = useRef<ScrollViewInstance>(null);
   useScrollToTop(scrollRef);
   const scrollTop = useScrollTopVisibility();
 
   const layout = useMemo(() => {
-    // The carousel is all pictures, so it draws from stories that come with one.
+    // The dashboard's top story is the newest one with a picture; the rest follow below.
     const withImages = stories.filter((st) => st.imageUrl);
-    const slides = pickTopStories(withImages.length >= 3 ? withImages : stories, 5);
-    const used = new Set(slides.map((s) => s.id));
-    const rest = stories.filter((s) => !used.has(s.id));
-    const bullets = rest.slice(0, 3);
+    const lead = pickTopStories(withImages.length ? withImages : stories, 1)[0];
+    const rest = stories.filter((s) => s !== lead);
     const hero = rest.find((s) => s.imageUrl);
     const afterHero = rest.filter((s) => s !== hero);
     return {
-      slides,
-      bullets,
+      lead,
       hero,
-      topRows: afterHero.slice(0, 2),
-      forYou: afterHero.slice(2, 2 + FOR_YOU_COUNT),
+      topRows: afterHero.slice(0, 3),
+      forYou: afterHero.slice(3, 3 + FOR_YOU_COUNT),
     };
   }, [stories]);
 
@@ -71,11 +65,8 @@ export function ForYouScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={c.tertiary} progressViewOffset={insets.top} />
         }
       >
-        <AppHeader />
-        <WeatherBoundary>
-          <WeatherCard />
-        </WeatherBoundary>
-        {showMarkets ? <MarketsStrip /> : null}
+        <AppHeader hideWeather />
+        <Dashboard topStory={layout.lead} />
         <FailedNotice failed={failed} />
 
         {loading && stories.length === 0 ? (
@@ -101,8 +92,6 @@ export function ForYouScreen() {
           )
         ) : (
           <>
-            <BriefingCard bullets={layout.bullets} slides={layout.slides} />
-
             <SectionHeader title="Top stories" onPress={() => openTopic('top')} />
             {layout.hero ? <StoryCard story={layout.hero} variant="overlay" /> : null}
             {layout.topRows.map((s: Story, i) => (

@@ -29,7 +29,7 @@ export function useTabBarSpace(): number {
 }
 
 /** App bar on the tab screens: logo and name on the left, menu (Settings) on the right. */
-export function AppHeader() {
+export function AppHeader({ hideWeather }: { hideWeather?: boolean } = {}) {
   const c = useTheme();
   return (
     <View style={styles.appHeader}>
@@ -37,9 +37,11 @@ export function AppHeader() {
       <Text style={[styles.appName, { color: c.text }]}>
         News <Text style={{ color: c.accent }}>Hammer</Text>
       </Text>
-      <WeatherBoundary>
-        <WeatherChip />
-      </WeatherBoundary>
+      {hideWeather ? null : (
+        <WeatherBoundary>
+          <WeatherChip />
+        </WeatherBoundary>
+      )}
       <Pressable
         onPress={openSettings}
         hitSlop={12}

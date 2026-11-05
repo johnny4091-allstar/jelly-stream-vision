@@ -13,7 +13,7 @@ const DOWN = '#E5383B';
 let lastQuotes: Quote[] = [];
 
 /** Quotes that refresh every minute while the app is open; the last ones show straight away. */
-function useQuotes(): { quotes: Quote[]; failed: boolean } {
+export function useQuotes(): { quotes: Quote[]; failed: boolean } {
   const [quotes, setQuotes] = useState<Quote[]>(lastQuotes);
   const [failed, setFailed] = useState(false);
   useEffect(() => {

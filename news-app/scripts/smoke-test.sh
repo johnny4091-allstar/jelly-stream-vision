@@ -136,6 +136,33 @@ weather_flow() {
 }
 weather_flow || { echo "::error::The app crashed or froze opening the weather (see the log above)."; exit 1; }
 
+# The home dashboard's Quick read (swipe stories, read aloud) and Scores screens.
+dashboard_flow() {
+  adb logcat -c
+  adb shell am force-stop "$PKG"
+  adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null
+  sleep 30
+  check_alive dashboard || return 1
+  tap "Later" && sleep 2 && ui_texts >/dev/null
+  if tap "Quick read"; then
+    sleep 8
+    check_alive quick-read || return 1
+    tap "Listen" && sleep 5 && { check_alive quick-read-listen || return 1; }
+    adb shell input keyevent KEYCODE_BACK
+    sleep 3
+    ui_texts >/dev/null
+  else
+    echo "::warning::No Quick read tile on For you."
+  fi
+  if tap "Scores"; then
+    sleep 8
+    check_alive scores || return 1
+  else
+    echo "::warning::No Scores tile on For you."
+  fi
+}
+dashboard_flow || { echo "::error::The app crashed or froze on the dashboard (see the log above)."; exit 1; }
+
 # Information only: the background news check should be scheduled with Android's JobScheduler.
 jobs="$(adb shell dumpsys jobscheduler | grep -c "$PKG/androidx.work" || true)"
 echo "Background check jobs scheduled for $PKG: $jobs"

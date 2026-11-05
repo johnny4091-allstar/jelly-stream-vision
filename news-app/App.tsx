@@ -31,6 +31,8 @@ import { MiniPlayer } from './src/components/Media';
 import { ShareSheet } from './src/components/ShareSheet';
 import { MediaScreen } from './src/screens/MediaScreen';
 import { VideoScreen } from './src/screens/VideoScreen';
+import { QuickReadScreen } from './src/screens/QuickReadScreen';
+import { ScoresScreen } from './src/screens/ScoresScreen';
 import { useTheme } from './src/theme';
 
 const Tab = createBottomTabNavigator();
@@ -113,6 +115,8 @@ function Root() {
         <Stack.Screen name="Radar" component={RadarScreen} options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="Video" component={VideoScreen} options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="Media" component={MediaScreen} options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="QuickRead" component={QuickReadScreen} options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="Scores" component={ScoresScreen} options={{ animation: 'slide_from_right' }} />
       </Stack.Navigator>
       {routeName === 'Media' || TAB_NAMES.includes(routeName ?? '') ? <MiniPlayer aboveTabs={routeName !== 'Media'} /> : null}
       <ShareSheet />

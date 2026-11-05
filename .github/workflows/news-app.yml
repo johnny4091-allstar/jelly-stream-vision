@@ -62,6 +62,10 @@ jobs:
         # Information only: shows which YouTube channel feeds and podcast feeds load.
         continue-on-error: true
         run: node scripts/check-media.mjs
+      - name: Check live scores
+        # Information only: shows ESPN's scoreboards still answer.
+        continue-on-error: true
+        run: node scripts/check-scores.mjs
       - name: Check weather forecast
         # Information only: shows Open-Meteo still answers the request the app makes.
         continue-on-error: true

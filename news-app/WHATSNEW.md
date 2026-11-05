@@ -1,4 +1,3 @@
-- New: Watch & Listen on For you: the latest videos from news channels (CNN, Fox, NBC, CBS, PBS, AP, Reuters, Sky, DW, Bloomberg, ESPN, NASA) and news podcasts (Up First, The Daily, BBC Global News, WSJ What's News and more)
-- Podcasts play right in the app, keep playing with the screen off, and have lock-screen controls
-- New share menu: send stories to Messages, WhatsApp, Facebook, X, Telegram, Reddit or Email in one tap, or copy the link
-- Market Open/Closed now follows real US market hours
+- New home screen: a "Today" dashboard with your weather and radar, the markets, live scores, Live TV, your podcast and the top story, all at a glance
+- New: Quick read. Today's top 8 stories full screen, swipe up for the next. Save, share, or have it read aloud
+- New: live scores for the NFL, college football, NBA, MLB, NHL, WNBA and MLS. Tap the star to pin your teams

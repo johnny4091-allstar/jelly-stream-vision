@@ -98,10 +98,10 @@ function Root() {
   }, []);
 
   useEffect(() => {
-    // Keeps the background check scheduled and, for people past setup, asks for notification
-    // permission if it was never answered. New installs are asked in the setup screens instead.
+    // Keeps the background check scheduled for people who allowed notifications. Nobody is asked at
+    // launch: new installs are asked in the setup screens, and anyone can turn alerts on in Settings.
     if (ready && firstRoute === 'Tabs')
-      setUpNotifications()
+      setUpNotifications({ ask: false })
         .then((granted) => (granted ? showBackgroundGuideOnce() : undefined))
         .catch(() => {});
   }, [ready, firstRoute]);

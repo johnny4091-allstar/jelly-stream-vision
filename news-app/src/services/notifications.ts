@@ -138,10 +138,11 @@ async function ensureChannels(): Promise<void> {
  * Creates channels, asks for permission once, and (re)registers the background check. Registration
  * is redone once per installed version so a changed interval takes effect after an update.
  */
-export async function setUpNotifications(): Promise<boolean> {
+export async function setUpNotifications({ ask = true }: { ask?: boolean } = {}): Promise<boolean> {
   await ensureChannels();
   let { status } = await Notifications.getPermissionsAsync();
-  if (status !== 'granted') status = (await Notifications.requestPermissionsAsync()).status;
+  // `ask: false` only keeps an already-allowed check scheduled; it never shows the permission prompt.
+  if (status !== 'granted' && ask) status = (await Notifications.requestPermissionsAsync()).status;
   const granted = status === 'granted';
   if (!granted) return false;
 

@@ -127,6 +127,11 @@ weather_flow() {
   adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null
   sleep 30
   check_alive weather-ask || return 1
+  # The one-time "run in the background" guide can open over the home screen; close it.
+  if tap "Not now"; then
+    sleep 2
+    ui_texts >/dev/null
+  fi
   # A newer published version shows the update pop-up over everything; dismiss it.
   if tap "Later"; then
     sleep 2

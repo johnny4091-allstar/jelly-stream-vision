@@ -111,3 +111,33 @@ export async function fetchGames(favorites: string[] = []): Promise<Game[]> {
         (a.state === 'post' ? b.start - a.start : a.start - b.start),
     );
 }
+
+export interface TeamInfo {
+  abbr: string;
+  name: string;
+  logo?: string;
+  league: string;
+}
+
+/** The leagues offered when picking favourite teams (college football has too many to list). */
+export const TEAM_LEAGUES = LEAGUES.filter((l) => l.id !== 'cfb');
+
+/** Every team in a league, A to Z, for picking favourites. */
+export async function fetchTeams(league: League): Promise<TeamInfo[]> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${league.path}/teams`, { signal: controller.signal });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = (await res.json()) as {
+      sports?: { leagues?: { teams?: { team?: { abbreviation?: string; displayName?: string; logos?: { href?: string }[] } }[] }[] }[];
+    };
+    return (data.sports?.[0]?.leagues?.[0]?.teams ?? [])
+      .flatMap(({ team: t }) =>
+        t?.abbreviation && t.displayName ? [{ abbr: t.abbreviation, name: t.displayName, logo: t.logos?.[0]?.href, league: league.id }] : [],
+      )
+      .sort((a, b) => a.name.localeCompare(b.name));
+  } finally {
+    clearTimeout(timer);
+  }
+}

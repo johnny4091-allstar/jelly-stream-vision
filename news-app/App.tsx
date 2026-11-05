@@ -1,10 +1,11 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { DarkTheme, DefaultTheme, NavigationContainer, type Theme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useLastNotificationResponse } from 'expo-notifications';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Platform } from 'react-native';
+import { Platform, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { UpdatePrompt } from './src/components/UpdatePrompt';
@@ -24,7 +25,7 @@ import { WatchScreen } from './src/screens/WatchScreen';
 import { RadarScreen } from './src/screens/RadarScreen';
 import { WeatherScreen } from './src/screens/WeatherScreen';
 import { SavedProvider } from './src/state/SavedContext';
-import { SettingsProvider, useSettings } from './src/state/SettingsContext';
+import { SETTINGS_KEY, SettingsProvider, useSettings } from './src/state/SettingsContext';
 import { WeatherProvider } from './src/state/WeatherContext';
 import { AudioProvider } from './src/state/AudioContext';
 import { MiniPlayer } from './src/components/Media';
@@ -33,6 +34,10 @@ import { MediaScreen } from './src/screens/MediaScreen';
 import { VideoScreen } from './src/screens/VideoScreen';
 import { QuickReadScreen } from './src/screens/QuickReadScreen';
 import { ScoresScreen } from './src/screens/ScoresScreen';
+import { AccountScreen } from './src/screens/AccountScreen';
+import { AuthScreen } from './src/screens/AuthScreen';
+import { ONBOARDING_KEY, OnboardingScreen } from './src/screens/OnboardingScreen';
+import { AccountProvider } from './src/state/AccountContext';
 import { useTheme } from './src/theme';
 
 const Tab = createBottomTabNavigator();
@@ -76,15 +81,30 @@ function Root() {
   // The mini player shows on the tabs and the media screen, and sits above the tab bar on the tabs.
   const [routeName, setRouteName] = useState<string | undefined>();
   useNotificationTaps(navReady);
+  // New installs start with the setup screens; people updating from an older version don't.
+  const [firstRoute, setFirstRoute] = useState<'Tabs' | 'Onboarding' | null>(null);
 
   useEffect(() => {
-    // Asks for notification permission on first launch and keeps the background check scheduled.
-    // Once notifications are allowed, walk the user through letting the app run in the background.
-    if (ready)
+    (async () => {
+      const [done, settings] = await Promise.all([
+        AsyncStorage.getItem(ONBOARDING_KEY).catch(() => null),
+        AsyncStorage.getItem(SETTINGS_KEY).catch(() => null),
+      ]);
+      if (done || settings) {
+        if (!done) AsyncStorage.setItem(ONBOARDING_KEY, '1').catch(() => {});
+        setFirstRoute('Tabs');
+      } else setFirstRoute('Onboarding');
+    })();
+  }, []);
+
+  useEffect(() => {
+    // Keeps the background check scheduled and, for people past setup, asks for notification
+    // permission if it was never answered. New installs are asked in the setup screens instead.
+    if (ready && firstRoute === 'Tabs')
       setUpNotifications()
         .then((granted) => (granted ? showBackgroundGuideOnce() : undefined))
         .catch(() => {});
-  }, [ready]);
+  }, [ready, firstRoute]);
 
   const navTheme = useMemo<Theme>(() => {
     const base = c.dark ? DarkTheme : DefaultTheme;
@@ -93,6 +113,8 @@ function Root() {
       colors: { ...base.colors, primary: c.accent, background: c.background, card: c.card, text: c.text, border: c.separator },
     };
   }, [c]);
+
+  if (!firstRoute) return <View style={{ flex: 1, backgroundColor: c.background }} />;
 
   return (
     <NavigationContainer
@@ -105,7 +127,7 @@ function Root() {
       onStateChange={() => setRouteName(navigationRef.getCurrentRoute()?.name)}
     >
       <StatusBar style={c.dark ? 'light' : 'dark'} />
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName={firstRoute}>
         <Stack.Screen name="Tabs" component={Tabs} />
         <Stack.Screen name="Article" component={ArticleScreen} options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="Topic" component={TopicScreen} options={{ animation: 'slide_from_right' }} />
@@ -117,6 +139,9 @@ function Root() {
         <Stack.Screen name="Media" component={MediaScreen} options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="QuickRead" component={QuickReadScreen} options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="Scores" component={ScoresScreen} options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ animation: 'fade', gestureEnabled: false }} />
+        <Stack.Screen name="Auth" component={AuthScreen} options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="Account" component={AccountScreen} options={{ animation: 'slide_from_right' }} />
       </Stack.Navigator>
       {routeName === 'Media' || TAB_NAMES.includes(routeName ?? '') ? <MiniPlayer aboveTabs={routeName !== 'Media'} /> : null}
       <ShareSheet />
@@ -133,7 +158,9 @@ export default function App() {
         <SavedProvider>
           <WeatherProvider>
             <AudioProvider>
-              <Root />
+              <AccountProvider>
+                <Root />
+              </AccountProvider>
             </AudioProvider>
           </WeatherProvider>
         </SavedProvider>

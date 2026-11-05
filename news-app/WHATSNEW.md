@@ -1,3 +1,4 @@
-- New home screen: a "Today" dashboard with your weather and radar, the markets, live scores, Live TV, your podcast and the top story, all at a glance
-- New: Quick read. Today's top 8 stories full screen, swipe up for the next. Save, share, or have it read aloud
-- New: live scores for the NFL, college football, NBA, MLB, NHL, WNBA and MLS. Tap the star to pin your teams
+- New: create a free account or sign in. Your saved stories, topics, teams and settings follow you to any phone
+- New setup screens when you first open the app: pick topics and teams, and turn on weather and alerts (Settings → Run setup again)
+- New home screen: the "Today" dashboard with weather and radar, markets, live scores, Live TV, your podcast and the top story
+- New: Quick read, and live scores with starred teams

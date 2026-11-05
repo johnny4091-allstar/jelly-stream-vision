@@ -1,6 +1,6 @@
 // Fetches today's games from every league the way the app does, so a change to ESPN's scoreboard
 // shows up in the CI log.
-import { LEAGUES, fetchGames, fetchLeagueGames } from '../src/services/scores.ts';
+import { LEAGUES, TEAM_LEAGUES, fetchGames, fetchLeagueGames, fetchTeams } from '../src/services/scores.ts';
 
 for (const league of LEAGUES) {
   try {
@@ -13,3 +13,12 @@ for (const league of LEAGUES) {
 }
 const all = await fetchGames(['TB']);
 console.log(`\n${all.length} games in all; first: ${all[0] ? `${all[0].leagueName} ${all[0].away.abbr} @ ${all[0].home.abbr} ${all[0].detail}` : 'none'}`);
+
+for (const league of TEAM_LEAGUES) {
+  try {
+    const teams = await fetchTeams(league);
+    console.log(`${league.name.padEnd(18)} ${String(teams.length).padStart(3)} teams, e.g. ${teams.slice(0, 2).map((t) => `${t.abbr} ${t.name}`).join(', ')}`);
+  } catch (err) {
+    console.log(`::warning::${league.name} teams failed: ${err instanceof Error ? err.message : err}`);
+  }
+}

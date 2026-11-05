@@ -8,6 +8,8 @@ import type { ConfigContext, ExpoConfig } from 'expo/config';
 //                     app never checks for updates.
 //   CARTO_KEY         CARTO Basemaps key for the radar's street map. Without it the app uses
 //                     CARTO's open tiles.
+//   SUPABASE_URL      Supabase project URL and public (anon) key for accounts and sync.
+//   SUPABASE_ANON_KEY Without them the app hides sign-in and works as before.
 export default ({ config }: ConfigContext): ExpoConfig => {
   const versionCode = Number(process.env.APP_VERSION_CODE) || 1;
   return {
@@ -28,6 +30,12 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         'android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS',
       ],
     },
-    extra: { ...config.extra, updateRepo: process.env.UPDATE_REPO ?? '', cartoKey: process.env.CARTO_KEY ?? '' },
+    extra: {
+      ...config.extra,
+      updateRepo: process.env.UPDATE_REPO ?? '',
+      cartoKey: process.env.CARTO_KEY ?? '',
+      supabaseUrl: process.env.SUPABASE_URL ?? '',
+      supabaseAnonKey: process.env.SUPABASE_ANON_KEY ?? '',
+    },
   };
 };

@@ -1,9 +1,12 @@
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useState, type ReactNode } from 'react';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { StackHeader } from '../components/common';
+import { openAccount, openOnboarding } from '../navigation';
+import { useAccount } from '../state/AccountContext';
 import { currentVersionCode, currentVersionName } from '../services/appUpdate';
 import { clearFeedCache } from '../services/news';
 import { showBackgroundGuide, showBackgroundGuideOnce } from '../components/BackgroundGuide';
@@ -57,6 +60,7 @@ export function SettingsScreen() {
     setShowMedia,
   } = useSettings();
   const [checking, setChecking] = useState(false);
+  const account = useAccount();
 
   const permissionOff = () =>
     Alert.alert('Notifications are off', 'Allow notifications for News Hammer in your phone settings.', [
@@ -98,6 +102,17 @@ export function SettingsScreen() {
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <StackHeader title="Settings" />
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}>
+
+      {account.enabled ? (
+        <Section title="Account" footer="A free account keeps your saved stories, topics, teams and settings in sync on every phone.">
+          <Pressable onPress={openAccount} style={styles.row} accessibilityRole="button">
+            <Text style={[styles.rowLabel, { color: account.status === 'signedIn' ? c.text : c.accent }]} numberOfLines={1}>
+              {account.status === 'signedIn' ? `Signed in as ${account.email ?? ''}` : 'Sign in or create an account'}
+            </Text>
+            <Ionicons name="chevron-forward" size={18} color={c.tertiary} />
+          </Pressable>
+        </Section>
+      ) : null}
 
       <Section title="Appearance" footer="System follows your phone's light or dark setting.">
         <View style={[styles.segment, { backgroundColor: c.chip }]}>
@@ -230,6 +245,12 @@ export function SettingsScreen() {
         </Pressable>
         <Pressable onPress={testNotification} style={[styles.row, styles.divider, { borderTopColor: c.separator }]} accessibilityRole="button">
           <Text style={[styles.rowLabel, { color: c.accent }]}>Send a test notification</Text>
+        </Pressable>
+      </Section>
+
+      <Section title="Setup">
+        <Pressable onPress={openOnboarding} style={styles.row} accessibilityRole="button">
+          <Text style={[styles.rowLabel, { color: c.accent }]}>Run setup again</Text>
         </Pressable>
       </Section>
 

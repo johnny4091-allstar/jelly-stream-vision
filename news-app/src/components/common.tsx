@@ -13,7 +13,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { goBack, openSettings } from '../navigation';
+import { goBack, openAccount, openSettings } from '../navigation';
+import { useAccount } from '../state/AccountContext';
 import { MINI_PLAYER_SPACE, useAudio } from '../state/AudioContext';
 import { WeatherBoundary } from './WeatherBoundary';
 import { WeatherChip } from './WeatherCard';
@@ -42,6 +43,7 @@ export function AppHeader({ hideWeather }: { hideWeather?: boolean } = {}) {
           <WeatherChip />
         </WeatherBoundary>
       )}
+      <AccountButton />
       <Pressable
         onPress={openSettings}
         hitSlop={12}
@@ -52,6 +54,29 @@ export function AppHeader({ hideWeather }: { hideWeather?: boolean } = {}) {
         <Ionicons name="ellipsis-vertical" size={20} color={c.text} />
       </Pressable>
     </View>
+  );
+}
+
+/** Profile circle in the app bar: your initial when signed in, a person icon when not. */
+function AccountButton() {
+  const c = useTheme();
+  const account = useAccount();
+  if (!account.enabled) return null;
+  const signedIn = account.status === 'signedIn';
+  return (
+    <Pressable
+      onPress={openAccount}
+      hitSlop={8}
+      accessibilityRole="button"
+      accessibilityLabel={signedIn ? `Account: ${account.email ?? ''}` : 'Sign in'}
+      style={[styles.avatar, { backgroundColor: signedIn ? c.accent : c.card }]}
+    >
+      {signedIn ? (
+        <Text style={styles.avatarText}>{(account.email ?? '?')[0]!.toUpperCase()}</Text>
+      ) : (
+        <Ionicons name="person-outline" size={17} color={c.text} />
+      )}
+    </Pressable>
   );
 }
 
@@ -256,6 +281,8 @@ const styles = StyleSheet.create({
   appLogo: { width: 30, height: 30, borderRadius: 8 },
   appName: { flex: 1, fontSize: 21, fontWeight: '800', letterSpacing: -0.2 },
   menuButton: { padding: 4 },
+  avatar: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  avatarText: { color: '#fff', fontSize: 15, fontWeight: '800' },
   stackHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, paddingBottom: 10 },
   stackTitle: { flex: 1, fontSize: 21, fontWeight: '800' },
   section: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 18, paddingTop: 28, paddingBottom: 14 },

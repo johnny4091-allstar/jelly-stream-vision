@@ -31,6 +31,9 @@ jobs:
       APP_VERSION_CODE: ${{ github.run_number }}
       # CARTO Basemaps key for the radar's street map (optional; masked in logs).
       CARTO_KEY: ${{ secrets.CARTO_KEY }}
+      # Supabase project for accounts and sync (optional; without them sign-in is hidden).
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7

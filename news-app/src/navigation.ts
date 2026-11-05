@@ -24,7 +24,13 @@ export type RootStackParamList = {
   Media: { tab: MediaTab };
   QuickRead: undefined;
   Scores: undefined;
+  Onboarding: undefined;
+  /** `then: 'back'` returns to the screen that opened it (the setup flow) instead of Account. */
+  Auth: { mode?: AuthMode; then?: 'back' } | undefined;
+  Account: undefined;
 };
+
+export type AuthMode = 'signin' | 'signup';
 
 export type MediaTab = 'videos' | 'podcasts';
 
@@ -33,6 +39,8 @@ export type TopicScreenProps = NativeStackScreenProps<RootStackParamList, 'Topic
 export type WatchScreenProps = NativeStackScreenProps<RootStackParamList, 'Watch'>;
 export type VideoScreenProps = NativeStackScreenProps<RootStackParamList, 'Video'>;
 export type MediaScreenProps = NativeStackScreenProps<RootStackParamList, 'Media'>;
+export type AuthScreenProps = NativeStackScreenProps<RootStackParamList, 'Auth'>;
+export type OnboardingScreenProps = NativeStackScreenProps<RootStackParamList, 'Onboarding'>;
 
 /** Lets code outside screens (notification taps, cards, headers) navigate. */
 export const navigationRef = createNavigationContainerRef<RootStackParamList>();
@@ -82,6 +90,19 @@ export function openScores(): void {
 /** Switches to the Live TV tab. */
 export function openLiveTv(): void {
   if (navigationRef.isReady()) navigationRef.navigate('Tabs', { screen: 'Live TV' });
+}
+
+export function openAuth(mode: AuthMode, then?: 'back'): void {
+  if (navigationRef.isReady()) navigationRef.navigate('Auth', { mode, then });
+}
+
+export function openAccount(): void {
+  if (navigationRef.isReady()) navigationRef.navigate('Account');
+}
+
+/** The first-launch setup, again from Settings. */
+export function openOnboarding(): void {
+  if (navigationRef.isReady()) navigationRef.navigate('Onboarding');
 }
 
 export function openSettings(): void {

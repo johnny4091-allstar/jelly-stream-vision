@@ -8,6 +8,8 @@ interface SavedValue {
   isSaved: (id: string) => boolean;
   toggleSaved: (story: Story) => void;
   clearSaved: () => void;
+  /** Replaces the list with one merged from another device (account sync). */
+  replaceSaved: (stories: Story[]) => void;
 }
 
 const KEY = 'saved:v1';
@@ -38,6 +40,7 @@ export function SavedProvider({ children }: { children: ReactNode }) {
       toggleSaved: (story) =>
         update((s) => (s.some((x) => x.id === story.id) ? s.filter((x) => x.id !== story.id) : [story, ...s])),
       clearSaved: () => update(() => []),
+      replaceSaved: (stories) => update(() => stories),
     };
   }, [saved, update]);
 

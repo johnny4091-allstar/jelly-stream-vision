@@ -93,6 +93,30 @@ check_alive() {
   echo "$label: running"
 }
 
+# A new install opens on the setup screens: go through them the way a user would.
+onboarding_flow() {
+  check_alive onboarding-welcome || return 1
+  if ! { tap "Continue without an account" || tap "Get started"; }; then
+    echo "::warning::No setup screen on a fresh install."
+    return 0
+  fi
+  sleep 3
+  ui_texts >/dev/null
+  tap "News" || true
+  for _ in 1 2 3 4 5; do
+    if tap "Start reading"; then
+      sleep 4
+      check_alive onboarding-done || return 1
+      return 0
+    fi
+    tap "Continue" || break
+    sleep 4
+    ui_texts >/dev/null
+  done
+  echo "::warning::Couldn't finish the setup screens."
+}
+onboarding_flow || { echo "::error::The app crashed or froze in the setup screens (see the log above)."; exit 1; }
+
 weather_flow() {
   adb shell cmd location set-location-enabled true 2>/dev/null || true
   # Keep feeding the emulator's GPS a position while the app looks for one.

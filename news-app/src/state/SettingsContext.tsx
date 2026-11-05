@@ -31,6 +31,10 @@ export interface StoredSettings {
 
 interface SettingsValue {
   ready: boolean;
+  /** Everything stored, for account sync. */
+  snapshot: StoredSettings;
+  /** Applies settings from another device (account sync). */
+  applySynced: (s: Partial<StoredSettings>) => void;
   enabledSources: SourceId[];
   isEnabled: (id: SourceId) => boolean;
   setSourceEnabled: (id: SourceId, on: boolean) => void;
@@ -85,6 +89,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     const enabledSources = SOURCE_IDS.filter((id) => !settings.disabled.includes(id));
     return {
       ready,
+      snapshot: settings,
+      applySynced: (synced) => update((s) => ({ ...s, ...synced })),
       enabledSources,
       isEnabled: (id) => !settings.disabled.includes(id),
       setSourceEnabled: (id, on) =>

@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState, type ReactNode } from 'react';
@@ -6,11 +7,12 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View, type StyleProp, t
 
 import { LIVE_CHANNELS, resolveLive, type LiveChannel } from '../live';
 import { PODCASTS, fetchPodcastEpisodes, formatDuration, type Episode } from '../media';
-import { openArticle, openLiveTv, openQuickRead, openScores, openTopic, openWeather } from '../navigation';
+import { openArticle, openAuth, openLiveTv, openQuickRead, openScores, openTopic, openWeather } from '../navigation';
 import { formatChange, formatPrice } from '../services/markets';
 import { useStoryImage } from '../services/previewImage';
 import { condition, conditionIcon, formatTemp } from '../services/weather';
 import { getSource } from '../sources';
+import { useAccount } from '../state/AccountContext';
 import { useAudio } from '../state/AudioContext';
 import { useSettings } from '../state/SettingsContext';
 import { useWeather } from '../state/WeatherContext';
@@ -294,6 +296,47 @@ function TopStoryTile({ story }: { story: Story }) {
   );
 }
 
+const ACCOUNT_CARD_KEY = 'card:account:v1';
+
+/** A one-time nudge to create an account, for people who skipped it (or updated from before). */
+function AccountCard() {
+  const c = useTheme();
+  const account = useAccount();
+  const [dismissed, setDismissed] = useState<boolean | null>(null);
+  useEffect(() => {
+    AsyncStorage.getItem(ACCOUNT_CARD_KEY)
+      .then((v) => setDismissed(!!v))
+      .catch(() => setDismissed(true));
+  }, []);
+  if (!account.enabled || account.status !== 'signedOut' || dismissed !== false) return null;
+  const dismiss = () => {
+    setDismissed(true);
+    AsyncStorage.setItem(ACCOUNT_CARD_KEY, '1').catch(() => {});
+  };
+  return (
+    <View style={[styles.tile, styles.accountCard, { backgroundColor: c.card }]}>
+      <View style={[styles.accountIcon, { backgroundColor: c.accent }]}>
+        <Ionicons name="person" size={20} color="#fff" />
+      </View>
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={[styles.listenTitle, { color: c.text }]}>Create a free account</Text>
+        <Text style={{ color: c.secondary, fontSize: 13, lineHeight: 18 }}>Keep your saved stories, topics and teams on every phone.</Text>
+        <View style={{ flexDirection: 'row', gap: 16, marginTop: 8 }}>
+          <Pressable onPress={() => openAuth('signup')} accessibilityRole="button" hitSlop={6}>
+            <Text style={{ color: c.accent, fontWeight: '800', fontSize: 14 }}>Sign up</Text>
+          </Pressable>
+          <Pressable onPress={() => openAuth('signin')} accessibilityRole="button" hitSlop={6}>
+            <Text style={{ color: c.text, fontWeight: '700', fontSize: 14 }}>Sign in</Text>
+          </Pressable>
+        </View>
+      </View>
+      <Pressable onPress={dismiss} hitSlop={10} accessibilityRole="button" accessibilityLabel="Not now">
+        <Ionicons name="close" size={20} color={c.tertiary} />
+      </Pressable>
+    </View>
+  );
+}
+
 const GREETING = { Morning: 'Good morning', Afternoon: 'Good afternoon', Evening: 'Good evening' } as const;
 
 /** "Today": everything checked daily at a glance, above the news. */
@@ -329,6 +372,7 @@ export function Dashboard({ topStory }: { topStory?: Story }) {
       ) : (
         <View style={[styles.row, styles.pair]}>{side}</View>
       )}
+      <AccountCard />
       <QuickReadTile />
       <LiveTile />
       {showMedia ? <ListenTile /> : null}
@@ -377,6 +421,8 @@ const styles = StyleSheet.create({
   listenTitle: { fontSize: 15, fontWeight: '800' },
   playBtn: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
   topStory: { flexDirection: 'row', padding: 0, height: 128 },
+  accountCard: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
+  accountIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   topImage: { width: '40%', height: '100%' },
   topText: { flex: 1, padding: 12, gap: 4 },
   topTitle: { fontSize: 16, lineHeight: 20, fontWeight: '700' },

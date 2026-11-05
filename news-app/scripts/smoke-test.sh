@@ -58,6 +58,15 @@ launch_and_check fresh || { echo "::error::The app doesn't open on a fresh insta
 ui_texts() {
   adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
   adb shell cat /sdcard/ui.xml > ui.xml 2>/dev/null
+  # The emulator's own apps sometimes freeze ("Pixel Launcher isn't responding") and Android's box
+  # covers the screen. Wait it out so the test can see News Hammer again; our own ANRs still fail.
+  if grep -q "responding" ui.xml && ! grep -q "News Hammer isn" ui.xml && grep -q 'text="Wait"' ui.xml; then
+    echo "(dismissing another app's not-responding dialog)" >&2
+    tap "Wait" >/dev/null
+    sleep 3
+    adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
+    adb shell cat /sdcard/ui.xml > ui.xml 2>/dev/null
+  fi
   grep -oE '(text|content-desc)="[^"]+"' ui.xml | sed -E 's/^(text|content-desc)=//' | tr '\n' ' ' | cut -c1-1500
   echo
 }

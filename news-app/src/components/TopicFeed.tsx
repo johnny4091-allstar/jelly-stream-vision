@@ -11,7 +11,7 @@ import { StoryCard } from './StoryCard';
 
 /**
  * Every story in one topic: the first with a picture as a big image card, the rest as rows.
- * Used by the Sports tab and the "More … stories" screens.
+ * Used by the "See all" topic screens.
  */
 export function TopicFeed({
   topic,

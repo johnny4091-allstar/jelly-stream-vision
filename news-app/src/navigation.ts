@@ -5,12 +5,15 @@ import type { Video } from './media';
 import type { Story, Topic } from './types';
 
 export type TabParamList = {
-  'For you': undefined;
-  News: undefined;
-  'Live TV': undefined;
-  Sports: undefined;
-  Following: undefined;
+  Today: undefined;
+  Explore: undefined;
+  Watch: undefined;
+  Scores: undefined;
+  You: undefined;
 };
+
+/** The bottom tabs, in order. */
+export const TAB_NAMES: (keyof TabParamList)[] = ['Today', 'Explore', 'Watch', 'Scores', 'You'];
 
 export type RootStackParamList = {
   Tabs: NavigatorScreenParams<TabParamList> | undefined;
@@ -23,7 +26,8 @@ export type RootStackParamList = {
   Video: { video: Video };
   Media: { tab: MediaTab };
   QuickRead: undefined;
-  Scores: undefined;
+  /** Every outlet's take on one story. */
+  Coverage: { story: Story };
   Onboarding: undefined;
   /** `then: 'back'` returns to the screen that opened it (the setup flow) instead of Account. */
   Auth: { mode?: AuthMode; then?: 'back' } | undefined;
@@ -39,6 +43,7 @@ export type TopicScreenProps = NativeStackScreenProps<RootStackParamList, 'Topic
 export type WatchScreenProps = NativeStackScreenProps<RootStackParamList, 'Watch'>;
 export type VideoScreenProps = NativeStackScreenProps<RootStackParamList, 'Video'>;
 export type MediaScreenProps = NativeStackScreenProps<RootStackParamList, 'Media'>;
+export type CoverageScreenProps = NativeStackScreenProps<RootStackParamList, 'Coverage'>;
 export type AuthScreenProps = NativeStackScreenProps<RootStackParamList, 'Auth'>;
 export type OnboardingScreenProps = NativeStackScreenProps<RootStackParamList, 'Onboarding'>;
 
@@ -83,13 +88,23 @@ export function openQuickRead(): void {
   if (navigationRef.isReady()) navigationRef.navigate('QuickRead');
 }
 
+/** Switches to the Scores tab. */
 export function openScores(): void {
-  if (navigationRef.isReady()) navigationRef.navigate('Scores');
+  if (navigationRef.isReady()) navigationRef.navigate('Tabs', { screen: 'Scores' });
 }
 
-/** Switches to the Live TV tab. */
+/** Switches to the Watch tab (live TV, videos, podcasts). */
 export function openLiveTv(): void {
-  if (navigationRef.isReady()) navigationRef.navigate('Tabs', { screen: 'Live TV' });
+  if (navigationRef.isReady()) navigationRef.navigate('Tabs', { screen: 'Watch' });
+}
+
+export function openExplore(): void {
+  if (navigationRef.isReady()) navigationRef.navigate('Tabs', { screen: 'Explore' });
+}
+
+/** All outlets covering the same story as this one. */
+export function openCoverage(story: Story): void {
+  if (navigationRef.isReady()) navigationRef.navigate('Coverage', { story });
 }
 
 export function openAuth(mode: AuthMode, then?: 'back'): void {

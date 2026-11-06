@@ -594,15 +594,15 @@ export interface TopicInfo {
 }
 
 export const TOPICS: TopicInfo[] = [
-  { id: 'top', label: 'News', title: 'Top stories', icon: 'newspaper', color: '#E3141B' },
-  { id: 'world', label: 'World', title: 'World', icon: 'earth', color: '#1F6FD1' },
-  { id: 'business', label: 'Business', title: 'Business & markets', icon: 'trending-up', color: '#0E8A5F' },
-  { id: 'politics', label: 'Politics', title: 'Politics', icon: 'flag', color: '#B4171E' },
-  { id: 'sports', label: 'Sports', title: 'Sports', icon: 'football', color: '#1E9E57' },
-  { id: 'tech', label: 'Tech', title: 'Tech', icon: 'hardware-chip', color: '#6B4FD8' },
-  { id: 'science', label: 'Science', title: 'Science', icon: 'flask', color: '#0A84C6' },
-  { id: 'health', label: 'Health', title: 'Health', icon: 'heart', color: '#E0457B' },
-  { id: 'entertainment', label: 'Entertainment', title: 'Entertainment', icon: 'film', color: '#E0730F' },
+  { id: 'top', label: 'News', title: 'Top stories', icon: 'newspaper', color: '#FF5A1F' },
+  { id: 'world', label: 'World', title: 'World', icon: 'earth', color: '#5CC8FF' },
+  { id: 'business', label: 'Business', title: 'Business & markets', icon: 'trending-up', color: '#3FD07A' },
+  { id: 'politics', label: 'Politics', title: 'Politics', icon: 'flag', color: '#A78BFA' },
+  { id: 'sports', label: 'Sports', title: 'Sports', icon: 'football', color: '#FFC53D' },
+  { id: 'tech', label: 'Tech', title: 'Tech', icon: 'hardware-chip', color: '#22D3EE' },
+  { id: 'science', label: 'Science', title: 'Science', icon: 'flask', color: '#34D399' },
+  { id: 'health', label: 'Health', title: 'Health', icon: 'heart', color: '#F472B6' },
+  { id: 'entertainment', label: 'Entertainment', title: 'Entertainment', icon: 'film', color: '#FB923C' },
 ];
 
 export function getTopic(id: Topic): TopicInfo {

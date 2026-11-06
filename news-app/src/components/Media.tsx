@@ -10,6 +10,7 @@ import { useAudio } from '../state/AudioContext';
 import { type, useTheme } from '../theme';
 import { timeAgo } from '../utils';
 import { SectionHeader } from './common';
+import { TAB_BAR_HEIGHT } from './FloatingTabBar';
 
 /** Loads a list once and on demand; `items` is null until the first load finishes. */
 function useLoader<T>(load: (force: boolean) => Promise<T[]>) {
@@ -97,7 +98,7 @@ export function EpisodeCard({ episode, row }: { episode: Episode; row?: boolean 
   );
 }
 
-/** "Watch" and "Listen" shelves for For you. */
+/** Latest videos and podcasts shelves, on the Watch tab. */
 export function MediaShelves() {
   const c = useTheme();
   const videos = useLatestVideos();
@@ -105,7 +106,7 @@ export function MediaShelves() {
   const loading = <ActivityIndicator style={{ marginVertical: 24 }} color={c.tertiary} />;
   return (
     <>
-      <SectionHeader title="Watch" subtitle="Latest videos from news channels" onPress={() => openMedia('videos')} />
+      <SectionHeader title="Latest videos" subtitle="From news channels on YouTube" onPress={() => openMedia('videos')} />
       {videos.items === null ? (
         loading
       ) : (
@@ -115,7 +116,7 @@ export function MediaShelves() {
           ))}
         </ScrollView>
       )}
-      <SectionHeader title="Listen" subtitle="Today's news podcasts" onPress={() => openMedia('podcasts')} />
+      <SectionHeader title="Podcasts" subtitle="Today's news shows" onPress={() => openMedia('podcasts')} />
       {episodes.items === null ? (
         loading
       ) : (
@@ -147,7 +148,7 @@ export function MiniPlayer({ aboveTabs }: { aboveTabs: boolean }) {
   return (
     <View
       pointerEvents="box-none"
-      style={[styles.miniWrap, { bottom: insets.bottom + (aboveTabs ? 92 : 12) }]}
+      style={[styles.miniWrap, { bottom: insets.bottom + (aboveTabs ? TAB_BAR_HEIGHT + 8 : 12) }]}
     >
       <View style={[styles.mini, { backgroundColor: c.card }]}>
         <Image source={{ uri: episode.imageUrl }} style={styles.miniArt} contentFit="cover" />

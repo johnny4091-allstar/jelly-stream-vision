@@ -22,9 +22,9 @@ const UNITS: { id: TempUnit; label: string }[] = [
 ];
 
 const MODES: { id: ThemeMode; label: string }[] = [
-  { id: 'system', label: 'System' },
-  { id: 'light', label: 'Light' },
   { id: 'dark', label: 'Dark' },
+  { id: 'light', label: 'Light' },
+  { id: 'system', label: 'Match phone' },
 ];
 
 function Section({ title, footer, children }: { title: string; footer?: string; children: ReactNode }) {
@@ -106,7 +106,7 @@ export function SettingsScreen() {
       {account.enabled ? (
         <Section title="Account" footer="A free account keeps your saved stories, topics, teams and settings in sync on every phone.">
           <Pressable onPress={openAccount} style={styles.row} accessibilityRole="button">
-            <Text style={[styles.rowLabel, { color: account.status === 'signedIn' ? c.text : c.accent }]} numberOfLines={1}>
+            <Text style={[styles.rowLabel, { color: account.status === 'signedIn' ? c.text : c.accentText }]} numberOfLines={1}>
               {account.status === 'signedIn' ? `Signed in as ${account.email ?? ''}` : 'Sign in or create an account'}
             </Text>
             <Ionicons name="chevron-forward" size={18} color={c.tertiary} />
@@ -114,7 +114,7 @@ export function SettingsScreen() {
         </Section>
       ) : null}
 
-      <Section title="Appearance" footer="System follows your phone's light or dark setting.">
+      <Section title="Appearance" footer="News Hammer is designed dark first. Match phone follows your phone's light or dark setting.">
         <View style={[styles.segment, { backgroundColor: c.chip }]}>
           {MODES.map((m) => {
             const active = m.id === themeMode;
@@ -145,7 +145,8 @@ export function SettingsScreen() {
           <Switch
             value={showWeather}
             onValueChange={setShowWeather}
-            trackColor={{ true: '#34C759' }}
+            trackColor={{ true: c.accent, false: c.border }}
+            thumbColor="#F5F5F7"
             accessibilityLabel="Show local weather"
           />
         </View>
@@ -172,27 +173,29 @@ export function SettingsScreen() {
 
       <Section title="Markets" footer="Major indexes, Bitcoin, gold, oil and the 10-year Treasury yield from Yahoo Finance. Prices may be delayed.">
         <View style={styles.row}>
-          <Text style={[styles.rowLabel, { color: c.text }]}>Show stock market on For you</Text>
+          <Text style={[styles.rowLabel, { color: c.text }]}>Show stock market on Today</Text>
           <Switch
             value={showMarkets}
             onValueChange={setShowMarkets}
-            trackColor={{ true: '#34C759' }}
-            accessibilityLabel="Show stock market on For you"
+            trackColor={{ true: c.accent, false: c.border }}
+            thumbColor="#F5F5F7"
+            accessibilityLabel="Show stock market on Today"
           />
         </View>
       </Section>
 
       <Section
         title="Videos & podcasts"
-        footer="Latest videos from news channels' YouTube pages and episodes of news podcasts. Podcasts keep playing with the screen off."
+        footer="Latest videos and podcasts are always on the Watch tab. Podcasts keep playing with the screen off."
       >
         <View style={styles.row}>
-          <Text style={[styles.rowLabel, { color: c.text }]}>Show on For you</Text>
+          <Text style={[styles.rowLabel, { color: c.text }]}>Show podcast on Today</Text>
           <Switch
             value={showMedia}
             onValueChange={setShowMedia}
-            trackColor={{ true: '#34C759' }}
-            accessibilityLabel="Show videos and podcasts on For you"
+            trackColor={{ true: c.accent, false: c.border }}
+            thumbColor="#F5F5F7"
+            accessibilityLabel="Show podcast on Today"
           />
         </View>
       </Section>
@@ -208,7 +211,8 @@ export function SettingsScreen() {
             <Switch
               value={isEnabled(s.id)}
               onValueChange={(on) => setSourceEnabled(s.id, on)}
-              trackColor={{ true: '#34C759' }}
+              trackColor={{ true: c.accent, false: c.border }}
+            thumbColor="#F5F5F7"
               accessibilityLabel={`${s.name} stories`}
             />
           </View>
@@ -224,7 +228,8 @@ export function SettingsScreen() {
           <Switch
             value={notifyTopStories}
             onValueChange={toggle(setNotifyTopStories)}
-            trackColor={{ true: '#34C759' }}
+            trackColor={{ true: c.accent, false: c.border }}
+            thumbColor="#F5F5F7"
             accessibilityLabel="Notify me about new top stories"
           />
         </View>
@@ -233,30 +238,31 @@ export function SettingsScreen() {
           <Switch
             value={notifyUpdates}
             onValueChange={toggle(setNotifyUpdates)}
-            trackColor={{ true: '#34C759' }}
+            trackColor={{ true: c.accent, false: c.border }}
+            thumbColor="#F5F5F7"
             accessibilityLabel="Notify me when a new version is available"
           />
         </View>
         <Pressable onPress={showBackgroundGuide} style={[styles.row, styles.divider, { borderTopColor: c.separator }]} accessibilityRole="button">
-          <Text style={[styles.rowLabel, { color: c.accent }]}>Allow running in the background</Text>
+          <Text style={[styles.rowLabel, { color: c.accentText }]}>Allow running in the background</Text>
         </Pressable>
         <Pressable onPress={checkNow} disabled={checking} style={[styles.row, styles.divider, { borderTopColor: c.separator }]} accessibilityRole="button">
-          <Text style={[styles.rowLabel, { color: c.accent }]}>{checking ? 'Checking…' : 'Check for news now'}</Text>
+          <Text style={[styles.rowLabel, { color: c.accentText }]}>{checking ? 'Checking…' : 'Check for news now'}</Text>
         </Pressable>
         <Pressable onPress={testNotification} style={[styles.row, styles.divider, { borderTopColor: c.separator }]} accessibilityRole="button">
-          <Text style={[styles.rowLabel, { color: c.accent }]}>Send a test notification</Text>
+          <Text style={[styles.rowLabel, { color: c.accentText }]}>Send a test notification</Text>
         </Pressable>
       </Section>
 
       <Section title="Setup">
         <Pressable onPress={openOnboarding} style={styles.row} accessibilityRole="button">
-          <Text style={[styles.rowLabel, { color: c.accent }]}>Run setup again</Text>
+          <Text style={[styles.rowLabel, { color: c.accentText }]}>Run setup again</Text>
         </Pressable>
       </Section>
 
       <Section title="Data" footer="Feeds are cached for 10 minutes so the app opens fast.">
         <Pressable onPress={clearCache} style={styles.row} accessibilityRole="button">
-          <Text style={[styles.rowLabel, { color: c.accent }]}>Clear feed cache</Text>
+          <Text style={[styles.rowLabel, { color: c.accentText }]}>Clear feed cache</Text>
         </Pressable>
       </Section>
 

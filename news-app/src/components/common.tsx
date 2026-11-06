@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { goBack, openAccount, openSettings } from '../navigation';
 import { useAccount } from '../state/AccountContext';
 import { MINI_PLAYER_SPACE, useAudio } from '../state/AudioContext';
+import { TAB_BAR_HEIGHT } from './FloatingTabBar';
 import { WeatherBoundary } from './WeatherBoundary';
 import { WeatherChip } from './WeatherCard';
 import { getSource } from '../sources';
@@ -23,21 +24,31 @@ import { useSettings } from '../state/SettingsContext';
 import { type, useTheme } from '../theme';
 import type { SourceId, Topic } from '../types';
 
-/** Space to leave at the bottom of tab screens so content clears the floating tab bar. */
+/** Space to leave at the bottom of tab screens so content clears the tab bar (and mini player). */
 export function useTabBarSpace(): number {
   const { episode } = useAudio();
-  return useSafeAreaInsets().bottom + 104 + (episode ? MINI_PLAYER_SPACE : 0);
+  return useSafeAreaInsets().bottom + TAB_BAR_HEIGHT + 20 + (episode ? MINI_PLAYER_SPACE : 0);
 }
 
-/** App bar on the tab screens: logo and name on the left, menu (Settings) on the right. */
-export function AppHeader({ hideWeather }: { hideWeather?: boolean } = {}) {
+/**
+ * Top of every tab: a small label ("News Hammer" or today's date) over a big condensed title,
+ * with weather, account and Settings on the right.
+ */
+export function AppHeader({ title, eyebrow, hideWeather }: { title: string; eyebrow?: string; hideWeather?: boolean }) {
   const c = useTheme();
   return (
     <View style={styles.appHeader}>
-      <Image source={require('../../assets/icon.png')} style={styles.appLogo} contentFit="cover" />
-      <Text style={[styles.appName, { color: c.text }]}>
-        News <Text style={{ color: c.accent }}>Hammer</Text>
-      </Text>
+      <View style={{ flex: 1 }}>
+        <View style={styles.eyebrowRow}>
+          {eyebrow ? null : <Image source={require('../../assets/icon.png')} style={styles.appLogo} contentFit="cover" />}
+          <Text style={[type.eyebrow, { color: eyebrow ? c.tertiary : c.accentText }]} numberOfLines={1}>
+            {eyebrow ?? 'News Hammer'}
+          </Text>
+        </View>
+        <Text style={[type.largeTitle, { color: c.text }]} numberOfLines={1} adjustsFontSizeToFit>
+          {title}
+        </Text>
+      </View>
       {hideWeather ? null : (
         <WeatherBoundary>
           <WeatherChip />
@@ -46,12 +57,12 @@ export function AppHeader({ hideWeather }: { hideWeather?: boolean } = {}) {
       <AccountButton />
       <Pressable
         onPress={openSettings}
-        hitSlop={12}
+        hitSlop={8}
         accessibilityRole="button"
         accessibilityLabel="Settings"
-        style={styles.menuButton}
+        style={[styles.roundButton, { backgroundColor: c.card, borderColor: c.border }]}
       >
-        <Ionicons name="ellipsis-vertical" size={20} color={c.text} />
+        <Ionicons name="settings-outline" size={19} color={c.text} />
       </Pressable>
     </View>
   );
@@ -69,10 +80,10 @@ function AccountButton() {
       hitSlop={8}
       accessibilityRole="button"
       accessibilityLabel={signedIn ? `Account: ${account.email ?? ''}` : 'Sign in'}
-      style={[styles.avatar, { backgroundColor: signedIn ? c.accent : c.card }]}
+      style={[styles.roundButton, { backgroundColor: signedIn ? c.accent : c.card, borderColor: signedIn ? c.accent : c.border }]}
     >
       {signedIn ? (
-        <Text style={styles.avatarText}>{(account.email ?? '?')[0]!.toUpperCase()}</Text>
+        <Text style={[styles.avatarText, { color: c.onAccent }]}>{(account.email ?? '?')[0]!.toUpperCase()}</Text>
       ) : (
         <Ionicons name="person-outline" size={17} color={c.text} />
       )}
@@ -89,7 +100,7 @@ export function StackHeader({ title, right }: { title: string; right?: ReactNode
       <Pressable onPress={goBack} hitSlop={12} accessibilityRole="button" accessibilityLabel="Back" style={styles.menuButton}>
         <Ionicons name="arrow-back" size={24} color={c.text} />
       </Pressable>
-      <Text style={[styles.stackTitle, { color: c.text }]} numberOfLines={1}>
+      <Text style={[type.sectionTitle, styles.stackTitle, { color: c.text }]} numberOfLines={1}>
         {title}
       </Text>
       {right}
@@ -118,8 +129,9 @@ export function SectionHeader({
       </View>
       {right}
       {onPress ? (
-        <Pressable onPress={onPress} hitSlop={10} accessibilityRole="button" accessibilityLabel={`All ${title}`}>
-          <Ionicons name="chevron-forward" size={26} color={c.text} />
+        <Pressable onPress={onPress} hitSlop={10} accessibilityRole="button" accessibilityLabel={`All ${title}`} style={styles.seeAll}>
+          <Text style={[styles.seeAllText, { color: c.accentText }]}>See all</Text>
+          <Ionicons name="chevron-forward" size={16} color={c.accentText} />
         </Pressable>
       ) : null}
     </View>
@@ -139,9 +151,9 @@ export function FollowButton({ topic }: { topic: Topic }) {
       }}
       accessibilityRole="button"
       accessibilityState={{ selected: on }}
-      style={[styles.follow, on ? { backgroundColor: c.chipActive, borderColor: c.chipActive } : { borderColor: c.text }]}
+      style={[styles.follow, on ? { backgroundColor: c.accent, borderColor: c.accent } : { borderColor: c.border, backgroundColor: c.card }]}
     >
-      <Text style={[styles.followText, { color: on ? c.chipActiveText : c.text }]}>{on ? 'Following' : 'Follow'}</Text>
+      <Text style={[styles.followText, { color: on ? c.onAccent : c.text }]}>{on ? 'Following' : 'Follow'}</Text>
     </Pressable>
   );
 }
@@ -151,8 +163,8 @@ export function MoreLink({ label, onPress }: { label: string; onPress: () => voi
   const c = useTheme();
   return (
     <Pressable onPress={onPress} style={styles.more} accessibilityRole="link" hitSlop={6}>
-      <Text style={[styles.moreText, { color: c.text }]}>{label}</Text>
-      <Ionicons name="chevron-forward" size={18} color={c.text} />
+      <Text style={[styles.moreText, { color: c.accentText }]}>{label}</Text>
+      <Ionicons name="chevron-forward" size={18} color={c.accentText} />
     </Pressable>
   );
 }
@@ -187,7 +199,7 @@ export function ScrollTopButton({ visible, onPress }: { visible: boolean; onPres
       style={[
         styles.scrollTopWrap,
         {
-          bottom: insets.bottom + 96,
+          bottom: insets.bottom + TAB_BAR_HEIGHT + 16,
           opacity: anim,
           transform: [{ scale: anim.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1] }) }],
         },
@@ -197,7 +209,7 @@ export function ScrollTopButton({ visible, onPress }: { visible: boolean; onPres
         onPress={onPress}
         accessibilityRole="button"
         accessibilityLabel="Back to top"
-        style={[styles.scrollTop, { backgroundColor: c.elevated }]}
+        style={[styles.scrollTop, { backgroundColor: c.elevated, borderColor: c.border }]}
       >
         <Ionicons name="chevron-up" size={26} color={c.text} />
       </Pressable>
@@ -223,7 +235,7 @@ export function SkeletonCard({ hero = false }: { hero?: boolean }) {
     return <Animated.View style={[styles.skelHero, { backgroundColor: c.skeleton, opacity: pulse }]} />;
   }
   return (
-    <Animated.View style={[styles.skeleton, { backgroundColor: c.card, opacity: pulse }]}>
+    <Animated.View style={[styles.skeleton, { backgroundColor: c.card, borderColor: c.border, opacity: pulse }]}>
       <View style={{ flex: 1, gap: 10 }}>
         <View style={[styles.skelLine, { width: '30%', backgroundColor: c.skeleton }]} />
         <View style={[styles.skelLine, { height: 16, width: '95%', backgroundColor: c.skeleton }]} />
@@ -247,13 +259,13 @@ export function EmptyState({
 }) {
   const c = useTheme();
   return (
-    <View style={[styles.empty, { backgroundColor: c.card }]}>
+    <View style={[styles.empty, { backgroundColor: c.card, borderColor: c.border }]}>
       <Ionicons name={icon} size={40} color={c.tertiary} />
       <Text style={[type.title, { color: c.text, textAlign: 'center' }]}>{title}</Text>
       <Text style={[type.body, { color: c.secondary, textAlign: 'center' }]}>{message}</Text>
       {action ? (
-        <Pressable onPress={action.onPress} style={[styles.follow, { borderColor: c.text, marginTop: 6 }]}>
-          <Text style={[styles.followText, { color: c.text }]}>{action.label}</Text>
+        <Pressable onPress={action.onPress} style={[styles.follow, { borderColor: c.accent, backgroundColor: c.accent, marginTop: 6 }]}>
+          <Text style={[styles.followText, { color: c.onAccent }]}>{action.label}</Text>
         </Pressable>
       ) : null}
     </View>
@@ -267,7 +279,7 @@ export function FailedNotice({ failed }: { failed: SourceId[] }) {
   // Name a few; offline, nearly every source fails and the list would fill the screen.
   const names = failed.length <= 3 ? failed.map((id) => getSource(id)?.name ?? id).join(', ') : `${failed.length} sources`;
   return (
-    <View style={[styles.notice, { backgroundColor: c.card }]}>
+    <View style={[styles.notice, { backgroundColor: c.card, borderColor: c.border }]}>
       <Ionicons name="cloud-offline-outline" size={16} color={c.secondary} />
       <Text style={[type.caption, { color: c.secondary, flex: 1 }]}>
         Couldn't reach {names}. Showing everything else.
@@ -277,45 +289,49 @@ export function FailedNotice({ failed }: { failed: SourceId[] }) {
 }
 
 const styles = StyleSheet.create({
-  appHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 18, paddingTop: 10, paddingBottom: 14 },
-  appLogo: { width: 30, height: 30, borderRadius: 8 },
-  appName: { flex: 1, fontSize: 21, fontWeight: '800', letterSpacing: -0.2 },
+  appHeader: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 18, paddingTop: 12, paddingBottom: 14 },
+  eyebrowRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
+  appLogo: { width: 16, height: 16, borderRadius: 4 },
+  roundButton: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: StyleSheet.hairlineWidth, marginBottom: 2 },
   menuButton: { padding: 4 },
-  avatar: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  avatarText: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  avatarText: { fontSize: 16, fontWeight: '900' },
   stackHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, paddingBottom: 10 },
-  stackTitle: { flex: 1, fontSize: 21, fontWeight: '800' },
-  section: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 18, paddingTop: 28, paddingBottom: 14 },
-  follow: { borderWidth: 1.5, borderRadius: 999, paddingHorizontal: 18, paddingVertical: 7 },
-  followText: { fontSize: 15, fontWeight: '700' },
+  stackTitle: { flex: 1 },
+  section: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 18, paddingTop: 26, paddingBottom: 12 },
+  seeAll: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  seeAllText: { fontSize: 14, fontWeight: '800' },
+  follow: { borderWidth: 1.5, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 7 },
+  followText: { fontSize: 14, fontWeight: '800' },
   more: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-end', gap: 4, paddingHorizontal: 20, paddingVertical: 10 },
-  moreText: { fontSize: 15, fontWeight: '600' },
+  moreText: { fontSize: 14, fontWeight: '800' },
   scrollTopWrap: { position: 'absolute', alignSelf: 'center' },
   scrollTop: {
     width: 52,
     height: 52,
     borderRadius: 26,
+    borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOpacity: 0.18,
+    shadowOpacity: 0.3,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 3 },
     elevation: 6,
   },
-  skeleton: { flexDirection: 'row', gap: 14, borderRadius: 20, padding: 16, marginHorizontal: 12, marginBottom: 10 },
-  skelHero: { borderRadius: 22, marginHorizontal: 12, marginBottom: 12, aspectRatio: 1.15 },
+  skeleton: { flexDirection: 'row', gap: 14, borderRadius: 22, borderWidth: StyleSheet.hairlineWidth, padding: 16, marginHorizontal: 14, marginBottom: 10 },
+  skelHero: { borderRadius: 22, marginHorizontal: 14, marginBottom: 12, aspectRatio: 1.15 },
   skelThumb: { width: 92, height: 92, borderRadius: 14 },
   skelLine: { height: 12, borderRadius: 6 },
-  empty: { alignItems: 'center', gap: 10, marginHorizontal: 12, padding: 28, borderRadius: 20 },
+  empty: { alignItems: 'center', gap: 10, marginHorizontal: 14, padding: 28, borderRadius: 22, borderWidth: StyleSheet.hairlineWidth },
   notice: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginHorizontal: 12,
+    marginHorizontal: 14,
     marginBottom: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
   },
 });

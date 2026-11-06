@@ -3,23 +3,24 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { DarkTheme, DefaultTheme, NavigationContainer, type Theme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useLastNotificationResponse } from 'expo-notifications';
+import { useFonts } from 'expo-font';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { UpdatePrompt } from './src/components/UpdatePrompt';
-import { navigationRef, openArticle, type RootStackParamList } from './src/navigation';
+import { TAB_NAMES, navigationRef, openArticle, type RootStackParamList, type TabParamList } from './src/navigation';
 import { ArticleScreen } from './src/screens/ArticleScreen';
 import { setUpNotifications, type NotificationData } from './src/services/notifications';
 import { BackgroundGuide, showBackgroundGuideOnce } from './src/components/BackgroundGuide';
 import { FloatingTabBar } from './src/components/FloatingTabBar';
-import { FollowingScreen } from './src/screens/FollowingScreen';
+import { CoverageScreen } from './src/screens/CoverageScreen';
+import { ExploreScreen } from './src/screens/ExploreScreen';
 import { ForYouScreen } from './src/screens/ForYouScreen';
 import { LiveTvScreen } from './src/screens/LiveTvScreen';
-import { NewsScreen } from './src/screens/NewsScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
-import { SportsScreen } from './src/screens/SportsScreen';
+import { YouScreen } from './src/screens/YouScreen';
 import { TopicScreen } from './src/screens/TopicScreen';
 import { WatchScreen } from './src/screens/WatchScreen';
 import { RadarScreen } from './src/screens/RadarScreen';
@@ -40,22 +41,29 @@ import { ONBOARDING_KEY, OnboardingScreen } from './src/screens/OnboardingScreen
 import { AccountProvider } from './src/state/AccountContext';
 import { useTheme } from './src/theme';
 
-const Tab = createBottomTabNavigator();
-const TAB_NAMES = ['For you', 'News', 'Live TV', 'Sports', 'Following'];
+const Tab = createBottomTabNavigator<TabParamList>();
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-// Samsung News-style tabs in a floating bar, plus free live news channels. Settings lives behind the ⋮ in the header.
+// Design v2: Today, Explore, Watch, Scores, You. Settings is the gear in each tab's header.
 function Tabs() {
   return (
     <Tab.Navigator screenOptions={{ headerShown: false, animation: 'shift' }} tabBar={(props) => <FloatingTabBar {...props} />}>
-      <Tab.Screen name="For you" component={ForYouScreen} />
-      <Tab.Screen name="News" component={NewsScreen} />
-      <Tab.Screen name="Live TV" component={LiveTvScreen} />
-      <Tab.Screen name="Sports" component={SportsScreen} />
-      <Tab.Screen name="Following" component={FollowingScreen} />
+      <Tab.Screen name="Today" component={ForYouScreen} />
+      <Tab.Screen name="Explore" component={ExploreScreen} />
+      <Tab.Screen name="Watch" component={LiveTvScreen} />
+      <Tab.Screen name="Scores" component={ScoresScreen} />
+      <Tab.Screen name="You" component={YouScreen} />
     </Tab.Navigator>
   );
 }
+
+// Native builds bundle the fonts (expo-font plugin in app.json); the web preview loads them here.
+const WEB_FONTS = {
+  BarlowCondensed_700Bold: require('./assets/fonts/BarlowCondensed_700Bold.ttf'),
+  BarlowCondensed_800ExtraBold: require('./assets/fonts/BarlowCondensed_800ExtraBold.ttf'),
+  BarlowCondensed_900Black: require('./assets/fonts/BarlowCondensed_900Black.ttf'),
+};
+const useAppFonts = Platform.OS === 'web' ? () => useFonts(WEB_FONTS)[0] : () => true;
 
 // Notifications don't exist on web (used only for previewing the layout in a browser).
 const useNotificationResponse = Platform.OS === 'web' ? () => null : useLastNotificationResponse;
@@ -77,6 +85,7 @@ function useNotificationTaps(navReady: boolean) {
 function Root() {
   const c = useTheme();
   const { ready } = useSettings();
+  const fontsReady = useAppFonts();
   const [navReady, setNavReady] = useState(false);
   // The mini player shows on the tabs and the media screen, and sits above the tab bar on the tabs.
   const [routeName, setRouteName] = useState<string | undefined>();
@@ -114,7 +123,7 @@ function Root() {
     };
   }, [c]);
 
-  if (!firstRoute) return <View style={{ flex: 1, backgroundColor: c.background }} />;
+  if (!firstRoute || !fontsReady) return <View style={{ flex: 1, backgroundColor: c.background }} />;
 
   return (
     <NavigationContainer
@@ -138,12 +147,12 @@ function Root() {
         <Stack.Screen name="Video" component={VideoScreen} options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="Media" component={MediaScreen} options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="QuickRead" component={QuickReadScreen} options={{ animation: 'slide_from_bottom' }} />
-        <Stack.Screen name="Scores" component={ScoresScreen} options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="Coverage" component={CoverageScreen} options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ animation: 'fade', gestureEnabled: false }} />
         <Stack.Screen name="Auth" component={AuthScreen} options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="Account" component={AccountScreen} options={{ animation: 'slide_from_right' }} />
       </Stack.Navigator>
-      {routeName === 'Media' || TAB_NAMES.includes(routeName ?? '') ? <MiniPlayer aboveTabs={routeName !== 'Media'} /> : null}
+      {routeName === 'Media' || TAB_NAMES.includes(routeName as keyof TabParamList) ? <MiniPlayer aboveTabs={routeName !== 'Media'} /> : null}
       <ShareSheet />
       <UpdatePrompt />
       <BackgroundGuide />

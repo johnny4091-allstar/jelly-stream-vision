@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 
 import { AppHeader, SectionHeader, useTabBarSpace } from '../components/common';
+import { MediaShelves } from '../components/Media';
 import {
   LIVE_CHANNELS,
   LIVE_PLAYER_ORIGIN,
@@ -19,14 +20,14 @@ import {
   type LiveResult,
 } from '../live';
 import { openWatch } from '../navigation';
-import { type, useTheme } from '../theme';
+import { HAMMER, fonts, type, useTheme } from '../theme';
 
 const YOUTUBE_HOSTS = /^https:\/\/([a-z0-9-]+\.)*(youtube\.com|youtube-nocookie\.com|googlevideo\.com|ytimg\.com|google\.com|gstatic\.com|doubleclick\.net)\//i;
 
 function LiveBadge() {
   return (
     <View style={styles.live}>
-      <Ionicons name="play" size={10} color="#fff" />
+      <Ionicons name="play" size={10} color="#120600" />
       <Text style={styles.liveText}>LIVE</Text>
     </View>
   );
@@ -137,7 +138,7 @@ function Player({ channel, playing }: { channel: LiveChannel; playing: boolean }
           onPress={() => (live ? watchInApp() : watchChannel())}
           hitSlop={8}
           accessibilityRole="link"
-          style={[styles.openYt, { borderColor: c.separator }]}
+          style={[styles.openYt, { borderColor: c.border }]}
         >
           <Ionicons name="logo-youtube" size={16} color="#FF0000" />
           <Text style={[styles.openYtText, { color: c.text }]}>YouTube</Text>
@@ -155,7 +156,7 @@ function ChannelTile({ channel, active, onPress }: { channel: LiveChannel; activ
       accessibilityRole="button"
       accessibilityState={{ selected: active }}
       accessibilityLabel={`Watch ${channel.name}`}
-      style={[styles.tile, { backgroundColor: c.card, borderColor: active ? c.text : 'transparent' }]}
+      style={[styles.tile, { backgroundColor: c.card, borderColor: active ? c.accent : c.border }]}
     >
       <View style={[styles.tileArt, { backgroundColor: channel.color }]}>
         <Text style={styles.tileWordmark} numberOfLines={2}>
@@ -164,7 +165,7 @@ function ChannelTile({ channel, active, onPress }: { channel: LiveChannel; activ
         <View style={styles.tileBadge}>
           {active ? (
             <View style={styles.live}>
-              <Ionicons name="volume-high" size={10} color="#fff" />
+              <Ionicons name="volume-high" size={10} color="#120600" />
               <Text style={styles.liveText}>WATCHING</Text>
             </View>
           ) : (
@@ -201,9 +202,9 @@ export function LiveTvScreen() {
       stickyHeaderIndices={[1]}
       contentContainerStyle={{ paddingTop: insets.top, paddingBottom: bottom }}
     >
-      <AppHeader />
+      <AppHeader title="Watch & Listen" />
       <Player channel={channel} playing={focused} />
-      <SectionHeader title="Live TV" subtitle="Free 24/7 news channels" />
+      <SectionHeader title="Live channels" subtitle="Free 24/7 news, tap to switch" />
       <View style={styles.grid}>
         {LIVE_CHANNELS.map((ch) => (
           <ChannelTile
@@ -218,6 +219,7 @@ export function LiveTvScreen() {
           />
         ))}
       </View>
+      <MediaShelves />
       <Text style={[type.caption, styles.note, { color: c.tertiary }]}>
         These are the channels' own free live streams on YouTube. A few broadcasters don't allow their stream inside
         other apps; for those, tap the picture to watch on YouTube's site without leaving News Hammer.
@@ -227,7 +229,7 @@ export function LiveTvScreen() {
 }
 
 const styles = StyleSheet.create({
-  player: { marginHorizontal: 12, borderRadius: 18, overflow: 'hidden', aspectRatio: 16 / 9, backgroundColor: '#000' },
+  player: { marginHorizontal: 14, borderRadius: 20, overflow: 'hidden', aspectRatio: 16 / 9, backgroundColor: '#000' },
   web: { flex: 1, backgroundColor: '#000' },
   paused: { alignItems: 'center', justifyContent: 'center', gap: 10, padding: 16 },
   dim: { backgroundColor: 'rgba(0,0,0,0.35)' },
@@ -236,13 +238,13 @@ const styles = StyleSheet.create({
   playerBtn: { borderRadius: 999, borderWidth: 1.5, borderColor: '#fff', paddingHorizontal: 16, paddingVertical: 6 },
   playerBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
   nowRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 4 },
-  nowName: { flex: 1, fontSize: 17, fontWeight: '800' },
+  nowName: { flex: 1, fontFamily: fonts.heading, fontSize: 22, lineHeight: 24 },
   openYt: { flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
   openYtText: { fontSize: 14, fontWeight: '600' },
-  live: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#E8352E', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
-  liveText: { color: '#fff', fontSize: 11, fontWeight: '800', letterSpacing: 0.4 },
+  live: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: HAMMER, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
+  liveText: { color: '#120600', fontSize: 11, fontWeight: '900', letterSpacing: 1 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 8 },
-  tile: { width: '46%', marginHorizontal: '2%', marginBottom: 12, borderRadius: 20, overflow: 'hidden', borderWidth: 2 },
+  tile: { width: '46%', marginHorizontal: '2%', marginBottom: 12, borderRadius: 20, overflow: 'hidden', borderWidth: 1.5 },
   tileArt: { aspectRatio: 16 / 10, alignItems: 'center', justifyContent: 'center', padding: 10 },
   tileWordmark: { color: '#fff', fontSize: 21, fontWeight: '900', textAlign: 'center', letterSpacing: -0.3 },
   tileBadge: { position: 'absolute', left: 10, bottom: 10 },

@@ -15,18 +15,20 @@ export interface StoredSettings {
   notifyTopStories: boolean;
   /** Notification when a new app version is published (also read by the background task). */
   notifyUpdates: boolean;
-  /** Topics shown on the Following tab. */
+  /** Topics shown on the You tab. */
   followed: Topic[];
-  /** Local weather on For you. Turning it off stops all location use. */
+  /** Local weather on Today. Turning it off stops all location use. */
   showWeather: boolean;
   /** null until the user picks one: follows the phone's region. */
   tempUnit: TempUnit | null;
-  /** Stock market prices on For you. */
+  /** Stock market prices on Today. */
   showMarkets: boolean;
-  /** "Watch" and "Listen" shelves on For you. */
+  /** The podcast tile on Today (videos and podcasts are always on the Watch tab). */
   showMedia: boolean;
   /** Team abbreviations (ESPN's, e.g. "TB") whose games show first. */
   favoriteTeams: string[];
+  /** Set once the v2 design (dark first) has been applied to this install's settings. */
+  designV2?: boolean;
 }
 
 interface SettingsValue {
@@ -60,7 +62,7 @@ interface SettingsValue {
 }
 
 export const SETTINGS_KEY = 'settings:v1';
-export const DEFAULT_SETTINGS: StoredSettings = { disabled: [], themeMode: 'system', notifyTopStories: true, notifyUpdates: true, followed: [], showWeather: true, tempUnit: null, showMarkets: true, showMedia: true, favoriteTeams: [] };
+export const DEFAULT_SETTINGS: StoredSettings = { disabled: [], themeMode: 'dark', notifyTopStories: true, notifyUpdates: true, followed: [], showWeather: true, tempUnit: null, showMarkets: true, showMedia: true, favoriteTeams: [] };
 const KEY = SETTINGS_KEY;
 const DEFAULTS = DEFAULT_SETTINGS;
 
@@ -72,7 +74,15 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     loadJSON(KEY, DEFAULTS).then((s) => {
-      setSettings({ ...DEFAULTS, ...s });
+      const loaded = { ...DEFAULTS, ...s };
+      // The v2 design is dark first: move installs still on "match phone" to dark, once. Anyone can
+      // pick light or "match phone" again in Settings.
+      if (!loaded.designV2) {
+        if (loaded.themeMode === 'system') loaded.themeMode = 'dark';
+        loaded.designV2 = true;
+        saveJSON(KEY, loaded);
+      }
+      setSettings(loaded);
       setReady(true);
     });
   }, []);

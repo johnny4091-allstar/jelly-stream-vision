@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "backgroundColor": "#000000",
+    "backgroundColor": "#0B0B0D",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.personal.headlines"
@@ -14,7 +14,7 @@
     "android": {
       "package": "com.personal.headlines",
       "adaptiveIcon": {
-        "backgroundColor": "#060A14",
+        "backgroundColor": "#FF5A1F",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png"
       },
@@ -25,6 +25,16 @@
     },
     "plugins": [
       "expo-image",
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/BarlowCondensed_700Bold.ttf",
+            "./assets/fonts/BarlowCondensed_800ExtraBold.ttf",
+            "./assets/fonts/BarlowCondensed_900Black.ttf"
+          ]
+        }
+      ],
       [
         "expo-audio",
         {

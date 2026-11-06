@@ -5,14 +5,25 @@ import type { Topic } from '../types';
 import { FollowButton, MoreLink, SectionHeader, SkeletonCard } from './common';
 import { StoryCard } from './StoryCard';
 
-/** One topic on the News and Following tabs: title, Follow, a lead story, two more, and a link to the rest. */
-export function TopicSection({ topic, count = 3, refreshToken = 0 }: { topic: Topic; count?: number; refreshToken?: number }) {
+/** One topic on the Explore and You tabs: title, Follow, a lead story, two more, and a link to the rest. */
+export function TopicSection({
+  topic,
+  count = 3,
+  refreshToken = 0,
+  hideHeader,
+}: {
+  topic: Topic;
+  count?: number;
+  refreshToken?: number;
+  /** The screen shows its own title above it. */
+  hideHeader?: boolean;
+}) {
   const info = getTopic(topic);
   const { stories, loading } = useStories(topic, refreshToken);
   const shown = stories.slice(0, count);
   return (
     <>
-      <SectionHeader title={info.title} right={<FollowButton topic={topic} />} onPress={() => openTopic(topic)} />
+      {hideHeader ? null : <SectionHeader title={info.title} right={<FollowButton topic={topic} />} onPress={() => openTopic(topic)} />}
       {loading && shown.length === 0 ? (
         <>
           <SkeletonCard />

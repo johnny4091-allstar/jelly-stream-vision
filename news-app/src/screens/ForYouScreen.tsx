@@ -15,7 +15,6 @@ import {
   useScrollTopVisibility,
   useTabBarSpace,
 } from '../components/common';
-import { MediaShelves } from '../components/Media';
 import { StoryCard } from '../components/StoryCard';
 import { openSettings, openTopic } from '../navigation';
 import { pickTopStories } from '../services/news';
@@ -23,16 +22,19 @@ import { useSettings } from '../state/SettingsContext';
 import { useStories } from '../state/useStories';
 import { useTheme } from '../theme';
 import type { Story } from '../types';
+import { partOfDay } from '../utils';
+
+const GREETING = { Morning: 'Good morning', Afternoon: 'Good afternoon', Evening: 'Good evening' } as const;
 
 const FOR_YOU_COUNT = 15;
 
-/** Home tab: the "Today" dashboard, Top stories, Watch & Listen, then a longer For you list. */
+/** Today tab: the dashboard, Top stories, Watch & Listen, then a longer For you list. */
 export function ForYouScreen() {
   const c = useTheme();
   const insets = useSafeAreaInsets();
   const bottom = useTabBarSpace();
   const { stories, failed, loading, refreshing, refresh } = useStories('top');
-  const { enabledSources, showMedia } = useSettings();
+  const { enabledSources } = useSettings();
   const scrollRef = useRef<ScrollViewInstance>(null);
   useScrollToTop(scrollRef);
   const scrollTop = useScrollTopVisibility();
@@ -65,7 +67,7 @@ export function ForYouScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={c.tertiary} progressViewOffset={insets.top} />
         }
       >
-        <AppHeader hideWeather />
+        <AppHeader hideWeather title={GREETING[partOfDay()]} eyebrow={new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })} />
         <Dashboard topStory={layout.lead} />
         <FailedNotice failed={failed} />
 
@@ -98,8 +100,6 @@ export function ForYouScreen() {
               <StoryCard key={s.id} story={s} index={i} />
             ))}
             <MoreLink label="More top stories" onPress={() => openTopic('top')} />
-
-            {showMedia ? <MediaShelves /> : null}
 
             {layout.forYou.length > 0 ? (
               <>

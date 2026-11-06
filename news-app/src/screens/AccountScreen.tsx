@@ -42,7 +42,7 @@ export function AccountScreen() {
 
   const row = (icon: keyof typeof Ionicons.glyphMap, text: string) => (
     <View style={styles.perk} key={text}>
-      <Ionicons name={icon} size={20} color={c.accent} />
+      <Ionicons name={icon} size={20} color={c.accentText} />
       <Text style={[styles.perkText, { color: c.text }]}>{text}</Text>
     </View>
   );
@@ -52,7 +52,7 @@ export function AccountScreen() {
       <StackHeader title="Account" />
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 32, gap: 14 }}>
         {!account.enabled ? (
-          <View style={[styles.card, { backgroundColor: c.card }]}>
+          <View style={[styles.card, { backgroundColor: c.card, borderColor: c.border, borderWidth: StyleSheet.hairlineWidth }]}>
             <Text style={[styles.h, { color: c.text }]}>Accounts are coming soon</Text>
             <Text style={{ color: c.secondary, fontSize: 15, lineHeight: 21 }}>
               Sign-in isn’t switched on in this version yet. Everything you do is saved on this phone.
@@ -62,15 +62,15 @@ export function AccountScreen() {
           <ActivityIndicator style={{ marginTop: 40 }} color={c.tertiary} />
         ) : account.status === 'signedIn' ? (
           <>
-            <View style={[styles.card, styles.who, { backgroundColor: c.card }]}>
+            <View style={[styles.card, styles.who, { backgroundColor: c.card, borderColor: c.border, borderWidth: StyleSheet.hairlineWidth }]}>
               <View style={[styles.avatar, { backgroundColor: c.accent }]}>
-                <Text style={styles.avatarText}>{(account.email ?? '?')[0]!.toUpperCase()}</Text>
+                <Text style={[styles.avatarText, { color: c.onAccent }]}>{(account.email ?? '?')[0]!.toUpperCase()}</Text>
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.h, { color: c.text, marginBottom: 2 }]} numberOfLines={1}>
                   {account.email}
                 </Text>
-                <Text style={{ color: account.syncError ? '#E5383B' : c.tertiary, fontSize: 13 }}>
+                <Text style={{ color: account.syncError ? c.down : c.tertiary, fontSize: 13 }}>
                   {account.syncError
                     ? `Sync problem: ${account.syncError}`
                     : account.lastSync
@@ -85,11 +85,11 @@ export function AccountScreen() {
               {row('options-outline', 'Sources, weather, markets and notification settings')}
               <Text style={{ color: c.tertiary, fontSize: 13 }}>These sync to any phone where you sign in.</Text>
             </View>
-            <Pressable onPress={() => account.signOut()} style={[styles.button, { backgroundColor: c.card }]} accessibilityRole="button">
+            <Pressable onPress={() => account.signOut()} style={[styles.button, { backgroundColor: c.card, borderColor: c.border, borderWidth: StyleSheet.hairlineWidth }]} accessibilityRole="button">
               <Text style={[styles.buttonText, { color: c.text }]}>Sign out</Text>
             </Pressable>
-            <Pressable onPress={confirmDelete} disabled={busy} style={[styles.button, { backgroundColor: c.card }]} accessibilityRole="button">
-              {busy ? <ActivityIndicator color="#E5383B" /> : <Text style={[styles.buttonText, { color: '#E5383B' }]}>Delete account</Text>}
+            <Pressable onPress={confirmDelete} disabled={busy} style={[styles.button, { backgroundColor: c.card, borderColor: c.border, borderWidth: StyleSheet.hairlineWidth }]} accessibilityRole="button">
+              {busy ? <ActivityIndicator color={c.down} /> : <Text style={[styles.buttonText, { color: c.down }]}>Delete account</Text>}
             </Pressable>
           </>
         ) : (
@@ -101,9 +101,9 @@ export function AccountScreen() {
               {row('lock-closed-outline', 'Just your email and a password. Nothing is sold or shared')}
             </View>
             <Pressable onPress={() => openAuth('signup')} style={[styles.button, { backgroundColor: c.accent }]} accessibilityRole="button">
-              <Text style={[styles.buttonText, { color: '#fff' }]}>Create account</Text>
+              <Text style={[styles.buttonText, { color: c.onAccent }]}>Create account</Text>
             </Pressable>
-            <Pressable onPress={() => openAuth('signin')} style={[styles.button, { backgroundColor: c.card }]} accessibilityRole="button">
+            <Pressable onPress={() => openAuth('signin')} style={[styles.button, { backgroundColor: c.card, borderColor: c.border, borderWidth: StyleSheet.hairlineWidth }]} accessibilityRole="button">
               <Text style={[styles.buttonText, { color: c.text }]}>Sign in</Text>
             </Pressable>
           </>

@@ -6,7 +6,7 @@ import { AppState, Pressable, StyleSheet, Text, View } from 'react-native';
 import { openWatch } from '../navigation';
 import { fetchGames, type Game } from '../services/scores';
 import { useSettings } from '../state/SettingsContext';
-import { useTheme } from '../theme';
+import { fonts, useTheme } from '../theme';
 
 let lastGames: Game[] | null = null;
 
@@ -57,7 +57,7 @@ export function StatusText({ game, small }: { game: Game; small?: boolean }) {
   const c = useTheme();
   const live = game.state === 'in';
   return (
-    <Text style={[small ? styles.statusSmall : styles.status, { color: live ? '#E5383B' : c.tertiary }]} numberOfLines={1}>
+    <Text style={[small ? styles.statusSmall : styles.status, { color: live ? c.accentText : c.tertiary }]} numberOfLines={1}>
       {live ? '● ' : ''}
       {game.detail}
     </Text>
@@ -77,7 +77,7 @@ export function GameRow({ game }: { game: Game }) {
           {t.name || t.abbr}
         </Text>
         <Pressable onPress={() => toggleFavoriteTeam(t.abbr)} hitSlop={8} accessibilityRole="button" accessibilityLabel={`${fav ? 'Unpin' : 'Pin'} ${t.name}`}>
-          <Ionicons name={fav ? 'star' : 'star-outline'} size={16} color={fav ? '#F5A623' : c.tertiary} />
+          <Ionicons name={fav ? 'star' : 'star-outline'} size={16} color={fav ? c.accent : c.tertiary} />
         </Pressable>
         <Text style={[styles.score, { color: c.text, opacity: game.state === 'post' && !t.winner ? 0.55 : 1 }]}>
           {game.state === 'pre' ? '' : t.score}
@@ -88,7 +88,7 @@ export function GameRow({ game }: { game: Game }) {
   return (
     <Pressable
       onPress={() => game.link && openWatch(game.link, `${game.away.abbr} at ${game.home.abbr}`)}
-      style={[styles.game, { backgroundColor: c.card }]}
+      style={[styles.game, { backgroundColor: c.card, borderColor: c.border }]}
       accessibilityRole="button"
       accessibilityLabel={`${game.away.name} ${game.away.score} at ${game.home.name} ${game.home.score}, ${game.detail}`}
     >
@@ -105,11 +105,11 @@ export function GameRow({ game }: { game: Game }) {
 const styles = StyleSheet.create({
   status: { fontSize: 13, fontWeight: '800' },
   statusSmall: { fontSize: 12, fontWeight: '800' },
-  game: { marginHorizontal: 12, marginBottom: 8, borderRadius: 18, padding: 14, gap: 8 },
+  game: { marginHorizontal: 14, marginBottom: 8, borderRadius: 20, borderWidth: StyleSheet.hairlineWidth, padding: 14, gap: 8 },
   gameTop: { flexDirection: 'row', justifyContent: 'space-between' },
-  league: { fontSize: 12, fontWeight: '800', letterSpacing: 0.3 },
+  league: { fontSize: 11, fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase' },
   teamLine: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   logo: { width: 26, height: 26 },
   teamName: { flex: 1, fontSize: 16, fontWeight: '700' },
-  score: { width: 40, textAlign: 'right', fontSize: 18, fontWeight: '800' },
+  score: { width: 44, textAlign: 'right', fontFamily: fonts.display, fontSize: 24, lineHeight: 26 },
 });

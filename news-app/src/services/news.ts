@@ -41,6 +41,19 @@ async function writeCache(url: string, entry: CacheEntry): Promise<void> {
   }
 }
 
+/** Every story loaded so far this session, from any topic or outlet (for Full coverage and search). */
+export function cachedStories(): Story[] {
+  const seen = new Set<string>();
+  const all: Story[] = [];
+  for (const entry of memory.values())
+    for (const s of entry.stories) {
+      if (seen.has(s.link)) continue;
+      seen.add(s.link);
+      all.push(s);
+    }
+  return all;
+}
+
 export async function clearFeedCache(): Promise<void> {
   memory.clear();
   const keys = await AsyncStorage.getAllKeys();

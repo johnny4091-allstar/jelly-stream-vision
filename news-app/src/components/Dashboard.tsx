@@ -7,7 +7,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View, type StyleProp, t
 
 import { LIVE_CHANNELS, resolveLive, type LiveChannel } from '../live';
 import { PODCASTS, fetchPodcastEpisodes, formatDuration, type Episode } from '../media';
-import { openArticle, openAuth, openLiveTv, openQuickRead, openScores, openTopic, openWeather } from '../navigation';
+import { openArticle, openAuth, openCoverage, openLiveTv, openQuickRead, openScores, openTopic, openWeather } from '../navigation';
 import { formatChange, formatPrice } from '../services/markets';
 import { useStoryImage } from '../services/previewImage';
 import { condition, conditionIcon, formatTemp } from '../services/weather';
@@ -16,17 +16,15 @@ import { useAccount } from '../state/AccountContext';
 import { useAudio } from '../state/AudioContext';
 import { useSettings } from '../state/SettingsContext';
 import { useWeather } from '../state/WeatherContext';
-import { useTheme } from '../theme';
+import { fonts, type, useTheme } from '../theme';
 import type { Story } from '../types';
-import { partOfDay } from '../utils';
+import { useCoverage } from '../screens/CoverageScreen';
 import { useQuotes } from './MarketsStrip';
 import { RadarPreview } from './RadarPreview';
 import { StatusText, useGames } from './Scores';
 import { WeatherBoundary } from './WeatherBoundary';
 import { icon, skyColors } from './WeatherCard';
 
-const UP = '#12A150';
-const DOWN = '#E5383B';
 
 function Tile({
   children,
@@ -46,7 +44,7 @@ function Tile({
       disabled={!onPress}
       accessibilityRole={onPress ? 'button' : undefined}
       accessibilityLabel={label}
-      style={({ pressed }) => [styles.tile, { backgroundColor: c.card, opacity: pressed ? 0.85 : 1 }, style]}
+      style={({ pressed }) => [styles.tile, { backgroundColor: c.card, borderColor: c.border, opacity: pressed ? 0.85 : 1 }, style]}
     >
       {children}
     </Pressable>
@@ -69,7 +67,7 @@ function WeatherTile() {
     return (
       <Tile style={styles.fill}>
         <Label>Weather</Label>
-        <Ionicons name="partly-sunny" size={40} color="#2D74D6" style={{ marginTop: 10 }} />
+        <Ionicons name="partly-sunny" size={40} color="#5CC8FF" style={{ marginTop: 10 }} />
         <Text style={[styles.tileBody, { color: c.secondary }]}>
           {access === 'blocked'
             ? 'Location is off for News Hammer.'
@@ -80,8 +78,8 @@ function WeatherTile() {
                 : "Couldn't load the weather."}
         </Text>
         {asking || failed ? (
-          <Pressable onPress={asking ? enable : refresh} style={[styles.smallBtn, { backgroundColor: c.chipActive }]} accessibilityRole="button">
-            <Text style={[styles.smallBtnText, { color: c.chipActiveText }]}>
+          <Pressable onPress={asking ? enable : refresh} style={[styles.smallBtn, { backgroundColor: c.accent }]} accessibilityRole="button">
+            <Text style={[styles.smallBtnText, { color: c.onAccent }]}>
               {access === 'blocked' ? 'Open settings' : asking ? 'Show weather' : 'Try again'}
             </Text>
           </Pressable>
@@ -104,7 +102,7 @@ function WeatherTile() {
       style={styles.fill}
     >
       <LinearGradient colors={skyColors(now.code, now.isDay)} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.tile, styles.fill]}>
-        <Label color="rgba(255,255,255,0.85)">Weather</Label>
+        <Label color="rgba(255,255,255,0.85)">{weather.place ?? 'Weather'}</Label>
         <View style={styles.wxRow}>
           <Text style={styles.wxTemp}>{formatTemp(now.temp, tempUnit)}</Text>
           <Ionicons name={icon(conditionIcon(now.code, now.isDay))} size={30} color="#fff" />
@@ -131,26 +129,35 @@ function MarketsTile() {
   const { quotes, failed } = useQuotes();
   const indexes = quotes.filter((q) => q.kind === 'index').slice(0, 3);
   const open = indexes.some((q) => q.open);
+  const lead = indexes[0];
   return (
     <Tile onPress={() => openTopic('business')} label="Markets" style={styles.fill}>
-      <Label>Markets{indexes.length ? ` · ${open ? 'Open' : 'Closed'}` : ''}</Label>
-      {indexes.length === 0 ? (
+      <Label>{lead ? `${lead.name.replace('Dow Jones', 'Dow')} · ${open ? 'Open' : 'Closed'}` : 'Markets'}</Label>
+      {!lead ? (
         failed ? (
           <Text style={[styles.tileBody, { color: c.secondary }]}>Prices unavailable</Text>
         ) : (
           <ActivityIndicator style={{ marginTop: 10, alignSelf: 'flex-start' }} color={c.tertiary} />
         )
       ) : (
-        indexes.map((q) => (
-          <View key={q.symbol} style={styles.mkRow}>
-            <Text style={[styles.mkName, { color: c.text }]} numberOfLines={1}>
-              {q.name.replace('Dow Jones', 'Dow')}
-            </Text>
-            <Text style={[styles.mkChange, { color: q.change > 0 ? UP : q.change < 0 ? DOWN : c.tertiary }]}>{formatChange(q)}</Text>
-          </View>
-        ))
+        <>
+          <Text style={[styles.bigNumber, { color: c.text }]} numberOfLines={1} adjustsFontSizeToFit>
+            {formatPrice(lead)}
+          </Text>
+          <Text style={[styles.mkChange, { color: lead.change > 0 ? c.up : lead.change < 0 ? c.down : c.tertiary }]}>
+            {lead.change > 0 ? '▲ ' : lead.change < 0 ? '▼ ' : ''}
+            {formatChange(lead)}
+          </Text>
+          {indexes.slice(1).map((q) => (
+            <View key={q.symbol} style={styles.mkRow}>
+              <Text style={[styles.mkName, { color: c.secondary }]} numberOfLines={1}>
+                {q.name.replace('Dow Jones', 'Dow')}
+              </Text>
+              <Text style={[styles.mkSmall, { color: q.change > 0 ? c.up : q.change < 0 ? c.down : c.tertiary }]}>{formatChange(q)}</Text>
+            </View>
+          ))}
+        </>
       )}
-      {indexes[0] ? <Text style={[styles.tiny, { color: c.tertiary }]}>S&amp;P {formatPrice(indexes[0])}</Text> : null}
     </Tile>
   );
 }
@@ -161,7 +168,7 @@ function ScoresTile() {
   const top = (games ?? []).slice(0, 1)[0];
   return (
     <Tile onPress={openScores} label="Scores" style={styles.fill}>
-      <Label>Scores</Label>
+      <Label>{top ? top.leagueName : 'Scores'}</Label>
       {games === null ? (
         <ActivityIndicator style={{ marginTop: 10, alignSelf: 'flex-start' }} color={c.tertiary} />
       ) : !top ? (
@@ -185,16 +192,17 @@ function ScoresTile() {
 }
 
 function QuickReadTile() {
+  const c = useTheme();
   return (
-    <Pressable onPress={openQuickRead} accessibilityRole="button" accessibilityLabel="Quick read: today's top stories" style={[styles.tile, styles.quick]}>
-      <View style={styles.bolt}>
-        <Ionicons name="flash" size={22} color="#fff" />
-      </View>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.quickTitle}>Quick read</Text>
-        <Text style={styles.quickSub}>Today's top 8 stories, one swipe at a time</Text>
-      </View>
-      <Ionicons name="chevron-forward" size={22} color="#fff" />
+    <Pressable
+      onPress={openQuickRead}
+      accessibilityRole="button"
+      accessibilityLabel="Quick read: today's top stories"
+      style={({ pressed }) => [styles.tile, styles.fill, styles.quick, { backgroundColor: c.accent, borderColor: c.accent, opacity: pressed ? 0.9 : 1 }]}
+    >
+      <Text style={[type.eyebrow, { color: c.onAccent }]}>Quick read</Text>
+      <Ionicons name="flash" size={30} color={c.onAccent} />
+      <Text style={[styles.quickTitle, { color: c.onAccent }]}>Top 8{'\n'}in 3 min</Text>
     </Pressable>
   );
 }
@@ -217,6 +225,7 @@ function LiveTile() {
     };
   }, []);
   const channel = live?.channel ?? LIVE_CHANNELS[0]!;
+  const c = useTheme();
   return (
     <Pressable onPress={openLiveTv} accessibilityRole="button" accessibilityLabel={`Live TV: ${channel.name}`} style={[styles.tile, styles.live, { backgroundColor: channel.color }]}>
       {live?.videoId ? (
@@ -226,8 +235,9 @@ function LiveTile() {
       )}
       <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.78)']} locations={[0.35, 1]} style={StyleSheet.absoluteFill} />
       <View style={styles.liveText}>
-        <View style={styles.liveBadge}>
-          <Text style={styles.liveBadgeText}>LIVE</Text>
+        <View style={[styles.liveBadge, { backgroundColor: c.accent }]}>
+          <View style={[styles.liveDot, { backgroundColor: c.onAccent }]} />
+          <Text style={[styles.liveBadgeText, { color: c.onAccent }]}>LIVE</Text>
         </View>
         <Text style={styles.liveName} numberOfLines={1}>
           {channel.name}
@@ -268,7 +278,7 @@ function ListenTile() {
         </Text>
       </View>
       <View style={[styles.playBtn, { backgroundColor: c.accent }]}>
-        <Ionicons name={playing ? 'pause' : 'play'} size={18} color="#fff" />
+        <Ionicons name={playing ? 'pause' : 'play'} size={18} color={c.onAccent} />
       </View>
     </Tile>
   );
@@ -277,20 +287,38 @@ function ListenTile() {
 function TopStoryTile({ story }: { story: Story }) {
   const c = useTheme();
   const image = useStoryImage(story);
+  const coverage = useCoverage(story);
+  const others = coverage.stories.filter((s) => s.sourceId !== story.sourceId).map((s) => s.sourceName);
   return (
     <Tile onPress={() => openArticle(story)} label={`Top story: ${story.title}`} style={styles.topStory}>
-      {image ? (
-        <Image source={{ uri: image }} style={styles.topImage} contentFit="cover" transition={250} />
-      ) : (
-        <View style={[styles.topImage, { backgroundColor: getSource(story.sourceId)?.color ?? c.skeleton }]} />
-      )}
+      <View style={[styles.topImage, { backgroundColor: getSource(story.sourceId)?.color ?? c.skeleton }]}>
+        {image ? <Image source={{ uri: image }} style={StyleSheet.absoluteFill} contentFit="cover" transition={250} /> : null}
+        <View style={[styles.topTag, { backgroundColor: c.background }]}>
+          <Text style={[type.eyebrow, { color: c.text }]}>Top story</Text>
+        </View>
+      </View>
       <View style={styles.topText}>
-        <Text style={[styles.label, { color: c.accent }]} numberOfLines={1}>
-          TOP STORY · {story.sourceName.toUpperCase()}
-        </Text>
         <Text style={[styles.topTitle, { color: c.text }]} numberOfLines={4}>
           {story.title}
         </Text>
+        <View style={styles.topMeta}>
+          <Text style={[type.caption, { color: c.secondary, flex: 1, fontWeight: '600' }]} numberOfLines={1}>
+            {[story.sourceName, ...others.slice(0, 2)].join(' · ')}
+            {others.length > 2 ? ` +${others.length - 2}` : ''}
+          </Text>
+          {coverage.outlets > 1 ? (
+            <Pressable
+              onPress={() => openCoverage(story)}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={`Full coverage: ${coverage.outlets} outlets`}
+              style={[styles.coveragePill, { backgroundColor: c.elevated, borderColor: c.border }]}
+            >
+              <Ionicons name="layers-outline" size={14} color={c.accentText} />
+              <Text style={[styles.coverageText, { color: c.accentText }]}>{coverage.outlets} outlets</Text>
+            </Pressable>
+          ) : null}
+        </View>
       </View>
     </Tile>
   );
@@ -314,16 +342,16 @@ function AccountCard() {
     AsyncStorage.setItem(ACCOUNT_CARD_KEY, '1').catch(() => {});
   };
   return (
-    <View style={[styles.tile, styles.accountCard, { backgroundColor: c.card }]}>
+    <View style={[styles.tile, styles.accountCard, { backgroundColor: c.card, borderColor: c.border }]}>
       <View style={[styles.accountIcon, { backgroundColor: c.accent }]}>
-        <Ionicons name="person" size={20} color="#fff" />
+        <Ionicons name="person" size={20} color={c.onAccent} />
       </View>
       <View style={{ flex: 1, gap: 2 }}>
         <Text style={[styles.listenTitle, { color: c.text }]}>Create a free account</Text>
         <Text style={{ color: c.secondary, fontSize: 13, lineHeight: 18 }}>Keep your saved stories, topics and teams on every phone.</Text>
         <View style={{ flexDirection: 'row', gap: 16, marginTop: 8 }}>
           <Pressable onPress={() => openAuth('signup')} accessibilityRole="button" hitSlop={6}>
-            <Text style={{ color: c.accent, fontWeight: '800', fontSize: 14 }}>Sign up</Text>
+            <Text style={{ color: c.accentText, fontWeight: '800', fontSize: 14 }}>Sign up</Text>
           </Pressable>
           <Pressable onPress={() => openAuth('signin')} accessibilityRole="button" hitSlop={6}>
             <Text style={{ color: c.text, fontWeight: '700', fontSize: 14 }}>Sign in</Text>
@@ -337,93 +365,86 @@ function AccountCard() {
   );
 }
 
-const GREETING = { Morning: 'Good morning', Afternoon: 'Good afternoon', Evening: 'Good evening' } as const;
-
-/** "Today": everything checked daily at a glance, above the news. */
+/** "Today": everything checked daily at a glance, as a grid of live tiles above the news. */
 export function Dashboard({ topStory }: { topStory?: Story }) {
-  const c = useTheme();
   const { showWeather, showMarkets, showMedia } = useSettings();
-  const { weather } = useWeather();
-  const date = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
-  const side = (
-    <>
-      {showMarkets ? <MarketsTile /> : null}
-      <ScoresTile />
-    </>
-  );
   return (
     <View style={styles.wrap}>
-      <View style={styles.greet}>
-        <Text style={[styles.hello, { color: c.text }]}>{GREETING[partOfDay()]}</Text>
-        <Text style={[styles.date, { color: c.tertiary }]}>
-          {date}
-          {showWeather && weather?.place ? ` · ${weather.place}` : ''}
-        </Text>
-      </View>
-      {showWeather ? (
+      {showWeather || showMarkets ? (
         <View style={styles.row}>
-          <View style={styles.col}>
-            <WeatherBoundary>
-              <WeatherTile />
-            </WeatherBoundary>
-          </View>
-          <View style={[styles.col, { gap: 10 }]}>{side}</View>
+          {showWeather ? (
+            <View style={styles.col}>
+              <WeatherBoundary>
+                <WeatherTile />
+              </WeatherBoundary>
+            </View>
+          ) : null}
+          {showMarkets ? (
+            <View style={styles.col}>
+              <MarketsTile />
+            </View>
+          ) : null}
         </View>
-      ) : (
-        <View style={[styles.row, styles.pair]}>{side}</View>
-      )}
+      ) : null}
+      {topStory ? <TopStoryTile story={topStory} /> : null}
+      <View style={styles.row}>
+        <View style={styles.col}>
+          <ScoresTile />
+        </View>
+        <View style={styles.col}>
+          <QuickReadTile />
+        </View>
+      </View>
       <AccountCard />
-      <QuickReadTile />
       <LiveTile />
       {showMedia ? <ListenTile /> : null}
-      {topStory ? <TopStoryTile story={topStory} /> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { paddingHorizontal: 12, gap: 10, marginBottom: 6 },
-  greet: { paddingHorizontal: 6, paddingBottom: 4 },
-  hello: { fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
-  date: { fontSize: 14, marginTop: 2 },
+  wrap: { paddingHorizontal: 14, gap: 10, marginBottom: 6 },
   row: { flexDirection: 'row', gap: 10 },
-  pair: { alignItems: 'stretch' },
   col: { flex: 1 },
   fill: { flex: 1 },
-  tile: { borderRadius: 22, padding: 14, overflow: 'hidden' },
-  label: { fontSize: 12, fontWeight: '800', letterSpacing: 0.3, textTransform: 'uppercase' },
+  tile: { borderRadius: 24, padding: 14, overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth },
+  label: { fontSize: 11, fontWeight: '800', letterSpacing: 1.2, textTransform: 'uppercase' },
   tileBody: { fontSize: 14, marginTop: 8, lineHeight: 19 },
-  tiny: { fontSize: 11, marginTop: 6 },
   smallBtn: { alignSelf: 'flex-start', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8, marginTop: 10 },
-  smallBtnText: { fontSize: 14, fontWeight: '700' },
+  smallBtnText: { fontSize: 14, fontWeight: '800' },
   wxRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 },
-  wxTemp: { color: '#fff', fontSize: 48, fontWeight: '300', letterSpacing: -1 },
+  wxTemp: { color: '#fff', fontFamily: fonts.display, fontSize: 60, lineHeight: 64 },
   wxText: { color: '#fff', fontSize: 13, fontWeight: '600' },
-  mkRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 7 },
-  mkName: { fontSize: 14, fontWeight: '700', flex: 1 },
-  mkChange: { fontSize: 14, fontWeight: '800' },
-  scRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 },
-  scLogo: { width: 20, height: 20 },
-  scTeam: { flex: 1, fontSize: 16, fontWeight: '800' },
-  scScore: { fontSize: 16, fontWeight: '800' },
-  quick: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#111114' },
-  bolt: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#E3141B', alignItems: 'center', justifyContent: 'center' },
-  quickTitle: { color: '#fff', fontSize: 17, fontWeight: '800' },
-  quickSub: { color: 'rgba(255,255,255,0.72)', fontSize: 13, marginTop: 1 },
-  live: { height: 160, padding: 0, justifyContent: 'center', alignItems: 'center' },
+  bigNumber: { fontFamily: fonts.display, fontSize: 34, lineHeight: 38, marginTop: 10 },
+  mkRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
+  mkName: { fontSize: 13, fontWeight: '700', flex: 1 },
+  mkChange: { fontSize: 15, fontWeight: '800' },
+  mkSmall: { fontSize: 13, fontWeight: '800' },
+  scRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 },
+  scLogo: { width: 22, height: 22 },
+  scTeam: { flex: 1, fontFamily: fonts.heading, fontSize: 24, lineHeight: 26 },
+  scScore: { fontFamily: fonts.display, fontSize: 26, lineHeight: 28 },
+  quick: { justifyContent: 'space-between', gap: 8, minHeight: 140 },
+  quickTitle: { fontFamily: fonts.display, fontSize: 28, lineHeight: 28, textTransform: 'uppercase' },
+  live: { height: 170, padding: 0, justifyContent: 'center', alignItems: 'center' },
   liveWordmark: { color: '#fff', fontSize: 28, fontWeight: '900' },
   liveText: { position: 'absolute', left: 14, right: 14, bottom: 12, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  liveBadge: { backgroundColor: '#E8352E', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
-  liveBadgeText: { color: '#fff', fontSize: 11, fontWeight: '800' },
-  liveName: { color: '#fff', fontSize: 16, fontWeight: '800', flexShrink: 1 },
+  liveBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4 },
+  liveDot: { width: 6, height: 6, borderRadius: 3 },
+  liveBadgeText: { fontSize: 11, fontWeight: '900', letterSpacing: 1 },
+  liveName: { color: '#fff', fontFamily: fonts.heading, fontSize: 22, lineHeight: 24, flexShrink: 1 },
   listen: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   listenArt: { width: 48, height: 48, borderRadius: 10, backgroundColor: '#333' },
   listenTitle: { fontSize: 15, fontWeight: '800' },
-  playBtn: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
-  topStory: { flexDirection: 'row', padding: 0, height: 128 },
+  playBtn: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center' },
+  topStory: { padding: 0 },
+  topImage: { height: 190, width: '100%' },
+  topTag: { position: 'absolute', left: 12, top: 12, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5 },
+  topText: { padding: 16, gap: 10 },
+  topTitle: { fontFamily: fonts.heading, fontSize: 30, lineHeight: 31 },
+  topMeta: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  coveragePill: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 999, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: 10, paddingVertical: 5 },
+  coverageText: { fontSize: 12, fontWeight: '800' },
   accountCard: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
   accountIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  topImage: { width: '40%', height: '100%' },
-  topText: { flex: 1, padding: 12, gap: 4 },
-  topTitle: { fontSize: 16, lineHeight: 20, fontWeight: '700' },
 });

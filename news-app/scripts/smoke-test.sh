@@ -112,7 +112,7 @@ onboarding_flow() {
   sleep 3
   ui_texts >/dev/null
   tap "News" || true
-  for _ in 1 2 3 4 5; do
+  for _ in 1 2 3 4 5 6 7; do
     if tap "Start reading"; then
       sleep 4
       check_alive onboarding-done || return 1
@@ -153,12 +153,12 @@ weather_flow() {
     tap "While using the app" || tap "Only this time" || tap "Allow" || echo "::warning::No location pop-up appeared."
     sleep 40
   else
-    echo "::warning::No Show weather button on For you."
+    echo "::warning::No Show weather button on Today."
   fi
   check_alive weather-card || { kill $feeder 2>/dev/null; return 1; }
   if ! tap "Weather"; then
     kill $feeder 2>/dev/null
-    echo "::warning::No weather card on For you (location or forecast didn't load); skipped the weather screens."
+    echo "::warning::No weather card on Today (location or forecast didn't load); skipped the weather screens."
     return 0
   fi
   sleep 15
@@ -190,16 +190,47 @@ dashboard_flow() {
     sleep 3
     ui_texts >/dev/null
   else
-    echo "::warning::No Quick read tile on For you."
+    echo "::warning::No Quick read tile on Today."
   fi
   if tap "Scores"; then
     sleep 8
     check_alive scores || return 1
   else
-    echo "::warning::No Scores tile on For you."
+    echo "::warning::No Scores tile on Today."
   fi
 }
 dashboard_flow || { echo "::error::The app crashed or froze on the dashboard (see the log above)."; exit 1; }
+
+# The other tabs, then a story with its Full coverage screen.
+tabs_flow() {
+  for t in Explore Watch You Today; do
+    ui_texts >/dev/null
+    # The closing quote makes it an exact match ("You" mustn't match "Your teams").
+    if tap "$t\""; then
+      sleep 8
+      check_alive "tab-$t" || return 1
+    else
+      echo "::warning::No $t tab."
+    fi
+  done
+  if tap "Top story"; then
+    sleep 10
+    check_alive story || return 1
+    if tap "Full coverage"; then
+      sleep 4
+      check_alive coverage || return 1
+      adb shell input keyevent KEYCODE_BACK
+      sleep 2
+    else
+      echo "::warning::No Full coverage link on the top story (no other outlet had it)."
+    fi
+    adb shell input keyevent KEYCODE_BACK
+    sleep 2
+  else
+    echo "::warning::No top story on Today."
+  fi
+}
+tabs_flow || { echo "::error::The app crashed or froze on a tab or story (see the log above)."; exit 1; }
 
 # Information only: the background news check should be scheduled with Android's JobScheduler.
 jobs="$(adb shell dumpsys jobscheduler | grep -c "$PKG/androidx.work" || true)"

@@ -1,73 +1,63 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import * as Haptics from 'expo-haptics';
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '../theme';
 
 const ICONS: Record<string, [keyof typeof Ionicons.glyphMap, keyof typeof Ionicons.glyphMap]> = {
-  'For you': ['star', 'star-outline'],
-  News: ['newspaper', 'newspaper-outline'],
-  'Live TV': ['tv', 'tv-outline'],
-  Sports: ['football', 'football-outline'],
-  Following: ['notifications', 'notifications-outline'],
+  Today: ['grid', 'grid-outline'],
+  Explore: ['compass', 'compass-outline'],
+  Watch: ['play-circle', 'play-circle-outline'],
+  Scores: ['trophy', 'trophy-outline'],
+  You: ['person-circle', 'person-circle-outline'],
 };
 
-/** Rounded bar floating above the content, with a pill behind the active tab (Samsung News style). */
+/** Height of the bar above the phone's own navigation area. */
+export const TAB_BAR_HEIGHT = 64;
+
+/** Full-width bottom bar: the active tab's icon turns Hammer orange. */
 export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
   const c = useTheme();
   const insets = useSafeAreaInsets();
-  // Fit every tab on narrow phones; cap the width on wide ones.
-  const itemWidth = Math.min(80, (useWindowDimensions().width - 44) / state.routes.length);
   return (
-    <View pointerEvents="box-none" style={[styles.wrap, { bottom: insets.bottom + 12 }]}>
-      <View style={[styles.bar, { backgroundColor: c.tabBar }]}>
-        {state.routes.map((route, i) => {
-          const focused = state.index === i;
-          const [on, off] = ICONS[route.name] ?? ['ellipse', 'ellipse-outline'];
-          const onPress = () => {
-            const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-            if (!event.defaultPrevented) {
-              Haptics.selectionAsync().catch(() => {});
-              // Navigating to the focused tab lets screens scroll back to the top (useScrollToTop).
-              navigation.navigate(route.name, route.params);
-            }
-          };
-          return (
-            <Pressable
-              key={route.key}
-              onPress={onPress}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: focused }}
-              accessibilityLabel={route.name}
-              style={[styles.item, { width: itemWidth }, focused && { backgroundColor: c.dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)' }]}
-            >
-              <Ionicons name={focused ? on : off} size={24} color={c.text} />
-              <Text style={[styles.label, { color: c.text, fontWeight: focused ? '800' : '500' }]} numberOfLines={1}>
-                {route.name}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
+    <View style={[styles.bar, { backgroundColor: c.tabBar, borderTopColor: c.border, paddingBottom: insets.bottom }]}>
+      {state.routes.map((route, i) => {
+        const focused = state.index === i;
+        const [on, off] = ICONS[route.name] ?? ['ellipse', 'ellipse-outline'];
+        const onPress = () => {
+          const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+          if (!event.defaultPrevented) {
+            Haptics.selectionAsync().catch(() => {});
+            // Navigating to the focused tab lets screens scroll back to the top (useScrollToTop).
+            navigation.navigate(route.name, route.params);
+          }
+        };
+        return (
+          <Pressable
+            key={route.key}
+            onPress={onPress}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: focused }}
+            accessibilityLabel={route.name}
+            style={styles.item}
+          >
+            <View style={[styles.indicator, { backgroundColor: focused ? c.accent : 'transparent' }]} />
+            <Ionicons name={focused ? on : off} size={24} color={focused ? c.accent : c.tertiary} />
+            <Text style={[styles.label, { color: focused ? c.text : c.tertiary, fontWeight: focused ? '800' : '600' }]} numberOfLines={1}>
+              {route.name}
+            </Text>
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
-  bar: {
-    flexDirection: 'row',
-    borderRadius: 40,
-    padding: 6,
-    gap: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.16,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 10,
-  },
-  item: { alignItems: 'center', justifyContent: 'center', gap: 2, paddingVertical: 8, borderRadius: 32 },
-  label: { fontSize: 12 },
+  bar: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth },
+  item: { flex: 1, height: TAB_BAR_HEIGHT, alignItems: 'center', justifyContent: 'center', gap: 3 },
+  indicator: { position: 'absolute', top: 0, width: 28, height: 3, borderBottomLeftRadius: 3, borderBottomRightRadius: 3 },
+  label: { fontSize: 11.5 },
 });

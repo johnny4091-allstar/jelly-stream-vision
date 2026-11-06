@@ -7,8 +7,6 @@ import { fetchQuotes, formatChange, formatPrice, quoteUrl, type Quote } from '..
 import { useTheme } from '../theme';
 
 const REFRESH_MS = 60_000;
-const UP = '#12A150';
-const DOWN = '#E5383B';
 
 let lastQuotes: Quote[] = [];
 
@@ -61,7 +59,7 @@ function Sparkline({ points, color }: { points: number[]; color: string }) {
 
 function QuoteCard({ q }: { q: Quote }) {
   const c = useTheme();
-  const color = q.change > 0 ? UP : q.change < 0 ? DOWN : c.tertiary;
+  const color = q.change > 0 ? c.up : q.change < 0 ? c.down : c.tertiary;
   return (
     <Pressable
       onPress={() => openWatch(quoteUrl(q.symbol), q.name)}
@@ -96,8 +94,8 @@ export function MarketsStrip() {
         <Text style={[styles.title, { color: c.text }]}>Markets</Text>
         {quotes.length > 0 ? (
           <View style={[styles.status, { backgroundColor: open ? 'rgba(18,161,80,0.14)' : c.card }]}>
-            <View style={[styles.dot, { backgroundColor: open ? UP : c.tertiary }]} />
-            <Text style={[styles.statusText, { color: open ? UP : c.secondary }]}>{open ? 'Open' : 'Closed'}</Text>
+            <View style={[styles.dot, { backgroundColor: open ? c.up : c.tertiary }]} />
+            <Text style={[styles.statusText, { color: open ? c.up : c.secondary }]}>{open ? 'Open' : 'Closed'}</Text>
           </View>
         ) : null}
       </View>

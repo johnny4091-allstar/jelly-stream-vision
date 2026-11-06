@@ -71,9 +71,9 @@ export function BackgroundGuide() {
   return (
     <Modal transparent animationType="fade" visible={visible} onRequestClose={() => setVisible(false)}>
       <View style={styles.backdrop}>
-        <View style={[styles.sheet, { backgroundColor: c.card }]}>
+        <View style={[styles.sheet, { backgroundColor: c.card, borderColor: c.border, borderWidth: StyleSheet.hairlineWidth }]}>
           <View style={[styles.iconWrap, { backgroundColor: c.accent }]}>
-            <Ionicons name="notifications" size={28} color="#fff" />
+            <Ionicons name="notifications" size={28} color={c.onAccent} />
           </View>
           <Text style={[type.title, { color: c.text, textAlign: 'center' }]}>Get alerts on time</Text>
           <Text style={[type.body, { color: c.secondary, textAlign: 'center' }]}>
@@ -110,7 +110,7 @@ export function BackgroundGuide() {
 
           {step < 2 ? (
             <Pressable onPress={allow} style={[styles.primary, { backgroundColor: c.accent }]} accessibilityRole="button">
-              <Text style={styles.primaryText}>Allow in background</Text>
+              <Text style={[styles.primaryText, { color: c.onAccent }]}>Allow in background</Text>
             </Pressable>
           ) : (
             <Pressable
@@ -118,7 +118,7 @@ export function BackgroundGuide() {
               style={[styles.primary, { backgroundColor: c.accent }]}
               accessibilityRole="button"
             >
-              <Text style={styles.primaryText}>Open app settings</Text>
+              <Text style={[styles.primaryText, { color: c.onAccent }]}>Open app settings</Text>
             </Pressable>
           )}
           <Pressable onPress={() => setVisible(false)} style={styles.secondary} accessibilityRole="button">

@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { useCallback, useRef, useState } from 'react';
+import * as Speech from 'expo-speech';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { BackHandler, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
@@ -9,10 +10,12 @@ import { WebView } from 'react-native-webview';
 // TypeScript; `object` restores them.
 type ReaderWebView = WebView<object>;
 
-import type { ArticleScreenProps } from '../navigation';
+import { openCoverage, type ArticleScreenProps } from '../navigation';
 import { openShareSheet } from '../components/ShareSheet';
 import { useSaved } from '../state/SavedContext';
+import { getSource } from '../sources';
 import { type, useTheme } from '../theme';
+import { useCoverage } from './CoverageScreen';
 
 function hostOf(url: string): string {
   return /^https?:\/\/(?:www\.)?([^/]+)/.exec(url)?.[1] ?? url;
@@ -30,6 +33,22 @@ export function ArticleScreen({ route, navigation }: ArticleScreenProps) {
   const [url, setUrl] = useState(story.link);
   const [failed, setFailed] = useState(false);
   const saved = isSaved(story.id);
+  const coverage = useCoverage(story);
+  const [speaking, setSpeaking] = useState(false);
+
+  // Stop reading aloud when the story closes.
+  useEffect(() => () => void Speech.stop().catch(() => {}), []);
+
+  const listen = () => {
+    Speech.stop().catch(() => {});
+    if (speaking) return setSpeaking(false);
+    setSpeaking(true);
+    Speech.speak(`${story.title}. ${story.summary}`, {
+      onDone: () => setSpeaking(false),
+      onStopped: () => setSpeaking(false),
+      onError: () => setSpeaking(false),
+    });
+  };
 
   // Android back button steps back through the page's own links before leaving the reader.
   useFocusEffect(
@@ -63,11 +82,28 @@ export function ArticleScreen({ route, navigation }: ArticleScreenProps) {
             {hostOf(url)}
           </Text>
         </View>
-        {iconButton(saved ? 'bookmark' : 'bookmark-outline', saved ? 'Remove from saved' : 'Save for later', () => toggleSaved(story), saved ? c.accent : c.text)}
-        {iconButton('share-outline', 'Share story', () => openShareSheet({ title: story.title, link: story.link }))}
+        {iconButton('open-outline', 'Open in browser', () => Linking.openURL(url).catch(() => {}))}
       </View>
+      {coverage.outlets > 1 ? (
+        <Pressable
+          onPress={() => openCoverage(story)}
+          accessibilityRole="button"
+          accessibilityLabel={`Full coverage: ${coverage.outlets} outlets`}
+          style={[styles.coverage, { backgroundColor: c.background, borderBottomColor: c.border }]}
+        >
+          <View style={styles.coverageBar}>
+            {coverage.stories.slice(0, 8).map((s) => (
+              <View key={s.sourceId} style={[styles.coverageSeg, { backgroundColor: getSource(s.sourceId)?.color ?? c.tertiary }]} />
+            ))}
+          </View>
+          <Text style={[styles.coverageText, { color: c.text }]}>
+            Full coverage · <Text style={{ color: c.accentText }}>{coverage.outlets} outlets</Text>
+          </Text>
+          <Ionicons name="chevron-forward" size={16} color={c.accentText} />
+        </Pressable>
+      ) : null}
       {progress < 1 && !failed ? (
-        <View style={[styles.progressTrack, { backgroundColor: c.separator }]}>
+        <View style={[styles.progressTrack, { backgroundColor: c.border }]}>
           <View style={[styles.progressBar, { backgroundColor: c.accent, width: `${Math.max(5, progress * 100)}%` }]} />
         </View>
       ) : null}
@@ -87,7 +123,7 @@ export function ArticleScreen({ route, navigation }: ArticleScreenProps) {
               }}
               style={[styles.button, { backgroundColor: c.accent }]}
             >
-              <Text style={styles.buttonText}>Try again</Text>
+              <Text style={[styles.buttonText, { color: c.onAccent }]}>Try again</Text>
             </Pressable>
             <Pressable onPress={() => Linking.openURL(url).catch(() => {})} style={[styles.button, { backgroundColor: c.chip }]}>
               <Text style={[styles.buttonText, { color: c.text }]}>Open in browser</Text>
@@ -118,6 +154,29 @@ export function ArticleScreen({ route, navigation }: ArticleScreenProps) {
           return false;
         }}
       />
+
+      <View style={[styles.actions, { paddingBottom: insets.bottom + 10, backgroundColor: c.card, borderTopColor: c.border }]}>
+        <Pressable onPress={listen} style={[styles.listen, { backgroundColor: c.accent }]} accessibilityRole="button" accessibilityLabel={speaking ? 'Stop reading' : 'Listen'}>
+          <Ionicons name={speaking ? 'stop' : 'play'} size={18} color={c.onAccent} />
+          <Text style={[styles.listenText, { color: c.onAccent }]}>{speaking ? 'Stop' : 'Listen'}</Text>
+        </Pressable>
+        <Pressable
+          onPress={() => toggleSaved(story)}
+          style={[styles.square, { backgroundColor: c.elevated, borderColor: c.border }]}
+          accessibilityRole="button"
+          accessibilityLabel={saved ? 'Remove from saved' : 'Save for later'}
+        >
+          <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={21} color={saved ? c.accentText : c.text} />
+        </Pressable>
+        <Pressable
+          onPress={() => openShareSheet({ title: story.title, link: story.link })}
+          style={[styles.square, { backgroundColor: c.elevated, borderColor: c.border }]}
+          accessibilityRole="button"
+          accessibilityLabel="Share story"
+        >
+          <Ionicons name="share-outline" size={21} color={c.text} />
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -141,4 +200,12 @@ const styles = StyleSheet.create({
   errorButtons: { flexDirection: 'row', gap: 10, marginTop: 8 },
   button: { borderRadius: 12, paddingVertical: 12, paddingHorizontal: 16 },
   buttonText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  coverage: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth },
+  coverageBar: { flexDirection: 'row', gap: 2, width: 56, height: 8, borderRadius: 4, overflow: 'hidden' },
+  coverageSeg: { flex: 1 },
+  coverageText: { flex: 1, fontSize: 14, fontWeight: '800' },
+  actions: { flexDirection: 'row', gap: 10, paddingHorizontal: 14, paddingTop: 10, borderTopWidth: StyleSheet.hairlineWidth },
+  listen: { flex: 1, height: 48, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  listenText: { fontSize: 16, fontWeight: '800' },
+  square: { width: 52, height: 48, borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, alignItems: 'center', justifyContent: 'center' },
 });

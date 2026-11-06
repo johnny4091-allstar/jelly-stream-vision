@@ -10,7 +10,7 @@ import { openShareSheet } from './ShareSheet';
 import { useStoryImage } from '../services/previewImage';
 import { getSource } from '../sources';
 import { useSaved } from '../state/SavedContext';
-import { type, useTheme } from '../theme';
+import { fonts, type, useTheme } from '../theme';
 import type { Story } from '../types';
 import { timeAgo } from '../utils';
 
@@ -115,6 +115,7 @@ function StoryCardImpl({ story, variant = 'row', index = 0 }: Props) {
               {story.title}
             </Text>
             <View style={styles.overlayMeta}>
+              <View style={[styles.dot, { backgroundColor: sourceColor }]} />
               <Text style={[type.meta, styles.white]} numberOfLines={1}>
                 {story.sourceName.toUpperCase()}
               </Text>
@@ -133,13 +134,16 @@ function StoryCardImpl({ story, variant = 'row', index = 0 }: Props) {
   const lead = variant === 'lead';
   return (
     <Animated.View style={animated}>
-      <Pressable {...pressable} style={[styles.row, { backgroundColor: c.card }]}>
+      <Pressable {...pressable} style={[styles.row, { backgroundColor: c.card, borderColor: c.border }]}>
         <View style={styles.rowTop}>
           <View style={styles.rowText}>
-            <Text style={[styles.source, { color: sourceColor }]} numberOfLines={1}>
-              {story.sourceName}
-            </Text>
-            <Text style={[lead ? type.title : type.rowTitle, { color: c.text }]} numberOfLines={lead ? 4 : 3}>
+            <View style={styles.sourceRow}>
+              <View style={[styles.dot, { backgroundColor: sourceColor }]} />
+              <Text style={[styles.source, { color: c.secondary }]} numberOfLines={1}>
+                {story.sourceName.toUpperCase()}
+              </Text>
+            </View>
+            <Text style={[lead ? styles.leadTitle : type.rowTitle, { color: c.text }]} numberOfLines={lead ? 4 : 3}>
               {story.title}
             </Text>
             {story.summary ? (
@@ -161,7 +165,7 @@ function StoryCardImpl({ story, variant = 'row', index = 0 }: Props) {
         <View style={styles.rowBottom}>
           <Text style={[type.caption, { color: c.tertiary, flex: 1 }]}>{time}</Text>
           <Pressable onPress={onSave} hitSlop={10} accessibilityRole="button" accessibilityLabel={saved ? 'Remove from saved' : 'Save for later'} style={styles.icon}>
-            <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={19} color={saved ? c.accent : c.tertiary} />
+            <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={19} color={saved ? c.accentText : c.tertiary} />
           </Pressable>
           <Pressable onPress={menu} hitSlop={10} accessibilityRole="button" accessibilityLabel="More options" style={styles.icon}>
             <Ionicons name="ellipsis-vertical" size={17} color={c.tertiary} />
@@ -175,16 +179,19 @@ function StoryCardImpl({ story, variant = 'row', index = 0 }: Props) {
 export const StoryCard = memo(StoryCardImpl);
 
 const styles = StyleSheet.create({
-  row: { borderRadius: 20, marginHorizontal: 12, marginBottom: 10, paddingHorizontal: 18, paddingTop: 16, paddingBottom: 8 },
+  row: { borderRadius: 22, borderWidth: StyleSheet.hairlineWidth, marginHorizontal: 14, marginBottom: 10, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 6 },
   rowTop: { flexDirection: 'row', gap: 14 },
-  rowText: { flex: 1, gap: 5 },
-  source: { fontSize: 14, fontWeight: '800', letterSpacing: -0.1 },
-  thumb: { width: 96, height: 96, borderRadius: 14 },
-  leadThumb: { width: 128, height: 128, borderRadius: 16 },
-  rowBottom: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 10 },
+  rowText: { flex: 1, gap: 6 },
+  sourceRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  dot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
+  source: { fontSize: 11.5, fontWeight: '800', letterSpacing: 1 },
+  leadTitle: { fontFamily: fonts.heading, fontSize: 24, lineHeight: 26 },
+  thumb: { width: 92, height: 92, borderRadius: 14 },
+  leadThumb: { width: 120, height: 120, borderRadius: 16 },
+  rowBottom: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 8 },
   icon: { padding: 4 },
-  overlayWrap: { marginHorizontal: 12, marginBottom: 10 },
-  overlay: { borderRadius: 22, overflow: 'hidden', aspectRatio: 1.15, justifyContent: 'flex-end' },
+  overlayWrap: { marginHorizontal: 14, marginBottom: 10 },
+  overlay: { borderRadius: 24, overflow: 'hidden', aspectRatio: 1.1, justifyContent: 'flex-end' },
   overlayText: { padding: 18, gap: 10 },
   overlayMeta: { flexDirection: 'row', alignItems: 'center' },
   white: { color: '#fff' },

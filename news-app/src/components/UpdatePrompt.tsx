@@ -124,7 +124,7 @@ export function UpdatePrompt() {
                 <Text style={[styles.buttonText, { color: c.text }]}>Later</Text>
               </Pressable>
               <Pressable onPress={updateNow} style={[styles.button, { backgroundColor: c.accent }]} accessibilityRole="button">
-                <Text style={[styles.buttonText, { color: '#fff' }]}>Update now</Text>
+                <Text style={[styles.buttonText, { color: c.onAccent }]}>Update now</Text>
               </Pressable>
             </View>
           )}

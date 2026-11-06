@@ -15,6 +15,7 @@ import { useStoryImage } from '../services/previewImage';
 import { getSource } from '../sources';
 import { useSaved } from '../state/SavedContext';
 import { useStories } from '../state/useStories';
+import { HAMMER, fonts } from '../theme';
 import type { Story } from '../types';
 import { timeAgo } from '../utils';
 
@@ -182,17 +183,17 @@ const styles = StyleSheet.create({
   top: { position: 'absolute', left: 0, right: 0, top: 0, paddingHorizontal: 14, gap: 10 },
   bars: { flexDirection: 'row', gap: 4 },
   bar: { flex: 1, height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.3)' },
-  barOn: { backgroundColor: '#fff' },
+  barOn: { backgroundColor: HAMMER },
   topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   pill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.18)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
   pillText: { color: '#fff', fontWeight: '800', fontSize: 13 },
   close: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
   content: { position: 'absolute', left: 20, right: 84, gap: 10 },
   source: { color: '#fff', fontSize: 13, fontWeight: '800', letterSpacing: 0.5 },
-  title: { color: '#fff', fontSize: 30, lineHeight: 35, fontWeight: '800', letterSpacing: -0.4 },
+  title: { color: '#fff', fontFamily: fonts.heading, fontSize: 38, lineHeight: 39 },
   summary: { color: 'rgba(255,255,255,0.88)', fontSize: 16, lineHeight: 23 },
   time: { color: 'rgba(255,255,255,0.7)', fontSize: 13 },
-  readBtn: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#fff', borderRadius: 999, paddingHorizontal: 18, paddingVertical: 10, marginTop: 6 },
+  readBtn: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: HAMMER, borderRadius: 999, paddingHorizontal: 18, paddingVertical: 10, marginTop: 6 },
   readText: { color: '#000', fontWeight: '800', fontSize: 15 },
   rail: { position: 'absolute', right: 12, gap: 18, alignItems: 'center' },
   railItem: { alignItems: 'center', gap: 4 },

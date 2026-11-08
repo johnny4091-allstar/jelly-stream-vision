@@ -1,7 +1,9 @@
 import type { Session } from '@supabase/supabase-js';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
-import { accountsEnabled, supabase } from '../services/supabase';
+import * as WebBrowser from 'expo-web-browser';
+
+import { AUTH_REDIRECT, accountsEnabled, googleEnabled, supabase } from '../services/supabase';
 import type { Story } from '../types';
 import { useSaved } from './SavedContext';
 import { useSettings, type StoredSettings } from './SettingsContext';
@@ -10,6 +12,8 @@ export type AccountStatus = 'disabled' | 'loading' | 'signedOut' | 'signedIn';
 
 interface AccountValue {
   enabled: boolean;
+  /** Whether "Continue with Google" is set up. */
+  google: boolean;
   status: AccountStatus;
   email: string | null;
   /** When this phone last saved to or loaded from the account. */
@@ -18,6 +22,8 @@ interface AccountValue {
   signIn: (email: string, password: string) => Promise<void>;
   /** Resolves `needsConfirmation` when the project asks new users to confirm their email first. */
   signUp: (email: string, password: string) => Promise<{ needsConfirmation: boolean }>;
+  /** Opens Google's sign-in page; resolves false if the user closed it. */
+  signInWithGoogle: () => Promise<boolean>;
   signOut: () => Promise<void>;
   /** Emails a reset code (and link) to the address. */
   sendPasswordReset: (email: string) => Promise<void>;
@@ -129,6 +135,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     };
     return {
       enabled: accountsEnabled,
+      google: googleEnabled,
       status,
       email: session?.user.email ?? null,
       lastSync,
@@ -143,6 +150,24 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         // An existing confirmed address comes back with no identities instead of an error.
         if (data.user && data.user.identities?.length === 0) throw friendly(new Error('already registered'));
         return { needsConfirmation: !data.session };
+      },
+      signInWithGoogle: async () => {
+        const client = need();
+        const { data, error } = await client.auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo: AUTH_REDIRECT, skipBrowserRedirect: true },
+        });
+        if (error || !data.url) throw friendly(error ?? new Error('Couldn’t start Google sign-in.'));
+        const result = await WebBrowser.openAuthSessionAsync(data.url, AUTH_REDIRECT);
+        if (result.type !== 'success') return false;
+        // Supabase hands the session back in the link's #fragment (or ?query on some browsers).
+        const params = new URLSearchParams(result.url.split('#')[1] ?? result.url.split('?')[1] ?? '');
+        const access_token = params.get('access_token');
+        const refresh_token = params.get('refresh_token');
+        if (!access_token || !refresh_token) throw friendly(new Error(params.get('error_description') ?? 'Google sign-in didn’t finish.'));
+        const { error: sessionError } = await client.auth.setSession({ access_token, refresh_token });
+        if (sessionError) throw friendly(sessionError);
+        return true;
       },
       signOut: async () => {
         await need().auth.signOut();

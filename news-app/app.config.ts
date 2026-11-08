@@ -10,6 +10,7 @@ import type { ConfigContext, ExpoConfig } from 'expo/config';
 //                     CARTO's open tiles.
 //   SUPABASE_URL      Supabase project URL and public (anon) key for accounts and sync.
 //   SUPABASE_ANON_KEY Without them the app hides sign-in and works as before.
+//   GOOGLE_SIGN_IN    "1" once Google is turned on in the Supabase project: shows Continue with Google.
 export default ({ config }: ConfigContext): ExpoConfig => {
   const versionCode = Number(process.env.APP_VERSION_CODE) || 1;
   return {
@@ -36,6 +37,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       cartoKey: process.env.CARTO_KEY ?? '',
       supabaseUrl: process.env.SUPABASE_URL ?? '',
       supabaseAnonKey: process.env.SUPABASE_ANON_KEY ?? '',
+      googleSignIn: process.env.GOOGLE_SIGN_IN === '1',
     },
   };
 };

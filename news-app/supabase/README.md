@@ -19,3 +19,18 @@ The app works without this; sign-in stays hidden until the two secrets below exi
 
 The next build includes them. The anon key is meant to ship inside apps; the row-level security
 policies in `schema.sql` are what keep each person's data private.
+
+## Optional: Continue with Google
+
+1. In **Google Cloud Console → APIs & Services → Credentials**, create an **OAuth client ID** of type
+   *Web application*. Under *Authorized redirect URIs* add
+   `https://<your-project>.supabase.co/auth/v1/callback` (Supabase shows the exact URL on the Google
+   provider page).
+2. In Supabase, **Authentication → Sign In / Providers → Google**: turn it on and paste the client ID
+   and secret.
+3. In Supabase, **Authentication → URL Configuration → Redirect URLs**: add
+   `newshammer://auth-callback`.
+4. In GitHub, **Settings → Secrets and variables → Actions → Variables**: add `GOOGLE_SIGN_IN` with
+   the value `1`.
+
+The next build shows **Continue with Google** on the welcome, sign-in and save screens.

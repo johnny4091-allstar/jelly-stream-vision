@@ -14,6 +14,13 @@ interface SavedValue {
 
 const KEY = 'saved:v1';
 
+let savedListener: ((count: number) => void) | null = null;
+
+/** Called with the new total each time a story is saved (the account prompt listens). */
+export function onStorySaved(listener: ((count: number) => void) | null): void {
+  savedListener = listener;
+}
+
 const SavedContext = createContext<SavedValue | null>(null);
 
 export function SavedProvider({ children }: { children: ReactNode }) {
@@ -37,8 +44,11 @@ export function SavedProvider({ children }: { children: ReactNode }) {
       saved,
       isSaved: (id) => ids.has(id),
       // Newest saves first. Only the RSS fields are stored, never article text.
-      toggleSaved: (story) =>
-        update((s) => (s.some((x) => x.id === story.id) ? s.filter((x) => x.id !== story.id) : [story, ...s])),
+      toggleSaved: (story) => {
+        const adding = !ids.has(story.id);
+        update((s) => (s.some((x) => x.id === story.id) ? s.filter((x) => x.id !== story.id) : [story, ...s]));
+        if (adding) savedListener?.(saved.length + 1);
+      },
       clearSaved: () => update(() => []),
       replaceSaved: (stories) => update(() => stories),
     };

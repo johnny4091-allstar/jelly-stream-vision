@@ -20,6 +20,8 @@ const TASK = 'headlines-background-check';
 const STORIES_CHANNEL = 'top-stories-alerts';
 const OLD_STORIES_CHANNEL = 'top-stories';
 const UPDATES_CHANNEL = 'app-updates';
+const BRIEFING_CHANNEL = 'morning-briefing';
+const BRIEFING_ID = 'daily-briefing';
 const LAST_SEEN_KEY = 'notify:lastSeen:v1';
 const UPDATE_NOTIFIED_KEY = 'notify:updateNotified:v1';
 const REGISTERED_KEY = 'notify:registeredFor:v1';
@@ -28,7 +30,7 @@ const INTERVAL_MINUTES = 15;
 // Stories older than this when first seen are not "new" (e.g. after the phone was off all day).
 const MAX_AGE_MS = 6 * 60 * 60 * 1000;
 
-export type NotificationData = { kind: 'story'; story: Story } | { kind: 'update' };
+export type NotificationData = { kind: 'story'; story: Story } | { kind: 'update' } | { kind: 'briefing' };
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -128,6 +130,10 @@ async function ensureChannels(): Promise<void> {
     name: 'New top stories',
     importance: Notifications.AndroidImportance.HIGH,
   });
+  await Notifications.setNotificationChannelAsync(BRIEFING_CHANNEL, {
+    name: 'Morning briefing',
+    importance: Notifications.AndroidImportance.DEFAULT,
+  });
   await Notifications.setNotificationChannelAsync(UPDATES_CHANNEL, {
     name: 'App updates',
     importance: Notifications.AndroidImportance.DEFAULT,
@@ -157,6 +163,33 @@ export async function setUpNotifications({ ask = true }: { ask?: boolean } = {})
     await AsyncStorage.setItem(REGISTERED_KEY, marker);
   }
   return true;
+}
+
+/**
+ * Schedules (or cancels) the daily 7 AM "your briefing is ready" notification. Never asks for
+ * permission: it only runs once notifications are allowed.
+ */
+export async function syncBriefingAlert(on: boolean): Promise<void> {
+  if (Platform.OS === 'web') return;
+  await Notifications.cancelScheduledNotificationAsync(BRIEFING_ID).catch(() => {});
+  if (!on) return;
+  const { status } = await Notifications.getPermissionsAsync();
+  if (status !== 'granted') return;
+  await ensureChannels();
+  await Notifications.scheduleNotificationAsync({
+    identifier: BRIEFING_ID,
+    content: {
+      title: 'Your briefing is ready',
+      body: 'Weather, the top stories and your teams. Listen in about 5 minutes.',
+      data: { kind: 'briefing' } satisfies NotificationData,
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DAILY,
+      hour: 7,
+      minute: 0,
+      ...(Platform.OS === 'android' ? { channelId: BRIEFING_CHANNEL } : {}),
+    },
+  });
 }
 
 /** Shows a sample notification so the user can confirm notifications reach the phone. */

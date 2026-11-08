@@ -7,7 +7,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View, type StyleProp, t
 
 import { LIVE_CHANNELS, resolveLive, type LiveChannel } from '../live';
 import { PODCASTS, fetchPodcastEpisodes, formatDuration, type Episode } from '../media';
-import { openArticle, openAuth, openCoverage, openLiveTv, openQuickRead, openScores, openTopic, openWeather } from '../navigation';
+import { openArticle, openAuth, openBriefing, openCoverage, openLiveTv, openQuickRead, openScores, openTopic, openWeather } from '../navigation';
 import { formatChange, formatPrice } from '../services/markets';
 import { useStoryImage } from '../services/previewImage';
 import { condition, conditionIcon, formatTemp } from '../services/weather';
@@ -19,6 +19,7 @@ import { useWeather } from '../state/WeatherContext';
 import { fonts, type, useTheme } from '../theme';
 import type { Story } from '../types';
 import { useCoverage } from '../screens/CoverageScreen';
+import { streak } from '../services/activity';
 import { useQuotes } from './MarketsStrip';
 import { RadarPreview } from './RadarPreview';
 import { StatusText, useGames } from './Scores';
@@ -324,6 +325,30 @@ function TopStoryTile({ story }: { story: Story }) {
   );
 }
 
+/** Today's briefing: one tap to listen to weather, top stories, your teams and markets. */
+function BriefingTile() {
+  const c = useTheme();
+  const { activity } = useSettings();
+  const days = streak(activity.days);
+  return (
+    <Tile onPress={openBriefing} label="Your briefing" style={styles.briefing}>
+      <View style={[styles.briefPlay, { backgroundColor: c.accent }]}>
+        <Ionicons name="play" size={22} color={c.onAccent} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={[type.eyebrow, { color: c.accentText }]}>Your briefing</Text>
+        <Text style={[styles.briefTitle, { color: c.text }]}>Listen · about 5 min</Text>
+      </View>
+      {days > 1 ? (
+        <View style={[styles.streakPill, { backgroundColor: c.elevated, borderColor: c.border }]}>
+          <Ionicons name="flame" size={14} color={c.accent} />
+          <Text style={[styles.streakText, { color: c.text }]}>{days}</Text>
+        </View>
+      ) : null}
+    </Tile>
+  );
+}
+
 const ACCOUNT_CARD_KEY = 'card:account:v1';
 
 /** A one-time nudge to create an account, for people who skipped it (or updated from before). */
@@ -387,6 +412,7 @@ export function Dashboard({ topStory }: { topStory?: Story }) {
         </View>
       ) : null}
       {topStory ? <TopStoryTile story={topStory} /> : null}
+      <BriefingTile />
       <View style={styles.row}>
         <View style={styles.col}>
           <ScoresTile />
@@ -445,6 +471,11 @@ const styles = StyleSheet.create({
   topMeta: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   coveragePill: { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 999, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: 10, paddingVertical: 5 },
   coverageText: { fontSize: 12, fontWeight: '800' },
+  briefing: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  briefPlay: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+  briefTitle: { fontFamily: fonts.heading, fontSize: 24, lineHeight: 26, textTransform: 'uppercase' },
+  streakPill: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 999, borderWidth: StyleSheet.hairlineWidth, paddingHorizontal: 10, paddingVertical: 6 },
+  streakText: { fontSize: 14, fontWeight: '900' },
   accountCard: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
   accountIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
 });

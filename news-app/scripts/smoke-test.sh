@@ -105,7 +105,9 @@ check_alive() {
 # A new install opens on the setup screens: go through them the way a user would.
 onboarding_flow() {
   check_alive onboarding-welcome || return 1
-  if ! { tap "Continue without an account" || tap "Get started"; }; then
+  # Welcome slides: Skip goes to the last one.
+  tap "Skip" && sleep 2 && ui_texts >/dev/null
+  if ! { tap "Maybe later" || tap "Get started"; }; then
     echo "::warning::No setup screen on a fresh install."
     return 0
   fi
@@ -213,6 +215,15 @@ tabs_flow() {
       echo "::warning::No $t tab."
     fi
   done
+  if tap "Your briefing"; then
+    sleep 8
+    check_alive briefing || return 1
+    adb shell input keyevent KEYCODE_BACK
+    sleep 2
+    ui_texts >/dev/null
+  else
+    echo "::warning::No briefing tile on Today."
+  fi
   if tap "Top story"; then
     sleep 10
     check_alive story || return 1

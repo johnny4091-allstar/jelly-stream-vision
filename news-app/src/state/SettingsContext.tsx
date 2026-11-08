@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
+import { EMPTY_ACTIVITY, mergeActivity, record, type Activity, type ActivityEvent } from '../services/activity';
 import { defaultTempUnit, type TempUnit } from '../services/weather';
 import { SOURCE_IDS } from '../sources';
 import type { SourceId, Topic } from '../types';
@@ -29,6 +30,10 @@ export interface StoredSettings {
   favoriteTeams: string[];
   /** Set once the v2 design (dark first) has been applied to this install's settings. */
   designV2?: boolean;
+  /** Reading streak, counts and badges (synced with the account, merged, never lost). */
+  activity: Activity;
+  /** The 7 AM "your briefing is ready" notification. */
+  briefingAlert: boolean;
 }
 
 interface SettingsValue {
@@ -59,10 +64,14 @@ interface SettingsValue {
   setShowMedia: (on: boolean) => void;
   favoriteTeams: string[];
   toggleFavoriteTeam: (abbr: string) => void;
+  activity: Activity;
+  recordActivity: (event: ActivityEvent) => void;
+  briefingAlert: boolean;
+  setBriefingAlert: (on: boolean) => void;
 }
 
 export const SETTINGS_KEY = 'settings:v1';
-export const DEFAULT_SETTINGS: StoredSettings = { disabled: [], themeMode: 'dark', notifyTopStories: true, notifyUpdates: true, followed: [], showWeather: true, tempUnit: null, showMarkets: true, showMedia: true, favoriteTeams: [] };
+export const DEFAULT_SETTINGS: StoredSettings = { disabled: [], themeMode: 'dark', notifyTopStories: true, notifyUpdates: true, followed: [], showWeather: true, tempUnit: null, showMarkets: true, showMedia: true, favoriteTeams: [], activity: EMPTY_ACTIVITY, briefingAlert: true };
 const KEY = SETTINGS_KEY;
 const DEFAULTS = DEFAULT_SETTINGS;
 
@@ -74,7 +83,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     loadJSON(KEY, DEFAULTS).then((s) => {
-      const loaded = { ...DEFAULTS, ...s };
+      const loaded = { ...DEFAULTS, ...s, activity: mergeActivity(EMPTY_ACTIVITY, s.activity) };
       // The v2 design is dark first: move installs still on "match phone" to dark, once. Anyone can
       // pick light or "match phone" again in Settings.
       if (!loaded.designV2) {
@@ -100,7 +109,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     return {
       ready,
       snapshot: settings,
-      applySynced: (synced) => update((s) => ({ ...s, ...synced })),
+      // Activity from another phone adds to this one's instead of replacing it.
+      applySynced: (synced) => update((s) => ({ ...s, ...synced, activity: mergeActivity(s.activity, synced.activity) })),
       enabledSources,
       isEnabled: (id) => !settings.disabled.includes(id),
       setSourceEnabled: (id, on) =>
@@ -129,6 +139,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       setShowMarkets: (showMarkets) => update((s) => ({ ...s, showMarkets })),
       showMedia: settings.showMedia,
       setShowMedia: (showMedia) => update((s) => ({ ...s, showMedia })),
+      activity: settings.activity,
+      recordActivity: (event) => update((s) => ({ ...s, activity: record(s.activity, event) })),
+      briefingAlert: settings.briefingAlert,
+      setBriefingAlert: (briefingAlert) => update((s) => ({ ...s, briefingAlert })),
       favoriteTeams: settings.favoriteTeams,
       toggleFavoriteTeam: (abbr) =>
         update((s) => ({

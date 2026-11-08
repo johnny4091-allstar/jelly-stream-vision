@@ -34,6 +34,8 @@ jobs:
       # Supabase project for accounts and sync (optional; without them sign-in is hidden).
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      # "1" once Google sign-in is set up in Supabase (see news-app/supabase/README.md).
+      GOOGLE_SIGN_IN: ${{ vars.GOOGLE_SIGN_IN }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -65,6 +67,8 @@ jobs:
         # Information only: shows which YouTube channel feeds and podcast feeds load.
         continue-on-error: true
         run: node scripts/check-media.mjs
+      - name: Check streaks, badges and Full coverage
+        run: node scripts/check-logic.mjs
       - name: Check live scores
         # Information only: shows ESPN's scoreboards still answer.
         continue-on-error: true

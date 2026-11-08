@@ -26,6 +26,8 @@ export type RootStackParamList = {
   Video: { video: Video };
   Media: { tab: MediaTab };
   QuickRead: undefined;
+  /** Weather, top stories, your teams and markets, to read or listen to. */
+  Briefing: undefined;
   /** Every outlet's take on one story. */
   Coverage: { story: Story };
   Onboarding: undefined;
@@ -86,6 +88,11 @@ export function openMedia(tab: MediaTab): void {
 /** Today's top stories one at a time, full screen. */
 export function openQuickRead(): void {
   if (navigationRef.isReady()) navigationRef.navigate('QuickRead');
+}
+
+/** The morning briefing. */
+export function openBriefing(): void {
+  if (navigationRef.isReady()) navigationRef.navigate('Briefing');
 }
 
 /** Switches to the Scores tab. */

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { GoogleButton } from '../components/AccountPrompts';
 import { StackHeader } from '../components/common';
 import type { AuthScreenProps } from '../navigation';
 import { useAccount } from '../state/AccountContext';
@@ -110,6 +111,17 @@ export function AuthScreen({ route, navigation }: AuthScreenProps) {
             <View style={[styles.notice, { backgroundColor: c.card, borderColor: c.border, borderWidth: StyleSheet.hairlineWidth }]}>
               <Ionicons name="mail-outline" size={18} color={c.accentText} />
               <Text style={[styles.noticeText, { color: c.text }]}>{notice}</Text>
+            </View>
+          ) : null}
+
+          {(mode === 'signin' || mode === 'signup') && account.google ? (
+            <View style={{ gap: 14, marginBottom: 4 }}>
+              <GoogleButton onDone={done} />
+              <View style={styles.or}>
+                <View style={[styles.orLine, { backgroundColor: c.border }]} />
+                <Text style={{ color: c.tertiary, fontSize: 12, fontWeight: '800', letterSpacing: 1 }}>OR WITH EMAIL</Text>
+                <View style={[styles.orLine, { backgroundColor: c.border }]} />
+              </View>
             </View>
           ) : null}
 
@@ -235,6 +247,8 @@ const styles = StyleSheet.create({
   logo: { width: 64, height: 64, borderRadius: 16, alignSelf: 'center', marginTop: 8 },
   title: { fontFamily: fonts.display, fontSize: 40, lineHeight: 42, textTransform: 'uppercase', textAlign: 'center', marginTop: 12 },
   meter: { flexDirection: 'row', gap: 6 },
+  or: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  orLine: { flex: 1, height: StyleSheet.hairlineWidth },
   meterSeg: { flex: 1, height: 4, borderRadius: 2 },
   sub: { fontSize: 15, lineHeight: 21, textAlign: 'center', marginBottom: 12 },
   notice: { flexDirection: 'row', gap: 10, padding: 14, borderRadius: 14, marginBottom: 6, alignItems: 'flex-start' },

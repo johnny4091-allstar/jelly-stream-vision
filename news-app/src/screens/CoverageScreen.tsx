@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -7,6 +7,7 @@ import { openArticle, type CoverageScreenProps } from '../navigation';
 import { findCoverage } from '../services/coverage';
 import { cachedStories } from '../services/news';
 import { getSource } from '../sources';
+import { useSettings } from '../state/SettingsContext';
 import { fonts, type, useTheme } from '../theme';
 import type { Story } from '../types';
 import { timeAgo } from '../utils';
@@ -22,6 +23,8 @@ export function CoverageScreen({ route }: CoverageScreenProps) {
   const c = useTheme();
   const insets = useSafeAreaInsets();
   const coverage = useCoverage(story);
+  const { recordActivity } = useSettings();
+  useEffect(() => recordActivity('coverage'), []); // eslint-disable-line react-hooks/exhaustive-deps
   const newest = coverage.stories[0];
 
   return (

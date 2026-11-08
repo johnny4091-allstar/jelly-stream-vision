@@ -50,6 +50,8 @@ export function SettingsScreen() {
     setNotifyTopStories,
     notifyUpdates,
     setNotifyUpdates,
+    briefingAlert,
+    setBriefingAlert,
     showWeather,
     setShowWeather,
     tempUnit,
@@ -241,6 +243,16 @@ export function SettingsScreen() {
             trackColor={{ true: c.accent, false: c.border }}
             thumbColor="#F5F5F7"
             accessibilityLabel="Notify me when a new version is available"
+          />
+        </View>
+        <View style={[styles.row, styles.divider, { borderTopColor: c.separator }]}>
+          <Text style={[styles.rowLabel, { color: c.text }]}>Morning briefing at 7 AM</Text>
+          <Switch
+            value={briefingAlert}
+            onValueChange={toggle(setBriefingAlert)}
+            trackColor={{ true: c.accent, false: c.border }}
+            thumbColor="#F5F5F7"
+            accessibilityLabel="Notify me when my morning briefing is ready"
           />
         </View>
         <Pressable onPress={showBackgroundGuide} style={[styles.row, styles.divider, { borderTopColor: c.separator }]} accessibilityRole="button">

@@ -13,6 +13,7 @@ type ReaderWebView = WebView<object>;
 import { openCoverage, type ArticleScreenProps } from '../navigation';
 import { openShareSheet } from '../components/ShareSheet';
 import { useSaved } from '../state/SavedContext';
+import { useSettings } from '../state/SettingsContext';
 import { getSource } from '../sources';
 import { type, useTheme } from '../theme';
 import { useCoverage } from './CoverageScreen';
@@ -35,6 +36,10 @@ export function ArticleScreen({ route, navigation }: ArticleScreenProps) {
   const saved = isSaved(story.id);
   const coverage = useCoverage(story);
   const [speaking, setSpeaking] = useState(false);
+
+  const { recordActivity } = useSettings();
+  // Counts toward the reading streak and badges.
+  useEffect(() => recordActivity('read'), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Stop reading aloud when the story closes.
   useEffect(() => () => void Speech.stop().catch(() => {}), []);

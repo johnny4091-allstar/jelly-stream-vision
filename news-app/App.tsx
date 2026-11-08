@@ -10,11 +10,12 @@ import { Platform, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { UpdatePrompt } from './src/components/UpdatePrompt';
-import { TAB_NAMES, navigationRef, openArticle, type RootStackParamList, type TabParamList } from './src/navigation';
+import { TAB_NAMES, navigationRef, openArticle, openBriefing, type RootStackParamList, type TabParamList } from './src/navigation';
 import { ArticleScreen } from './src/screens/ArticleScreen';
-import { setUpNotifications, type NotificationData } from './src/services/notifications';
+import { setUpNotifications, syncBriefingAlert, type NotificationData } from './src/services/notifications';
 import { BackgroundGuide, showBackgroundGuideOnce } from './src/components/BackgroundGuide';
 import { FloatingTabBar } from './src/components/FloatingTabBar';
+import { BriefingScreen } from './src/screens/BriefingScreen';
 import { CoverageScreen } from './src/screens/CoverageScreen';
 import { ExploreScreen } from './src/screens/ExploreScreen';
 import { ForYouScreen } from './src/screens/ForYouScreen';
@@ -38,7 +39,8 @@ import { ScoresScreen } from './src/screens/ScoresScreen';
 import { AccountScreen } from './src/screens/AccountScreen';
 import { AuthScreen } from './src/screens/AuthScreen';
 import { ONBOARDING_KEY, OnboardingScreen } from './src/screens/OnboardingScreen';
-import { AccountProvider } from './src/state/AccountContext';
+import { AccountProvider, useAccount } from './src/state/AccountContext';
+import { SavePrompt } from './src/components/AccountPrompts';
 import { useTheme } from './src/theme';
 
 const Tab = createBottomTabNavigator<TabParamList>();
@@ -79,12 +81,19 @@ function useNotificationTaps(navReady: boolean) {
     handled.current = id;
     const data = response.notification.request.content.data as NotificationData | undefined;
     if (data?.kind === 'story' && data.story?.link) openArticle(data.story);
+    else if (data?.kind === 'briefing') openBriefing();
   }, [navReady, response]);
 }
 
 function Root() {
   const c = useTheme();
-  const { ready } = useSettings();
+  const { ready, briefingAlert } = useSettings();
+  const account = useAccount();
+  // The 7 AM briefing alert: on for everyone without accounts, for signed-in people with them.
+  const briefingOn = briefingAlert && (!account.enabled || account.status === 'signedIn');
+  useEffect(() => {
+    if (ready && account.status !== 'loading') syncBriefingAlert(briefingOn).catch(() => {});
+  }, [ready, briefingOn, account.status]);
   const fontsReady = useAppFonts();
   const [navReady, setNavReady] = useState(false);
   // The mini player shows on the tabs and the media screen, and sits above the tab bar on the tabs.
@@ -147,6 +156,7 @@ function Root() {
         <Stack.Screen name="Video" component={VideoScreen} options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="Media" component={MediaScreen} options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="QuickRead" component={QuickReadScreen} options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="Briefing" component={BriefingScreen} options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="Coverage" component={CoverageScreen} options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ animation: 'fade', gestureEnabled: false }} />
         <Stack.Screen name="Auth" component={AuthScreen} options={{ animation: 'slide_from_bottom' }} />
@@ -154,6 +164,7 @@ function Root() {
       </Stack.Navigator>
       {routeName === 'Media' || TAB_NAMES.includes(routeName as keyof TabParamList) ? <MiniPlayer aboveTabs={routeName !== 'Media'} /> : null}
       <ShareSheet />
+      <SavePrompt />
       <UpdatePrompt />
       <BackgroundGuide />
     </NavigationContainer>

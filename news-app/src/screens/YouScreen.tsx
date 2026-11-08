@@ -15,7 +15,7 @@ import {
 } from '../components/common';
 import { StoryCard } from '../components/StoryCard';
 import { TopicSection } from '../components/TopicSection';
-import { openAccount, openAuth, openBriefing, openExplore, openRadar, openScores, openSettings, openWeather } from '../navigation';
+import { openAccount, openAuth, openBriefing, openRecap, openExplore, openRadar, openScores, openSettings, openWeather } from '../navigation';
 import { useAccount } from '../state/AccountContext';
 import { useSaved } from '../state/SavedContext';
 import { useSettings } from '../state/SettingsContext';
@@ -233,6 +233,7 @@ export function YouScreen() {
         <View style={{ height: 10 }} />
         <Group>
           <LinkRow icon="headset-outline" label="Your briefing" onPress={openBriefing} />
+          <LinkRow icon="moon-outline" label="Your day in news" onPress={openRecap} />
           <LinkRow icon="star-outline" label={`Topics you follow (${followed.length})`} onPress={openExplore} />
           <LinkRow icon="partly-sunny-outline" label="Weather" onPress={openWeather} />
           <LinkRow icon="rainy-outline" label="Rain radar" onPress={openRadar} />

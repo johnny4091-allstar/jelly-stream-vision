@@ -32,6 +32,39 @@ export function sameStory(a: Set<string>, b: Set<string>): boolean {
   return shared >= 3 || (shared >= 2 && smaller > 0 && shared / smaller >= 0.5);
 }
 
+/**
+ * The day's biggest stories: each covered by the most outlets, one per story (an outlet's other
+ * versions of it are left out), most outlets first, then the newest single-outlet stories.
+ */
+export function biggestStories(pool: Story[], since: number, count = 5): Coverage[] {
+  // Newest few hundred only: every story is compared with every other.
+  const seen = new Set<string>();
+  const recent = pool
+    .filter((s) => s.publishedAt >= since && !seen.has(s.link) && (seen.add(s.link), true))
+    .sort((a, b) => b.publishedAt - a.publishedAt)
+    .slice(0, 500);
+  const words = recent.map((s) => keywords(s.title));
+  const clusters = recent.map((story, i) => {
+    const bySource = new Map<string, Story>([[story.sourceId, story]]);
+    words.forEach((w, j) => {
+      const other = recent[j]!;
+      if (j !== i && !bySource.has(other.sourceId) && sameStory(words[i]!, w)) bySource.set(other.sourceId, other);
+    });
+    const stories = [...bySource.values()].sort((x, y) => y.publishedAt - x.publishedAt);
+    return { stories, outlets: stories.length };
+  });
+  clusters.sort((a, b) => b.outlets - a.outlets || (b.stories[0]?.publishedAt ?? 0) - (a.stories[0]?.publishedAt ?? 0));
+  const used = new Set<string>();
+  const picks: Coverage[] = [];
+  for (const c of clusters) {
+    if (c.stories.some((s) => used.has(s.link))) continue;
+    c.stories.forEach((s) => used.add(s.link));
+    picks.push(c);
+    if (picks.length === count) break;
+  }
+  return picks;
+}
+
 export interface Coverage {
   /** Every story about it, the given one included, newest first, at most one per outlet. */
   stories: Story[];

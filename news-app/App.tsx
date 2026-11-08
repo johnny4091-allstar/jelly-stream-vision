@@ -10,12 +10,14 @@ import { Platform, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { UpdatePrompt } from './src/components/UpdatePrompt';
-import { TAB_NAMES, navigationRef, openArticle, openBriefing, type RootStackParamList, type TabParamList } from './src/navigation';
+import { TAB_NAMES, navigationRef, openArticle, openBriefing, openRecap, openScores, type RootStackParamList, type TabParamList } from './src/navigation';
 import { ArticleScreen } from './src/screens/ArticleScreen';
-import { setUpNotifications, syncBriefingAlert, type NotificationData } from './src/services/notifications';
+import { setUpNotifications, syncBriefingAlert, syncRecapAlert, type NotificationData } from './src/services/notifications';
 import { BackgroundGuide, showBackgroundGuideOnce } from './src/components/BackgroundGuide';
 import { FloatingTabBar } from './src/components/FloatingTabBar';
 import { BriefingScreen } from './src/screens/BriefingScreen';
+import { PulseScreen } from './src/screens/PulseScreen';
+import { RecapScreen } from './src/screens/RecapScreen';
 import { CoverageScreen } from './src/screens/CoverageScreen';
 import { ExploreScreen } from './src/screens/ExploreScreen';
 import { ForYouScreen } from './src/screens/ForYouScreen';
@@ -41,6 +43,18 @@ import { AuthScreen } from './src/screens/AuthScreen';
 import { ONBOARDING_KEY, OnboardingScreen } from './src/screens/OnboardingScreen';
 import { AccountProvider, useAccount } from './src/state/AccountContext';
 import { SavePrompt } from './src/components/AccountPrompts';
+import { useGames } from './src/components/Scores';
+import { updateLiveScore } from './src/services/liveScore';
+
+/** Keeps the lock-screen score up to date while the app is open (useGames polls every 30 s when live). */
+function LiveScoreNotifier() {
+  const { favoriteTeams, liveScoreAlert } = useSettings();
+  const { games } = useGames();
+  useEffect(() => {
+    if (games && favoriteTeams.length) updateLiveScore(games, favoriteTeams, liveScoreAlert).catch(() => {});
+  }, [games, favoriteTeams, liveScoreAlert]);
+  return null;
+}
 import { useTheme } from './src/theme';
 
 const Tab = createBottomTabNavigator<TabParamList>();
@@ -82,12 +96,17 @@ function useNotificationTaps(navReady: boolean) {
     const data = response.notification.request.content.data as NotificationData | undefined;
     if (data?.kind === 'story' && data.story?.link) openArticle(data.story);
     else if (data?.kind === 'briefing') openBriefing();
+    else if (data?.kind === 'recap') openRecap();
+    else if (data?.kind === 'score') openScores();
   }, [navReady, response]);
 }
 
 function Root() {
   const c = useTheme();
-  const { ready, briefingAlert } = useSettings();
+  const { ready, briefingAlert, recapAlert } = useSettings();
+  useEffect(() => {
+    if (ready) syncRecapAlert(recapAlert).catch(() => {});
+  }, [ready, recapAlert]);
   const account = useAccount();
   // The 7 AM briefing alert: on for everyone without accounts, for signed-in people with them.
   const briefingOn = briefingAlert && (!account.enabled || account.status === 'signedIn');
@@ -156,6 +175,8 @@ function Root() {
         <Stack.Screen name="Video" component={VideoScreen} options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="Media" component={MediaScreen} options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="QuickRead" component={QuickReadScreen} options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="Pulse" component={PulseScreen} options={{ animation: 'fade' }} />
+        <Stack.Screen name="Recap" component={RecapScreen} options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="Briefing" component={BriefingScreen} options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="Coverage" component={CoverageScreen} options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="Onboarding" component={OnboardingScreen} options={{ animation: 'fade', gestureEnabled: false }} />
@@ -165,6 +186,7 @@ function Root() {
       {routeName === 'Media' || TAB_NAMES.includes(routeName as keyof TabParamList) ? <MiniPlayer aboveTabs={routeName !== 'Media'} /> : null}
       <ShareSheet />
       <SavePrompt />
+      <LiveScoreNotifier />
       <UpdatePrompt />
       <BackgroundGuide />
     </NavigationContainer>

@@ -67,7 +67,7 @@ jobs:
         # Information only: shows which YouTube channel feeds and podcast feeds load.
         continue-on-error: true
         run: node scripts/check-media.mjs
-      - name: Check streaks, badges and Full coverage
+      - name: Check streaks, badges, Full coverage and Pulse
         run: node scripts/check-logic.mjs
       - name: Check live scores
         # Information only: shows ESPN's scoreboards still answer.

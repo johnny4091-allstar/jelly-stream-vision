@@ -34,6 +34,10 @@ export interface StoredSettings {
   activity: Activity;
   /** The 7 AM "your briefing is ready" notification. */
   briefingAlert: boolean;
+  /** The 8 PM "your day in news" notification. */
+  recapAlert: boolean;
+  /** A silent notification with your team's live score, kept up to date (shows on the lock screen). */
+  liveScoreAlert: boolean;
 }
 
 interface SettingsValue {
@@ -68,10 +72,14 @@ interface SettingsValue {
   recordActivity: (event: ActivityEvent) => void;
   briefingAlert: boolean;
   setBriefingAlert: (on: boolean) => void;
+  recapAlert: boolean;
+  setRecapAlert: (on: boolean) => void;
+  liveScoreAlert: boolean;
+  setLiveScoreAlert: (on: boolean) => void;
 }
 
 export const SETTINGS_KEY = 'settings:v1';
-export const DEFAULT_SETTINGS: StoredSettings = { disabled: [], themeMode: 'dark', notifyTopStories: true, notifyUpdates: true, followed: [], showWeather: true, tempUnit: null, showMarkets: true, showMedia: true, favoriteTeams: [], activity: EMPTY_ACTIVITY, briefingAlert: true };
+export const DEFAULT_SETTINGS: StoredSettings = { disabled: [], themeMode: 'dark', notifyTopStories: true, notifyUpdates: true, followed: [], showWeather: true, tempUnit: null, showMarkets: true, showMedia: true, favoriteTeams: [], activity: EMPTY_ACTIVITY, briefingAlert: true, recapAlert: true, liveScoreAlert: true };
 const KEY = SETTINGS_KEY;
 const DEFAULTS = DEFAULT_SETTINGS;
 
@@ -143,6 +151,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       recordActivity: (event) => update((s) => ({ ...s, activity: record(s.activity, event) })),
       briefingAlert: settings.briefingAlert,
       setBriefingAlert: (briefingAlert) => update((s) => ({ ...s, briefingAlert })),
+      recapAlert: settings.recapAlert,
+      setRecapAlert: (recapAlert) => update((s) => ({ ...s, recapAlert })),
+      liveScoreAlert: settings.liveScoreAlert,
+      setLiveScoreAlert: (liveScoreAlert) => update((s) => ({ ...s, liveScoreAlert })),
       favoriteTeams: settings.favoriteTeams,
       toggleFavoriteTeam: (abbr) =>
         update((s) => ({

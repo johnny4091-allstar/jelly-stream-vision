@@ -81,6 +81,22 @@ tap() {
   adb shell input tap $(( ($1 + $3) / 2 )) $(( ($2 + $4) / 2 ))
 }
 
+# Scrolls the screen up by about half and reads it again.
+scroll_down() {
+  adb shell input swipe 540 1500 540 700 400
+  sleep 2
+  ui_texts >/dev/null
+}
+
+# Taps the element, scrolling down up to three times to find it.
+tap_scrolling() {
+  for _ in 1 2 3 4; do
+    tap "$1" && return 0
+    scroll_down
+  done
+  return 1
+}
+
 check_alive() {
   local label="$1"
   adb logcat -d > "logcat-$label.txt"
@@ -158,7 +174,8 @@ weather_flow() {
     echo "::warning::No Show weather button on Today."
   fi
   check_alive weather-card || { kill $feeder 2>/dev/null; return 1; }
-  if ! tap "Weather"; then
+  # The temperature opens the forecast; the middle of the card is the radar.
+  if ! { tap '[-0-9]+°"' || tap "Weather"; }; then
     kill $feeder 2>/dev/null
     echo "::warning::No weather card on Today (location or forecast didn't load); skipped the weather screens."
     return 0
@@ -184,7 +201,7 @@ dashboard_flow() {
   sleep 30
   check_alive dashboard || return 1
   tap "Later" && sleep 2 && ui_texts >/dev/null
-  if tap "Quick read"; then
+  if tap_scrolling "Quick read"; then
     sleep 8
     check_alive quick-read || return 1
     tap "Listen" && sleep 5 && { check_alive quick-read-listen || return 1; }
@@ -211,11 +228,21 @@ tabs_flow() {
     if tap "$t\""; then
       sleep 8
       check_alive "tab-$t" || return 1
+      if [ "$t" = Explore ]; then
+        if tap "Pulse"; then
+          sleep 8
+          check_alive pulse || return 1
+          adb shell input keyevent KEYCODE_BACK
+          sleep 2
+        else
+          echo "::warning::No Pulse card on Explore."
+        fi
+      fi
     else
       echo "::warning::No $t tab."
     fi
   done
-  if tap "Your briefing"; then
+  if tap_scrolling "Your (briefing|day in news)"; then
     sleep 8
     check_alive briefing || return 1
     adb shell input keyevent KEYCODE_BACK
@@ -224,6 +251,8 @@ tabs_flow() {
   else
     echo "::warning::No briefing tile on Today."
   fi
+  # Back to the top of Today for the top story.
+  tap 'Today"' && sleep 3 && ui_texts >/dev/null
   if tap "Top story"; then
     sleep 10
     check_alive story || return 1

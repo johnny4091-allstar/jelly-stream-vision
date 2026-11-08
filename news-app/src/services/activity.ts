@@ -13,6 +13,8 @@ export interface Activity {
   earlyBird: boolean;
   /** Opened a story after 11 PM. */
   nightOwl: boolean;
+  /** Stories opened per local day (last 60 days). */
+  byDay?: Record<string, number>;
 }
 
 export const EMPTY_ACTIVITY: Activity = { days: [], read: 0, coverage: 0, briefings: 0, earlyBird: false, nightOwl: false };
@@ -39,7 +41,13 @@ export function record(a: Activity, event: ActivityEvent, now = new Date()): Act
   if (event === 'coverage') return { ...a, days, coverage: a.coverage + 1 };
   if (event === 'briefing') return { ...a, days, briefings: a.briefings + 1 };
   const h = now.getHours();
-  return { ...a, days, read: a.read + 1, earlyBird: a.earlyBird || (h >= 4 && h < 7), nightOwl: a.nightOwl || h >= 23 || h < 3 };
+  const key = dayKey(now);
+  const byDay = Object.fromEntries(
+    Object.entries({ ...(a.byDay ?? {}), [key]: (a.byDay?.[key] ?? 0) + 1 })
+      .sort(([x], [y]) => (x < y ? -1 : 1))
+      .slice(-60),
+  );
+  return { ...a, days, byDay, read: a.read + 1, earlyBird: a.earlyBird || (h >= 4 && h < 7), nightOwl: a.nightOwl || h >= 23 || h < 3 };
 }
 
 /**
@@ -83,6 +91,11 @@ export function lastWeek(days: string[], now = new Date()): { key: string; lette
   });
 }
 
+/** Stories opened on the given day. */
+export function readOn(a: Activity, date = new Date()): number {
+  return a.byDay?.[dayKey(date)] ?? 0;
+}
+
 /** Two phones' activity combined (account sync): every day from both, the higher counts. */
 export function mergeActivity(a: Activity, b: Partial<Activity> | undefined): Activity {
   if (!b) return a;
@@ -93,6 +106,12 @@ export function mergeActivity(a: Activity, b: Partial<Activity> | undefined): Ac
     briefings: Math.max(a.briefings, b.briefings ?? 0),
     earlyBird: a.earlyBird || !!b.earlyBird,
     nightOwl: a.nightOwl || !!b.nightOwl,
+    byDay: Object.fromEntries(
+      [...new Set([...Object.keys(a.byDay ?? {}), ...Object.keys(b.byDay ?? {})])]
+        .sort()
+        .slice(-60)
+        .map((k) => [k, Math.max(a.byDay?.[k] ?? 0, b.byDay?.[k] ?? 0)]),
+    ),
   };
 }
 

@@ -8,7 +8,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppHeader, EmptyState, ScrollTopButton, SectionHeader, useScrollTopVisibility, useTabBarSpace } from '../components/common';
 import { StoryCard } from '../components/StoryCard';
 import { TopicSection } from '../components/TopicSection';
-import { openTopic } from '../navigation';
+import { Globe } from '../components/Globe';
+import { openPulse, openTopic } from '../navigation';
+import { usePulse } from './PulseScreen';
 import { cachedStories } from '../services/news';
 import { TOPICS } from '../sources';
 import { useSettings } from '../state/SettingsContext';
@@ -29,7 +31,36 @@ function search(query: string) {
     .slice(0, MAX_RESULTS);
 }
 
-/** Search, colour-coded topic tiles, then every topic as a section. */
+/** The live globe teaser at the top of Explore. */
+function PulseCard() {
+  const c = useTheme();
+  const { spots, total } = usePulse();
+  return (
+    <Pressable
+      onPress={openPulse}
+      accessibilityRole="button"
+      accessibilityLabel={`Pulse: ${total} stories from ${spots.length} places`}
+      style={({ pressed }) => [styles.pulse, { borderColor: c.border, opacity: pressed ? 0.9 : 1 }]}
+    >
+      <View style={styles.pulseGlobe}>
+        <Globe size={210} spots={spots} labels={1} />
+      </View>
+      <View style={styles.pulseText}>
+        <View style={styles.liveTag}>
+          <View style={[styles.liveDot, { backgroundColor: c.accent }]} />
+          <Text style={styles.liveTagText}>Pulse</Text>
+        </View>
+        <Text style={styles.pulseTitle}>The world{'\n'}right now</Text>
+        <Text style={styles.pulseSub}>
+          {total ? `${total} stories · ${spots.length} places` : 'Finding the news…'}
+        </Text>
+        {spots[0] ? <Text style={[styles.pulseSub, { color: c.accentText, fontWeight: '800' }]}>Busiest: {spots[0].place.name}</Text> : null}
+      </View>
+    </Pressable>
+  );
+}
+
+/** Search, the Pulse globe, colour-coded topic tiles, then every topic as a section. */
 export function ExploreScreen() {
   const c = useTheme();
   const insets = useSafeAreaInsets();
@@ -82,6 +113,8 @@ export function ExploreScreen() {
             </Pressable>
           ) : null}
         </View>
+
+        {searching ? null : <PulseCard />}
 
         {searching ? (
           <>
@@ -142,6 +175,14 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   searchInput: { flex: 1, paddingVertical: 13, fontSize: 16 },
+  pulse: { marginHorizontal: 14, marginTop: 14, height: 190, borderRadius: 24, borderWidth: StyleSheet.hairlineWidth, backgroundColor: '#0A0F1C', overflow: 'hidden' },
+  pulseGlobe: { position: 'absolute', right: -40, top: -10 },
+  pulseText: { padding: 16, gap: 6, maxWidth: '62%' },
+  liveTag: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', backgroundColor: '#1E1E23', borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4 },
+  liveDot: { width: 7, height: 7, borderRadius: 4 },
+  liveTagText: { color: '#F5F5F7', fontSize: 11, fontWeight: '900', letterSpacing: 1, textTransform: 'uppercase' },
+  pulseTitle: { color: '#F5F5F7', fontFamily: fonts.heading, fontSize: 30, lineHeight: 30, textTransform: 'uppercase' },
+  pulseSub: { color: '#9AA3B5', fontSize: 13 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: 14 },
   topic: {
     width: '48%',

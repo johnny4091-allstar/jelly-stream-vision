@@ -7,7 +7,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View, type StyleProp, t
 
 import { LIVE_CHANNELS, resolveLive, type LiveChannel } from '../live';
 import { PODCASTS, fetchPodcastEpisodes, formatDuration, type Episode } from '../media';
-import { openArticle, openAuth, openBriefing, openCoverage, openLiveTv, openQuickRead, openScores, openTopic, openWeather } from '../navigation';
+import { openArticle, openAuth, openBriefing, openRecap, openCoverage, openLiveTv, openQuickRead, openScores, openTopic, openWeather } from '../navigation';
 import { formatChange, formatPrice } from '../services/markets';
 import { useStoryImage } from '../services/previewImage';
 import { condition, conditionIcon, formatTemp } from '../services/weather';
@@ -330,14 +330,16 @@ function BriefingTile() {
   const c = useTheme();
   const { activity } = useSettings();
   const days = streak(activity.days);
+  // Evenings swap the morning briefing for the day's recap.
+  const evening = new Date().getHours() >= 18;
   return (
-    <Tile onPress={openBriefing} label="Your briefing" style={styles.briefing}>
+    <Tile onPress={evening ? openRecap : openBriefing} label={evening ? 'Your day in news' : 'Your briefing'} style={styles.briefing}>
       <View style={[styles.briefPlay, { backgroundColor: c.accent }]}>
-        <Ionicons name="play" size={22} color={c.onAccent} />
+        <Ionicons name={evening ? 'moon' : 'play'} size={22} color={c.onAccent} />
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={[type.eyebrow, { color: c.accentText }]}>Your briefing</Text>
-        <Text style={[styles.briefTitle, { color: c.text }]}>Listen · about 5 min</Text>
+        <Text style={[type.eyebrow, { color: c.accentText }]}>{evening ? 'Your day in news' : 'Your briefing'}</Text>
+        <Text style={[styles.briefTitle, { color: c.text }]}>{evening ? 'Tonight’s recap' : 'Listen · about 5 min'}</Text>
       </View>
       {days > 1 ? (
         <View style={[styles.streakPill, { backgroundColor: c.elevated, borderColor: c.border }]}>

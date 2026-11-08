@@ -28,6 +28,10 @@ export type RootStackParamList = {
   QuickRead: undefined;
   /** Weather, top stories, your teams and markets, to read or listen to. */
   Briefing: undefined;
+  /** Where in the world the news is, on a globe. */
+  Pulse: undefined;
+  /** The evening "your day in news" recap. */
+  Recap: undefined;
   /** Every outlet's take on one story. */
   Coverage: { story: Story };
   Onboarding: undefined;
@@ -88,6 +92,16 @@ export function openMedia(tab: MediaTab): void {
 /** Today's top stories one at a time, full screen. */
 export function openQuickRead(): void {
   if (navigationRef.isReady()) navigationRef.navigate('QuickRead');
+}
+
+/** The globe of where the news is. */
+export function openPulse(): void {
+  if (navigationRef.isReady()) navigationRef.navigate('Pulse');
+}
+
+/** Tonight's recap of the day. */
+export function openRecap(): void {
+  if (navigationRef.isReady()) navigationRef.navigate('Recap');
 }
 
 /** The morning briefing. */

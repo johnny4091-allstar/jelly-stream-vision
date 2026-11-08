@@ -10,7 +10,9 @@ import { SOURCE_IDS } from '../sources';
 import { DEFAULT_SETTINGS, SETTINGS_KEY, type StoredSettings } from '../state/SettingsContext';
 import type { Story } from '../types';
 import { checkForUpdate, updatesEnabled } from './appUpdate';
+import { updateLiveScore } from './liveScore';
 import { loadTopic } from './news';
+import { fetchGames } from './scores';
 
 // Local notifications only: a background task fetches the Top feeds on the phone and posts a
 // notification for a new story or a new app version. No push server is involved.
@@ -22,6 +24,7 @@ const OLD_STORIES_CHANNEL = 'top-stories';
 const UPDATES_CHANNEL = 'app-updates';
 const BRIEFING_CHANNEL = 'morning-briefing';
 const BRIEFING_ID = 'daily-briefing';
+const RECAP_ID = 'daily-recap';
 const LAST_SEEN_KEY = 'notify:lastSeen:v1';
 const UPDATE_NOTIFIED_KEY = 'notify:updateNotified:v1';
 const REGISTERED_KEY = 'notify:registeredFor:v1';
@@ -30,7 +33,7 @@ const INTERVAL_MINUTES = 15;
 // Stories older than this when first seen are not "new" (e.g. after the phone was off all day).
 const MAX_AGE_MS = 6 * 60 * 60 * 1000;
 
-export type NotificationData = { kind: 'story'; story: Story } | { kind: 'update' } | { kind: 'briefing' };
+export type NotificationData = { kind: 'story'; story: Story } | { kind: 'update' } | { kind: 'briefing' } | { kind: 'recap' } | { kind: 'score' };
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -106,6 +109,9 @@ export async function runCheck(): Promise<{ stories: number; update: boolean }> 
   const [stories, update] = await Promise.allSettled([
     settings.notifyTopStories ? notifyNewStories(settings) : Promise.resolve(0),
     settings.notifyUpdates ? notifyAppUpdate() : Promise.resolve(false),
+    settings.liveScoreAlert && settings.favoriteTeams.length
+      ? fetchGames(settings.favoriteTeams).then((g) => updateLiveScore(g, settings.favoriteTeams, true))
+      : Promise.resolve(),
   ]);
   return {
     stories: stories.status === 'fulfilled' ? stories.value : 0,
@@ -131,7 +137,7 @@ async function ensureChannels(): Promise<void> {
     importance: Notifications.AndroidImportance.HIGH,
   });
   await Notifications.setNotificationChannelAsync(BRIEFING_CHANNEL, {
-    name: 'Morning briefing',
+    name: 'Briefing and recap',
     importance: Notifications.AndroidImportance.DEFAULT,
   });
   await Notifications.setNotificationChannelAsync(UPDATES_CHANNEL, {
@@ -165,31 +171,36 @@ export async function setUpNotifications({ ask = true }: { ask?: boolean } = {})
   return true;
 }
 
-/**
- * Schedules (or cancels) the daily 7 AM "your briefing is ready" notification. Never asks for
- * permission: it only runs once notifications are allowed.
- */
-export async function syncBriefingAlert(on: boolean): Promise<void> {
+async function syncDaily(id: string, on: boolean, hour: number, title: string, body: string, data: NotificationData, channelId: string) {
   if (Platform.OS === 'web') return;
-  await Notifications.cancelScheduledNotificationAsync(BRIEFING_ID).catch(() => {});
+  await Notifications.cancelScheduledNotificationAsync(id).catch(() => {});
   if (!on) return;
   const { status } = await Notifications.getPermissionsAsync();
   if (status !== 'granted') return;
   await ensureChannels();
   await Notifications.scheduleNotificationAsync({
-    identifier: BRIEFING_ID,
-    content: {
-      title: 'Your briefing is ready',
-      body: 'Weather, the top stories and your teams. Listen in about 5 minutes.',
-      data: { kind: 'briefing' } satisfies NotificationData,
-    },
+    identifier: id,
+    content: { title, body, data },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DAILY,
-      hour: 7,
+      hour,
       minute: 0,
-      ...(Platform.OS === 'android' ? { channelId: BRIEFING_CHANNEL } : {}),
+      ...(Platform.OS === 'android' ? { channelId } : {}),
     },
   });
+}
+
+/**
+ * Schedules (or cancels) the daily 7 AM "your briefing is ready" notification. Never asks for
+ * permission: it only runs once notifications are allowed.
+ */
+export async function syncBriefingAlert(on: boolean): Promise<void> {
+  await syncDaily(BRIEFING_ID, on, 7, 'Your briefing is ready', 'Weather, the top stories and your teams. Listen in about 5 minutes.', { kind: 'briefing' }, BRIEFING_CHANNEL);
+}
+
+/** The daily 8 PM "your day in news" notification. */
+export async function syncRecapAlert(on: boolean): Promise<void> {
+  await syncDaily(RECAP_ID, on, 20, 'Your day in news', 'The biggest stories, your teams and tomorrow’s weather, in 2 minutes.', { kind: 'recap' }, BRIEFING_CHANNEL);
 }
 
 /** Shows a sample notification so the user can confirm notifications reach the phone. */

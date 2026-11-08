@@ -52,6 +52,10 @@ export function SettingsScreen() {
     setNotifyUpdates,
     briefingAlert,
     setBriefingAlert,
+    recapAlert,
+    setRecapAlert,
+    liveScoreAlert,
+    setLiveScoreAlert,
     showWeather,
     setShowWeather,
     tempUnit,
@@ -253,6 +257,26 @@ export function SettingsScreen() {
             trackColor={{ true: c.accent, false: c.border }}
             thumbColor="#F5F5F7"
             accessibilityLabel="Notify me when my morning briefing is ready"
+          />
+        </View>
+        <View style={[styles.row, styles.divider, { borderTopColor: c.separator }]}>
+          <Text style={[styles.rowLabel, { color: c.text }]}>Evening recap at 8 PM</Text>
+          <Switch
+            value={recapAlert}
+            onValueChange={toggle(setRecapAlert)}
+            trackColor={{ true: c.accent, false: c.border }}
+            thumbColor="#F5F5F7"
+            accessibilityLabel="Notify me when my evening recap is ready"
+          />
+        </View>
+        <View style={[styles.row, styles.divider, { borderTopColor: c.separator }]}>
+          <Text style={[styles.rowLabel, { color: c.text }]}>Your team's live score on the lock screen</Text>
+          <Switch
+            value={liveScoreAlert}
+            onValueChange={toggle(setLiveScoreAlert)}
+            trackColor={{ true: c.accent, false: c.border }}
+            thumbColor="#F5F5F7"
+            accessibilityLabel="Show my team's live score on the lock screen"
           />
         </View>
         <Pressable onPress={showBackgroundGuide} style={[styles.row, styles.divider, { borderTopColor: c.separator }]} accessibilityRole="button">

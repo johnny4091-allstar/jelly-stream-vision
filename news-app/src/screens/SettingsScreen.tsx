@@ -15,6 +15,18 @@ import type { TempUnit } from '../services/weather';
 import { SOURCES } from '../sources';
 import { useSettings, type ThemeMode } from '../state/SettingsContext';
 import { type, useTheme } from '../theme';
+import { addWidget } from '../widgets';
+
+const WIDGETS = [
+  { name: 'TopStory', label: 'Top story' },
+  { name: 'Weather', label: 'Weather' },
+  { name: 'YourTeam', label: 'Your team’s score' },
+] as const;
+
+async function pinWidget(name: (typeof WIDGETS)[number]['name']) {
+  if (!(await addWidget(name)))
+    Alert.alert('Add it from your home screen', 'Touch and hold an empty spot on your home screen, tap Widgets, then find News Hammer.');
+}
 
 const UNITS: { id: TempUnit; label: string }[] = [
   { id: 'f', label: '°F' },
@@ -288,6 +300,19 @@ export function SettingsScreen() {
         <Pressable onPress={testNotification} style={[styles.row, styles.divider, { borderTopColor: c.separator }]} accessibilityRole="button">
           <Text style={[styles.rowLabel, { color: c.accentText }]}>Send a test notification</Text>
         </Pressable>
+      </Section>
+
+      <Section title="Home screen widgets" footer="Top story, weather and your team's score on your home screen. They refresh about every 30 minutes, and whenever you use the app.">
+        {WIDGETS.map((w, i) => (
+          <Pressable
+            key={w.name}
+            onPress={() => pinWidget(w.name)}
+            style={[styles.row, i > 0 && styles.divider, i > 0 && { borderTopColor: c.separator }]}
+            accessibilityRole="button"
+          >
+            <Text style={[styles.rowLabel, { color: c.accentText }]}>Add {w.label} widget</Text>
+          </Pressable>
+        ))}
       </Section>
 
       <Section title="Setup">

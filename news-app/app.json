@@ -59,6 +59,56 @@
             "enableShrinkResourcesInReleaseBuilds": false
           }
         }
+      ],
+      [
+        "react-native-android-widget",
+        {
+          "fonts": [
+            "./assets/fonts/BarlowCondensed_800ExtraBold.ttf",
+            "./assets/fonts/BarlowCondensed_900Black.ttf"
+          ],
+          "widgets": [
+            {
+              "name": "TopStory",
+              "label": "Top story",
+              "description": "Today's biggest story and how many outlets have it",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "previewImage": "./assets/widgets/top.png",
+              "updatePeriodMillis": 1800000,
+              "widgetCategory": "home_screen|keyguard"
+            },
+            {
+              "name": "Weather",
+              "label": "Weather",
+              "description": "The temperature and rain where you are",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "previewImage": "./assets/widgets/weather.png",
+              "updatePeriodMillis": 1800000,
+              "widgetCategory": "home_screen|keyguard"
+            },
+            {
+              "name": "YourTeam",
+              "label": "Your team",
+              "description": "Your starred team's live score",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "previewImage": "./assets/widgets/team.png",
+              "updatePeriodMillis": 1800000,
+              "widgetCategory": "home_screen|keyguard"
+            }
+          ]
+        }
       ]
     ],
     "scheme": "newshammer"

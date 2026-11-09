@@ -83,7 +83,12 @@ tap() {
 
 # Scrolls the screen up by about half and reads it again.
 scroll_down() {
-  adb shell input swipe 540 1500 540 700 400
+  # Swipe from three-quarters to a quarter of the way down the real screen.
+  local size w h
+  size="$(adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -n 1)"
+  w="${size%x*}"
+  h="${size#*x}"
+  adb shell input swipe $((w / 2)) $((h * 3 / 4)) $((w / 2)) $((h / 4)) 500
   sleep 2
   ui_texts >/dev/null
 }

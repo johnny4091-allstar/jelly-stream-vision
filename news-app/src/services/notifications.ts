@@ -13,6 +13,7 @@ import { checkForUpdate, updatesEnabled } from './appUpdate';
 import { updateLiveScore } from './liveScore';
 import { loadTopic } from './news';
 import { fetchGames } from './scores';
+import { updateWidgets } from '../widgets';
 
 // Local notifications only: a background task fetches the Top feeds on the phone and posts a
 // notification for a new story or a new app version. No push server is involved.
@@ -103,6 +104,8 @@ async function notifyAppUpdate(): Promise<boolean> {
 
 /** One background check: new stories and new app versions, each if turned on in Settings. */
 export async function runCheck(): Promise<{ stories: number; update: boolean }> {
+  // Home screen widgets get the latest news, weather and score with each check.
+  updateWidgets().catch(() => {});
   const settings = await readSettings();
   const { status } = await Notifications.getPermissionsAsync();
   if (status !== 'granted') return { stories: 0, update: false };

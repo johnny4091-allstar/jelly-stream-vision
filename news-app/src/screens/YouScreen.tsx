@@ -237,6 +237,7 @@ export function YouScreen() {
           <LinkRow icon="star-outline" label={`Topics you follow (${followed.length})`} onPress={openExplore} />
           <LinkRow icon="partly-sunny-outline" label="Weather" onPress={openWeather} />
           <LinkRow icon="rainy-outline" label="Rain radar" onPress={openRadar} />
+          <LinkRow icon="apps-outline" label="Home screen widgets" onPress={openSettings} />
           <LinkRow icon="settings-outline" label="Settings" onPress={openSettings} last />
         </Group>
 

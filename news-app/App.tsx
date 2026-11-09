@@ -6,7 +6,7 @@ import { useLastNotificationResponse } from 'expo-notifications';
 import { useFonts } from 'expo-font';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Platform, View } from 'react-native';
+import { AppState, Platform, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { UpdatePrompt } from './src/components/UpdatePrompt';
@@ -45,6 +45,7 @@ import { AccountProvider, useAccount } from './src/state/AccountContext';
 import { SavePrompt } from './src/components/AccountPrompts';
 import { useGames } from './src/components/Scores';
 import { updateLiveScore } from './src/services/liveScore';
+import { updateWidgets } from './src/widgets';
 
 /** Keeps the lock-screen score up to date while the app is open (useGames polls every 30 s when live). */
 function LiveScoreNotifier() {
@@ -107,6 +108,16 @@ function Root() {
   useEffect(() => {
     if (ready) syncRecapAlert(recapAlert).catch(() => {});
   }, [ready, recapAlert]);
+  // Home screen widgets: refresh once the app's data has loaded, and whenever it's put away.
+  useEffect(() => {
+    if (!ready) return;
+    const timer = setTimeout(() => updateWidgets().catch(() => {}), 10_000);
+    const sub = AppState.addEventListener('change', (s) => s === 'background' && updateWidgets().catch(() => {}));
+    return () => {
+      clearTimeout(timer);
+      sub.remove();
+    };
+  }, [ready]);
   const account = useAccount();
   // The 7 AM briefing alert: on for everyone without accounts, for signed-in people with them.
   const briefingOn = briefingAlert && (!account.enabled || account.status === 'signedIn');

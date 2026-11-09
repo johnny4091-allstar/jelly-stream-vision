@@ -9,6 +9,8 @@ on:
   push:
     paths:
       - 'news-app/**'
+      # The website is deployed to Netlify separately; changing it doesn't need a new app build.
+      - '!news-app/site/**'
       - '.github/workflows/news-app.yml'
   workflow_dispatch:
 

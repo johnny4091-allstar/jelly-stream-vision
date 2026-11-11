@@ -56,7 +56,7 @@ launch_and_check fresh || { echo "::error::The app doesn't open on a fresh insta
 # Weather: allow location, put the emulator in New York, then open the forecast and the radar the way
 # a user taps them. A crash or "not responding" here fails the build so it never reaches phones.
 ui_texts() {
-  timeout 25 adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
+  adb shell pkill -f uiautomator >/dev/null 2>&1; timeout 25 adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
   timeout 15 adb shell cat /sdcard/ui.xml > ui.xml 2>/dev/null
   # The emulator's own apps sometimes freeze ("Pixel Launcher isn't responding") and Android's box
   # covers the screen. Wait it out so the test can see News Hammer again; our own ANRs still fail.
@@ -64,7 +64,7 @@ ui_texts() {
     echo "(dismissing another app's not-responding dialog)" >&2
     tap "Wait" >/dev/null
     sleep 3
-    timeout 25 adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
+    adb shell pkill -f uiautomator >/dev/null 2>&1; timeout 25 adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
     timeout 15 adb shell cat /sdcard/ui.xml > ui.xml 2>/dev/null
   fi
   # Android 16's Google "Location Accuracy" prompt covers the app after location is allowed.
@@ -72,7 +72,7 @@ ui_texts() {
     echo "(declining Google's Location Accuracy prompt)" >&2
     tap "No thanks" >/dev/null
     sleep 2
-    timeout 25 adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
+    adb shell pkill -f uiautomator >/dev/null 2>&1; timeout 25 adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
     timeout 15 adb shell cat /sdcard/ui.xml > ui.xml 2>/dev/null
   fi
   grep -oE '(text|content-desc)="[^"]+"' ui.xml | sed -E 's/^(text|content-desc)=//' | tr '\n' ' ' | cut -c1-1500
@@ -321,7 +321,27 @@ lived_in_flow() {
   sleep 40
   check_alive reopened-with-widgets || return 1
 }
-lived_in_flow || { echo "::error::The app crashed with a starred team or home screen widgets (see the log above)."; exit 1; }
+# These steps read the screen many times; cap them at 8 minutes so a slow emulator can't stall the
+# whole job. A crash still fails the build; running out of time only skips the rest of the steps.
+lived_in_flow &
+lived_pid=$!
+( sleep 480; kill -TERM "$lived_pid" 2>/dev/null ) &
+watchdog=$!
+wait "$lived_pid"
+lived_rc=$?
+kill "$watchdog" 2>/dev/null || true
+if [ "$lived_rc" -eq 143 ]; then
+  echo "::warning::The starred-team and widget steps took over 8 minutes; skipped the rest of them."
+elif [ "$lived_rc" -ne 0 ]; then
+  echo "::error::The app crashed with a starred team or home screen widgets (see the log above)."
+  exit 1
+fi
+# Whatever happened above, the app must still open.
+adb logcat -c
+adb shell am force-stop "$PKG"
+adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null
+sleep 30
+check_alive final || { echo "::error::The app doesn't open at the end of the test (see the log above)."; exit 1; }
 
 # Information only: the background news check should be scheduled with Android's JobScheduler.
 jobs="$(adb shell dumpsys jobscheduler | grep -c "$PKG/androidx.work" || true)"

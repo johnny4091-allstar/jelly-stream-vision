@@ -104,7 +104,7 @@ jobs:
   smoke-test:
     needs: apk
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 45
     # Android 14, and Android 16 like current Samsung Galaxy phones (an app can crash on only one).
     strategy:
       fail-fast: false

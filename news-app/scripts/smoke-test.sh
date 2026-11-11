@@ -67,6 +67,14 @@ ui_texts() {
     adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
     adb shell cat /sdcard/ui.xml > ui.xml 2>/dev/null
   fi
+  # Android 16's Google "Location Accuracy" prompt covers the app after location is allowed.
+  if grep -q "Location Accuracy" ui.xml && grep -q 'text="No thanks"' ui.xml; then
+    echo "(declining Google's Location Accuracy prompt)" >&2
+    tap "No thanks" >/dev/null
+    sleep 2
+    adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
+    adb shell cat /sdcard/ui.xml > ui.xml 2>/dev/null
+  fi
   grep -oE '(text|content-desc)="[^"]+"' ui.xml | sed -E 's/^(text|content-desc)=//' | tr '\n' ' ' | cut -c1-1500
   echo
 }

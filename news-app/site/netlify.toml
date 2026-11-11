@@ -1,6 +1,6 @@
-# The News Hammer website (a static page). Deployed from this folder.
+# The News Hammer website: a static page in public/ plus the crash-report function.
 [build]
-  publish = "."
+  publish = "public"
 
 [[headers]]
   for = "/*"

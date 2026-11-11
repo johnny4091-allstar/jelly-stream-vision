@@ -57,6 +57,7 @@ function LiveScoreNotifier() {
   return null;
 }
 import { useTheme } from './src/theme';
+import { CrashGuard } from './src/crashGuard';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -206,18 +207,20 @@ function Root() {
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <SettingsProvider>
-        <SavedProvider>
-          <WeatherProvider>
-            <AudioProvider>
-              <AccountProvider>
-                <Root />
-              </AccountProvider>
-            </AudioProvider>
-          </WeatherProvider>
-        </SavedProvider>
-      </SettingsProvider>
-    </SafeAreaProvider>
+    <CrashGuard>
+      <SafeAreaProvider>
+        <SettingsProvider>
+          <SavedProvider>
+            <WeatherProvider>
+              <AudioProvider>
+                <AccountProvider>
+                  <Root />
+                </AccountProvider>
+              </AudioProvider>
+            </WeatherProvider>
+          </SavedProvider>
+        </SettingsProvider>
+      </SafeAreaProvider>
+    </CrashGuard>
   );
 }

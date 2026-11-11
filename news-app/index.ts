@@ -1,3 +1,5 @@
+// First, so a crash anywhere after this shows the recovery screen instead of closing the app.
+import './src/crashGuard';
 import { registerRootComponent } from 'expo';
 
 import App from './App';

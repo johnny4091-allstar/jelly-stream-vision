@@ -277,6 +277,44 @@ tabs_flow() {
 }
 tabs_flow || { echo "::error::The app crashed or froze on a tab or story (see the log above)."; exit 1; }
 
+# A lived-in phone: a starred team and all three home screen widgets, then reopen the app the way a
+# user does. (The flows above never star a team or add a widget.)
+lived_in_flow() {
+  tap 'Scores"' && sleep 6 && ui_texts >/dev/null
+  if tap_scrolling "Pin "; then echo "Starred a team"; sleep 2; else echo "::warning::No game to star a team from."; fi
+  check_alive starred-team || return 1
+  for w in "Top story" "Weather" "Your team"; do
+    adb shell am force-stop "$PKG"
+    adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null
+    sleep 12
+    ui_texts >/dev/null
+    tap "Settings" && sleep 4 && ui_texts >/dev/null
+    if tap_scrolling "Add $w"; then
+      sleep 4
+      ui_texts >/dev/null
+      # The launcher asks before adding a widget.
+      tap "Add to home screen" || tap "Add automatically" || tap 'ADD"' || tap 'Add"' || echo "::warning::No launcher prompt for the $w widget."
+      sleep 6
+    else
+      echo "::warning::No Add $w widget button in Settings."
+    fi
+    check_alive "widget-$w" || return 1
+  done
+  echo "==== widgets on the home screen ===="
+  adb shell dumpsys appwidget | grep -iE "provider=|$PKG" | head -n 20 || true
+  # Let the widgets draw, then open the app from the home screen like a user would.
+  adb shell input keyevent KEYCODE_HOME
+  sleep 25
+  adb exec-out screencap -p > screenshot-home-widgets.png || true
+  adb logcat -d > logcat-home-widgets.txt
+  grep -E "FATAL EXCEPTION|AndroidRuntime|Fatal signal|ReactNativeJS|AndroidWidget|RemoteViews" logcat-home-widgets.txt | tail -n 80 || true
+  adb logcat -c
+  adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null
+  sleep 40
+  check_alive reopened-with-widgets || return 1
+}
+lived_in_flow || { echo "::error::The app crashed with a starred team or home screen widgets (see the log above)."; exit 1; }
+
 # Information only: the background news check should be scheduled with Android's JobScheduler.
 jobs="$(adb shell dumpsys jobscheduler | grep -c "$PKG/androidx.work" || true)"
 echo "Background check jobs scheduled for $PKG: $jobs"

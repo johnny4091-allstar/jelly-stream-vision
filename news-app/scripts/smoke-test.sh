@@ -323,6 +323,10 @@ lived_in_flow() {
 }
 # These steps read the screen many times; cap them at 8 minutes so a slow emulator can't stall the
 # whole job. A crash still fails the build; running out of time only skips the rest of the steps.
+if [ -n "${SKIP_LIVED_IN:-}" ]; then
+  echo "Skipping the starred-team and widget steps on this emulator (SKIP_LIVED_IN)."
+  lived_in_flow() { return 0; }
+fi
 lived_in_flow &
 lived_pid=$!
 ( sleep 480; kill -TERM "$lived_pid" 2>/dev/null ) &

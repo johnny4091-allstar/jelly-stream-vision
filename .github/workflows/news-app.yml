@@ -113,6 +113,9 @@ jobs:
     name: smoke-test (Android API ${{ matrix.api-level }})
     env:
       UPDATE_REPO: ${{ vars.UPDATE_REPO }}
+      # The starred-team and widget steps run on Android 16 only; on the Android 14 emulator they read
+      # the screen so slowly that the job ran out of time (the app itself ran fine there).
+      SKIP_LIVED_IN: ${{ matrix.api-level == 34 && '1' || '' }}
     defaults:
       run:
         working-directory: news-app

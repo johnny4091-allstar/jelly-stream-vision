@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useScrollToTop } from '@react-navigation/native';
 import { useRef, useState, type ReactNode } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, type ScrollViewInstance } from 'react-native';
+import { Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View, type ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -237,7 +237,7 @@ export function YouScreen() {
           <LinkRow icon="star-outline" label={`Topics you follow (${followed.length})`} onPress={openExplore} />
           <LinkRow icon="partly-sunny-outline" label="Weather" onPress={openWeather} />
           <LinkRow icon="rainy-outline" label="Rain radar" onPress={openRadar} />
-          <LinkRow icon="apps-outline" label="Home screen widgets" onPress={openSettings} />
+          {Platform.OS === 'android' ? <LinkRow icon="apps-outline" label="Home screen widgets" onPress={openSettings} /> : null}
           <LinkRow icon="settings-outline" label="Settings" onPress={openSettings} last />
         </Group>
 

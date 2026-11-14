@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
-import { AppState, Linking, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppState, Linking, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { requestBackgroundAccess } from '../services/notifications';
 import { type, useTheme } from '../theme';
@@ -16,6 +16,8 @@ export function showBackgroundGuide(): void {
 
 /** Opens the guide once, the first time notifications are allowed. */
 export async function showBackgroundGuideOnce(): Promise<void> {
+  // Battery-saver pausing is an Android (mostly Samsung) problem; iOS has no such setting to change.
+  if (Platform.OS !== 'android') return;
   try {
     if (await AsyncStorage.getItem(SEEN_KEY)) return;
     await AsyncStorage.setItem(SEEN_KEY, '1');

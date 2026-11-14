@@ -11,6 +11,7 @@ import type { ConfigContext, ExpoConfig } from 'expo/config';
 //   SUPABASE_URL      Supabase project URL and public (anon) key for accounts and sync.
 //   SUPABASE_ANON_KEY Without them the app hides sign-in and works as before.
 //   GOOGLE_SIGN_IN    "1" once Google is turned on in the Supabase project: shows Continue with Google.
+//   EAS_PROJECT_ID    Expo project ID for the iPhone/iPad builds (EAS Build); see news-app/IOS.md.
 export default ({ config }: ConfigContext): ExpoConfig => {
   const versionCode = Number(process.env.APP_VERSION_CODE) || 1;
   return {
@@ -19,6 +20,11 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     slug: config.slug ?? 'headlines',
     // "1.0" in app.json plus the build number, e.g. 1.0.7. Shown in Settings and the update pop-up.
     version: `${config.version ?? '1.0'}.${versionCode}`,
+    ios: {
+      ...config.ios,
+      // Same build number as Android; TestFlight needs it to go up with every upload.
+      buildNumber: String(versionCode),
+    },
     android: {
       ...config.android,
       versionCode,
@@ -38,6 +44,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       supabaseUrl: process.env.SUPABASE_URL ?? '',
       supabaseAnonKey: process.env.SUPABASE_ANON_KEY ?? '',
       googleSignIn: process.env.GOOGLE_SIGN_IN === '1',
+      ...(process.env.EAS_PROJECT_ID ? { eas: { projectId: process.env.EAS_PROJECT_ID } } : {}),
     },
   };
 };

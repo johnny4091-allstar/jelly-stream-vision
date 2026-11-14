@@ -9,7 +9,11 @@
     "backgroundColor": "#0B0B0D",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.personal.headlines"
+      "requireFullScreen": true,
+      "bundleIdentifier": "com.johnny4091.newshammer",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.personal.headlines",
@@ -109,7 +113,8 @@
             }
           ]
         }
-      ]
+      ],
+      "expo-background-task"
     ],
     "scheme": "newshammer"
   }

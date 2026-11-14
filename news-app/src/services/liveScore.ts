@@ -20,7 +20,8 @@ export function scoreGame(games: Game[], favorites: string[]): Game | undefined 
 }
 
 export async function updateLiveScore(games: Game[], favorites: string[], enabled: boolean): Promise<void> {
-  if (Platform.OS === 'web') return;
+  // Android only: iOS has no quiet, ongoing notification, so every update would be a new banner.
+  if (Platform.OS !== 'android') return;
   const game = enabled ? scoreGame(games, favorites) : undefined;
   const last = await AsyncStorage.getItem(LAST_KEY).catch(() => null);
   if (!game) {

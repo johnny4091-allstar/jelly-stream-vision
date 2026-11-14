@@ -39,3 +39,6 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# App Store Connect API key, written only in CI
+asc-api-key.p8

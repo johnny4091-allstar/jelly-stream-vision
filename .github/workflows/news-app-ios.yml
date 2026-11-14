@@ -1,0 +1,81 @@
+name: News Hammer iOS
+
+# Builds the iPhone/iPad app with Expo's cloud build service (EAS Build, no Mac needed) and uploads
+# it to TestFlight. Does nothing until the Expo and App Store Connect keys are added as GitHub
+# secrets and variables; see news-app/IOS.md.
+
+on:
+  push:
+    paths:
+      - 'news-app/**'
+      - '!news-app/site/**'
+      - '.github/workflows/news-app-ios.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  ios:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: news-app
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      EAS_PROJECT_ID: ${{ vars.EAS_PROJECT_ID }}
+      # Build number for TestFlight (must go up with every upload).
+      APP_VERSION_CODE: ${{ github.run_number }}
+      CARTO_KEY: ${{ secrets.CARTO_KEY }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      GOOGLE_SIGN_IN: ${{ vars.GOOGLE_SIGN_IN }}
+      # App Store Connect: the app record, the team, and an API key EAS uses to create the signing
+      # certificate and profile and to upload the build.
+      ASC_APP_ID: ${{ vars.ASC_APP_ID }}
+      APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+      ASC_KEY_ID: ${{ vars.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ vars.ASC_ISSUER_ID }}
+      ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+      EXPO_ASC_API_KEY_PATH: ./asc-api-key.p8
+      EXPO_ASC_KEY_ID: ${{ vars.ASC_KEY_ID }}
+      EXPO_ASC_ISSUER_ID: ${{ vars.ASC_ISSUER_ID }}
+      EXPO_APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+      EXPO_APPLE_TEAM_TYPE: ${{ vars.APPLE_TEAM_TYPE || 'INDIVIDUAL' }}
+    steps:
+      - name: Check the iOS setup
+        id: setup
+        working-directory: .
+        run: |
+          if [ -z "$EXPO_TOKEN" ] || [ -z "$EAS_PROJECT_ID" ] || [ -z "$ASC_API_KEY_P8" ]; then
+            echo "::notice::iOS builds aren't set up yet (EXPO_TOKEN, EAS_PROJECT_ID and ASC_API_KEY_P8 are needed). See news-app/IOS.md."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v7
+        if: steps.setup.outputs.ready == 'true'
+      - uses: actions/setup-node@v7
+        if: steps.setup.outputs.ready == 'true'
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: news-app/package-lock.json
+      - name: Install
+        if: steps.setup.outputs.ready == 'true'
+        run: npm ci
+      - name: Typecheck
+        if: steps.setup.outputs.ready == 'true'
+        run: npx tsc --noEmit
+      - name: Prepare keys and eas.json
+        if: steps.setup.outputs.ready == 'true'
+        run: |
+          printf '%s\n' "$ASC_API_KEY_P8" > asc-api-key.p8
+          node scripts/eas-ios-config.mjs
+      - name: Build on EAS and upload to TestFlight
+        if: steps.setup.outputs.ready == 'true'
+        run: npx -y eas-cli@27 build --platform ios --profile production --non-interactive --auto-submit

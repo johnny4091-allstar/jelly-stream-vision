@@ -1,7 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useState, type ReactNode } from 'react';
-import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+
+// Android-only extras: the APK updater, battery-saver guide, lock-screen score and home screen widgets.
+const ANDROID = Platform.OS === 'android';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { StackHeader } from '../components/common';
@@ -251,6 +254,7 @@ export function SettingsScreen() {
             accessibilityLabel="Notify me about new top stories"
           />
         </View>
+        {ANDROID ? (
         <View style={[styles.row, styles.divider, { borderTopColor: c.separator }]}>
           <Text style={[styles.rowLabel, { color: c.text }]}>App updates</Text>
           <Switch
@@ -261,6 +265,7 @@ export function SettingsScreen() {
             accessibilityLabel="Notify me when a new version is available"
           />
         </View>
+        ) : null}
         <View style={[styles.row, styles.divider, { borderTopColor: c.separator }]}>
           <Text style={[styles.rowLabel, { color: c.text }]}>Morning briefing at 7 AM</Text>
           <Switch
@@ -281,6 +286,7 @@ export function SettingsScreen() {
             accessibilityLabel="Notify me when my evening recap is ready"
           />
         </View>
+        {ANDROID ? (
         <View style={[styles.row, styles.divider, { borderTopColor: c.separator }]}>
           <Text style={[styles.rowLabel, { color: c.text }]}>Your team's live score on the lock screen</Text>
           <Switch
@@ -291,9 +297,12 @@ export function SettingsScreen() {
             accessibilityLabel="Show my team's live score on the lock screen"
           />
         </View>
-        <Pressable onPress={showBackgroundGuide} style={[styles.row, styles.divider, { borderTopColor: c.separator }]} accessibilityRole="button">
-          <Text style={[styles.rowLabel, { color: c.accentText }]}>Allow running in the background</Text>
-        </Pressable>
+        ) : null}
+        {ANDROID ? (
+          <Pressable onPress={showBackgroundGuide} style={[styles.row, styles.divider, { borderTopColor: c.separator }]} accessibilityRole="button">
+            <Text style={[styles.rowLabel, { color: c.accentText }]}>Allow running in the background</Text>
+          </Pressable>
+        ) : null}
         <Pressable onPress={checkNow} disabled={checking} style={[styles.row, styles.divider, { borderTopColor: c.separator }]} accessibilityRole="button">
           <Text style={[styles.rowLabel, { color: c.accentText }]}>{checking ? 'Checking…' : 'Check for news now'}</Text>
         </Pressable>
@@ -302,6 +311,7 @@ export function SettingsScreen() {
         </Pressable>
       </Section>
 
+      {ANDROID ? (
       <Section title="Home screen widgets" footer="Top story, weather and your team's score on your home screen. They refresh about every 30 minutes, and whenever you use the app.">
         {WIDGETS.map((w, i) => (
           <Pressable
@@ -314,6 +324,7 @@ export function SettingsScreen() {
           </Pressable>
         ))}
       </Section>
+      ) : null}
 
       <Section title="Setup">
         <Pressable onPress={openOnboarding} style={styles.row} accessibilityRole="button">
